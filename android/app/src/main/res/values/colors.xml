@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Paleta base "vinho tinto" usada só na Activity theme (XML) que o
+         Android exige antes do Compose desenhar; o tema Material 3 real
+         vive em ui/theme/Theme.kt (Compose). -->
+    <color name="background">#FFFBFE</color>
+    <color name="wine_primary">#6B2737</color>
+</resources>

@@ -1,0 +1,21 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Gradle wrapper binary — gerado pelo Android Studio no primeiro sync
+# (ver README.md), não é commitado por não podermos produzir o jar aqui.
+/gradle/wrapper/gradle-wrapper.jar
+/gradlew
+/gradlew.bat

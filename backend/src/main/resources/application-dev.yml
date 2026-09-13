@@ -1,0 +1,22 @@
+spring:
+  datasource:
+    url: jdbc:oracle:thin:@//localhost:1521/XEPDB1
+    username: ${ORACLE_APP_USER:aquavitae}
+    password: ${ORACLE_APP_PASSWORD:changeit123}
+    driver-class-name: oracle.jdbc.OracleDriver
+  jpa:
+    # "validate" (não "update"/"create") de propósito: o schema é gerido
+    # pelos scripts em ../database/ddl, não pelo Hibernate. Se o schema não
+    # existir ainda ou estiver dessincronizado dos @Entity, o arranque falha
+    # aqui — sinal para correr `database/run-migrations.ps1` primeiro.
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.OracleDialect
+        format_sql: true
+    show-sql: true
+
+logging:
+  level:
+    pt.aquavitae.api: DEBUG

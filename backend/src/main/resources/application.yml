@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: aquavitae-api
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+server:
+  port: 8080
+
+jwt:
+  # Em dev usa-se o valor por omissão abaixo. Em produção define sempre a
+  # variável de ambiente JWT_SECRET com um valor próprio, longo e aleatório.
+  secret: ${JWT_SECRET:dev-only-secret-change-me-before-any-real-deployment-32chars}
+  expiration-minutes: 60

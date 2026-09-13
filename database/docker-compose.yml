@@ -1,0 +1,20 @@
+services:
+  oracle-xe:
+    image: gvenzl/oracle-xe:21-slim-faststart
+    container_name: aquavitae-oracle-xe
+    ports:
+      - "1521:1521"
+    environment:
+      ORACLE_PASSWORD: ${ORACLE_SYS_PASSWORD}
+      APP_USER: ${ORACLE_APP_USER}
+      APP_USER_PASSWORD: ${ORACLE_APP_PASSWORD}
+    volumes:
+      - aquavitae_oracle_data:/opt/oracle/oradata
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+
+volumes:
+  aquavitae_oracle_data:

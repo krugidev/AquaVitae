@@ -1,0 +1,36 @@
+package pt.aquavitae.api.auth.dto
+
+import jakarta.validation.constraints.Email
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Size
+
+data class RegisterRequest(
+    @field:NotBlank @field:Size(min = 3, max = 30)
+    val username: String,
+
+    @field:NotBlank @field:Email @field:Size(max = 100)
+    val email: String,
+
+    @field:NotBlank @field:Size(min = 8, max = 72)
+    val password: String,
+
+    @field:Size(max = 25)
+    val firstName: String? = null,
+
+    @field:Size(max = 40)
+    val lastName: String? = null,
+)
+
+data class LoginRequest(
+    @field:NotBlank @field:Email
+    val email: String,
+
+    @field:NotBlank
+    val password: String,
+)
+
+data class AuthResponse(
+    val token: String,
+    val userId: Long,
+    val username: String?,
+)

@@ -1,0 +1,28 @@
+# Segredos
+database/.env
+
+# Backend (Gradle/Kotlin)
+backend/build/
+backend/.gradle/
+backend/bin/
+backend/out/
+backend/gradle/wrapper/gradle-wrapper.jar
+
+# Android
+android/build/
+android/app/build/
+android/.gradle/
+android/local.properties
+android/.cxx/
+android/captures/
+android/*.iml
+android/.idea/
+
+# IDE genérico
+.idea/
+*.iml
+.vscode/
+
+# SO
+.DS_Store
+Thumbs.db

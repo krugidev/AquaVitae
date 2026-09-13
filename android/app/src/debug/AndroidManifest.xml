@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Manifesto exclusivo do build type "debug": junta-se (merge) com o
+    AndroidManifest.xml principal apenas em builds de debug.
+
+    Ativa tráfego HTTP em texto simples (cleartext) SÓ nesta variante, para
+    permitir ligar ao backend local via http://10.0.2.2:8080/ a partir do
+    emulador. Em release, usesCleartextTraffic fica por omissão "false"
+    (obrigatório usar HTTPS em produção).
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application android:usesCleartextTraffic="true" />
+
+</manifest>
