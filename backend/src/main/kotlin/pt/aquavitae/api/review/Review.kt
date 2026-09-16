@@ -11,6 +11,7 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import pt.aquavitae.api.bebida.Bebida
 import pt.aquavitae.api.utilizador.Utilizador
+import java.math.BigDecimal
 import java.time.Instant
 
 @Entity
@@ -30,7 +31,7 @@ class Review(
     var utilizador: Utilizador? = null,
 
     @Column(name = "rating_value")
-    var rating: Double? = null,
+    var rating: BigDecimal? = null,
 
     @Column(name = "review_comment_value")
     var comment: String? = null,

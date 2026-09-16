@@ -12,6 +12,7 @@ import jakarta.persistence.Table
 import org.springframework.data.jpa.repository.JpaRepository
 import pt.aquavitae.api.bebida.Bebida
 import pt.aquavitae.api.utilizador.Utilizador
+import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
 
@@ -64,7 +65,7 @@ class CaveBebida(
     var dataAquisicao: LocalDate? = null,
 
     @Column(name = "cave_bebida_preco_pago")
-    var precoPago: Double? = null,
+    var precoPago: BigDecimal? = null,
 
     @Column(name = "cave_bebida_janela_inicio")
     var janelaInicio: LocalDate? = null,

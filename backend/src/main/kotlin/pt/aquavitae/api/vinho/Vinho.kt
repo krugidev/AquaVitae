@@ -16,6 +16,7 @@ import pt.aquavitae.api.lookup.Casta
 import pt.aquavitae.api.lookup.VinhoCorpo
 import pt.aquavitae.api.lookup.VinhoTanino
 import pt.aquavitae.api.lookup.VinhoTipo
+import java.math.BigDecimal
 
 // Subtype da bebida "Vinho": bebida_id é, ao mesmo tempo, PK própria e FK
 // 1:1 para `bebida` — padrão supertype/subtype do schema. @MapsId faz o
@@ -69,5 +70,5 @@ class VinhoCasta(
     var casta: Casta? = null,
 
     @Column(name = "vinho_casta_percentagem")
-    var percentagem: Double? = null,
+    var percentagem: BigDecimal? = null,
 )

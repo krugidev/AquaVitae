@@ -12,6 +12,7 @@ import jakarta.persistence.Table
 import pt.aquavitae.api.lookup.BebidaCategoria
 import pt.aquavitae.api.lookup.Pais
 import pt.aquavitae.api.produtor.Produtor
+import java.math.BigDecimal
 import java.time.Instant
 
 @Entity
@@ -40,11 +41,13 @@ class Bebida(
     @Column(name = "bebida_ano_producao")
     var anoProducao: Int? = null,
 
+    // BigDecimal, não Double: Hibernate mapeia Double para SQL FLOAT, que não bate
+    // certo com o NUMBER(p,s) do Oracle em modo "validate" (SchemaManagementException).
     @Column(name = "bebida_teor_alcoolico")
-    var teorAlcoolico: Double? = null,
+    var teorAlcoolico: BigDecimal? = null,
 
     @Column(name = "bebida_volume_ml")
-    var volumeMl: Double? = null,
+    var volumeMl: BigDecimal? = null,
 
     @Column(name = "bebida_path_image")
     var pathImage: String? = null,
@@ -53,7 +56,7 @@ class Bebida(
     var dataCriacao: Instant? = null,
 
     @Column(name = "bebida_rating_medio")
-    var ratingMedio: Double = 0.0,
+    var ratingMedio: BigDecimal = BigDecimal.ZERO,
 
     @Column(name = "bebida_total_reviews")
     var totalReviews: Int = 0,

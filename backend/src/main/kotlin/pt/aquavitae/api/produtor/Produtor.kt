@@ -11,6 +11,7 @@ import jakarta.persistence.Lob
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import pt.aquavitae.api.lookup.ProdutorPais
+import java.math.BigDecimal
 import java.time.Instant
 
 @Entity
@@ -45,10 +46,10 @@ class Produtor(
     var pathImagem: String? = null,
 
     @Column(name = "produtor_latitude")
-    var latitude: Double? = null,
+    var latitude: BigDecimal? = null,
 
     @Column(name = "produtor_longitude")
-    var longitude: Double? = null,
+    var longitude: BigDecimal? = null,
 
     @Column(name = "produtor_permite_visitas")
     var permiteVisitas: Boolean = false,

@@ -4,10 +4,11 @@ import jakarta.validation.constraints.DecimalMax
 import jakarta.validation.constraints.DecimalMin
 import jakarta.validation.constraints.NotNull
 import pt.aquavitae.api.review.Review
+import java.math.BigDecimal
 
 data class ReviewRequest(
     @field:NotNull @field:DecimalMin("0.0") @field:DecimalMax("5.0")
-    val rating: Double,
+    val rating: BigDecimal,
 
     val comment: String? = null,
 )
@@ -16,7 +17,7 @@ data class ReviewResponse(
     val id: Long,
     val bebidaId: Long?,
     val utilizadorUsername: String?,
-    val rating: Double?,
+    val rating: BigDecimal?,
     val comment: String?,
     val createdAt: java.time.Instant?,
 ) {

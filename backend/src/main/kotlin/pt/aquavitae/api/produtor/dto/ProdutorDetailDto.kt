@@ -1,6 +1,7 @@
 package pt.aquavitae.api.produtor.dto
 
 import pt.aquavitae.api.produtor.Produtor
+import java.math.BigDecimal
 
 data class ProdutorDetailDto(
     val id: Long,
@@ -11,8 +12,8 @@ data class ProdutorDetailDto(
     val anoFundacao: Int?,
     val website: String?,
     val imagePath: String?,
-    val latitude: Double?,
-    val longitude: Double?,
+    val latitude: BigDecimal?,
+    val longitude: BigDecimal?,
     val permiteVisitas: Boolean,
 ) {
     companion object {

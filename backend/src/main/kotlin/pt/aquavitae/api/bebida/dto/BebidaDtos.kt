@@ -1,13 +1,14 @@
 package pt.aquavitae.api.bebida.dto
 
 import pt.aquavitae.api.bebida.Bebida
+import java.math.BigDecimal
 
 data class BebidaSummaryDto(
     val id: Long,
     val nome: String?,
     val categoriaNome: String?,
     val produtorNome: String?,
-    val ratingMedio: Double,
+    val ratingMedio: BigDecimal,
     val totalReviews: Int,
     val imagePath: String?,
 ) {
@@ -26,7 +27,7 @@ data class BebidaSummaryDto(
 
 data class CastaPercentagemDto(
     val casta: String?,
-    val percentagem: Double?,
+    val percentagem: BigDecimal?,
 )
 
 data class VinhoDetalheDto(
@@ -46,10 +47,10 @@ data class BebidaDetailDto(
     val produtorNome: String?,
     val paisOrigemNome: String?,
     val anoProducao: Int?,
-    val teorAlcoolico: Double?,
-    val volumeMl: Double?,
+    val teorAlcoolico: BigDecimal?,
+    val volumeMl: BigDecimal?,
     val imagePath: String?,
-    val ratingMedio: Double,
+    val ratingMedio: BigDecimal,
     val totalReviews: Int,
     val vinhoDetalhe: VinhoDetalheDto?,
 ) {

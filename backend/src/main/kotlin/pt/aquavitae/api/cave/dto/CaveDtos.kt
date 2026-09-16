@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Positive
 import pt.aquavitae.api.cave.Cave
 import pt.aquavitae.api.cave.CaveBebida
+import java.math.BigDecimal
 import java.time.LocalDate
 
 data class CaveRequest(
@@ -35,7 +36,7 @@ data class CaveBebidaRequest(
     val bebidaId: Long,
     @field:Positive
     val quantidade: Int = 1,
-    val precoPago: Double? = null,
+    val precoPago: BigDecimal? = null,
     val dataAquisicao: LocalDate? = null,
 )
 
@@ -50,7 +51,7 @@ data class CaveBebidaResponse(
     val bebidaId: Long?,
     val bebidaNome: String?,
     val quantidade: Int,
-    val precoPago: Double?,
+    val precoPago: BigDecimal?,
     val dataAquisicao: LocalDate?,
     val isConsumida: Boolean,
     val dataConsumo: LocalDate?,
