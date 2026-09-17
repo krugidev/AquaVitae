@@ -83,7 +83,21 @@ produtor em destaque computado por rotação semanal (sem coluna nova); `casta` 
 - `GET /api/users/me/preferencias` novo (faltava para pré-popular o onboarding/editar preferências).
 - Validado a correr de verdade contra a BD de dev (`bootRun` + Hibernate `ddl-auto: validate` sem erros
   + `curl` a todos os endpoints novos, incluindo `PUT /me` com nationality/avatar/bio).
-- Branch `feature/api-endpoints-design` (ainda sem PR aberto — fica para quando o utilizador pedir).
+
+### Avatares reais integrados (concluída, 2026-09-18)
+
+- 27 SVGs (desenho de linha, 9 por categoria: Castas/Garrafas/Copos) entregues pelo utilizador, com README
+  de spec de design (cores, escalas, estados) — tudo em
+  `backend/src/main/resources/static/icones/avatares/`, servido em `GET /icones/avatares/<slug>.svg`.
+- Seed (`database/seed/01_lookups.sql`) e BD de dev atualizados: `avatar_categoria` trocou o placeholder
+  do esqueleto pelas 3 categorias reais; `utilizador_avatar` tem agora os 27 avatares reais.
+- `SecurityConfig` liberta `GET /icones/**` sem auth (faltava — 401 apanhado e corrigido ao testar).
+- Validado a servir com `content-type: image/svg+xml` correto via `curl`.
+- Pasta de staging `AVATARESAQUAVITAE/` (só tinha o zip de entrega) removida da raiz do projeto depois de
+  integrado — nunca chegou a ser commitada.
+
+**Branch `feature/api-endpoints-design`** com todo este trabalho (desenho + camada BD + fatia 1 do
+backend + avatares) — ainda sem PR aberto nesta sessão.
 
 **Próximo passo — resto do backend:** recuperação de password (auth), catálogo/bebida (filtros
 expandidos, enriquecimento dos DTOs, sugeridas, reviews com distribuição, links de compra), produtor,

@@ -136,20 +136,24 @@ utilizador), preço+retalhista mais barato, e data de adição/marcação.
 ## Imagens (bebidas, produtores, avatares)
 
 `bebida_path_image` e `produtor_path_imagem` existem no schema mas **nunca foram populadas** no seed —
-ainda não havia decisão sobre onde as imagens ficam alojadas. `utilizador_avatar.avatar_path_image` já
-tinha, no seed do esqueleto, o padrão `/avatars/raposa.png` — que assume paths relativos servidos pela
-própria API.
+ainda não havia decisão sobre onde as imagens ficam alojadas.
 
 **Decisão:** para o MVP, sem infraestrutura de CDN/bucket, as imagens ficam como recursos estáticos do
-próprio backend Spring Boot (`backend/src/main/resources/static/avatars/*.png` — Spring serve
-automaticamente qualquer ficheiro aí em `GET /avatars/<ficheiro>`, sem controller nenhum). O Android
-resolve a imagem completa como `API_BASE_URL + avatarPath` (mesmo padrão a seguir depois para fotos de
-bebidas/produtores, quando existirem).
+próprio backend Spring Boot (`backend/src/main/resources/static/...` — Spring serve automaticamente
+qualquer ficheiro aí, sem controller nenhum). O Android resolve a imagem completa como
+`API_BASE_URL + path`. Mesmo padrão a seguir depois para fotos de bebidas/produtores, quando existirem.
 
-**Para avançar:** envia os PNGs dos avatares (9 por categoria × 3 categorias = 27), com nome de ficheiro
-em minúsculas sem acentos/espaços (ex.: `raposa.png`, `hexagono_azul.png`) — esse nome é o que fica no
-`avatar_path_image` do seed. Tamanho recomendado: quadrado, ~256×256px, fundo transparente se fizer
-sentido para o design.
+**Avatares — feito (2026-09-18).** 27 avatares (SVG, desenho de linha, 9 por categoria: Castas/Garrafas/
+Copos) entregues pelo utilizador e integrados:
+- Ficheiros em `backend/src/main/resources/static/icones/avatares/*.svg`, servidos em
+  `GET /icones/avatares/<slug>.svg` (content-type `image/svg+xml`, confirmado a correr).
+- `avatar_path_image` no seed/BD guarda o path relativo `icones/avatares/<slug>.svg`.
+- `avatar_categoria` tem agora as 3 categorias reais (substituindo o placeholder do esqueleto
+  "Animais"/"Geométrico"/"Ilustração").
+- Spec de design completa (cores do traço, escalas por contexto, estado selecionado/hover) documentada em
+  `backend/src/main/resources/static/icones/avatares/README.md` — consultar ao construir o ecrã de
+  escolha de avatar no Android.
+- `SecurityConfig` liberta `GET /icones/**` sem auth (recursos estáticos públicos).
 
 ## Diffs exatos dos DTOs (por ajustar)
 

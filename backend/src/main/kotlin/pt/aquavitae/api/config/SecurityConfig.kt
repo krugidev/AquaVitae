@@ -31,6 +31,9 @@ class SecurityConfig(
                 auth
                     .requestMatchers("/api/auth/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/bebidas/**", "/api/produtores/**", "/api/lookup/**").permitAll()
+                    // Recursos estáticos (avatares, e futuramente fotos de bebidas/produtores) — sem
+                    // auth, servidos diretamente pelo Spring de src/main/resources/static/.
+                    .requestMatchers(HttpMethod.GET, "/icones/**").permitAll()
                     .anyRequest().authenticated()
             }
             .exceptionHandling { exceptions ->

@@ -16,17 +16,70 @@ INSERT INTO utilizador_nationality (nationality_value) VALUES ('Alemã');
 INSERT INTO utilizador_nationality (nationality_value) VALUES ('Italiana');
 INSERT INTO utilizador_nationality (nationality_value) VALUES ('Norte-Americana');
 
--- Avatares
-INSERT INTO avatar_categoria (avatar_categoria_value) VALUES ('Animais');
-INSERT INTO avatar_categoria (avatar_categoria_value) VALUES ('Geométrico');
-INSERT INTO avatar_categoria (avatar_categoria_value) VALUES ('Ilustração');
+-- Avatares — 27 desenhos de linha (SVG) fornecidos pelo utilizador, 9 por categoria.
+-- Ficheiros em backend/src/main/resources/static/icones/avatares/ (servidos pelo Spring Boot
+-- como recursos estáticos em GET /icones/avatares/<slug>.svg — ver backend/API_ENDPOINTS.md).
+-- Spec de design (cores, escalas, estado selecionado) documentada no README.md ao lado dos SVGs.
+INSERT INTO avatar_categoria (avatar_categoria_value) VALUES ('Castas');
+INSERT INTO avatar_categoria (avatar_categoria_value) VALUES ('Garrafas');
+INSERT INTO avatar_categoria (avatar_categoria_value) VALUES ('Copos');
 
 INSERT INTO utilizador_avatar (avatar_name, avatar_category_id, avatar_path_image, avatar_is_active)
-VALUES ('Raposa', (SELECT avatar_categoria_id FROM avatar_categoria WHERE avatar_categoria_value = 'Animais'), '/avatars/raposa.png', 1);
+VALUES ('Cacho cónico', (SELECT avatar_categoria_id FROM avatar_categoria WHERE avatar_categoria_value = 'Castas'), 'icones/avatares/casta-cacho-conico.svg', 1);
 INSERT INTO utilizador_avatar (avatar_name, avatar_category_id, avatar_path_image, avatar_is_active)
-VALUES ('Coruja', (SELECT avatar_categoria_id FROM avatar_categoria WHERE avatar_categoria_value = 'Animais'), '/avatars/coruja.png', 1);
+VALUES ('Cacho cilíndrico', (SELECT avatar_categoria_id FROM avatar_categoria WHERE avatar_categoria_value = 'Castas'), 'icones/avatares/casta-cacho-cilindrico.svg', 1);
 INSERT INTO utilizador_avatar (avatar_name, avatar_category_id, avatar_path_image, avatar_is_active)
-VALUES ('Hexágono Azul', (SELECT avatar_categoria_id FROM avatar_categoria WHERE avatar_categoria_value = 'Geométrico'), '/avatars/hexagono_azul.png', 1);
+VALUES ('Cacho alado', (SELECT avatar_categoria_id FROM avatar_categoria WHERE avatar_categoria_value = 'Castas'), 'icones/avatares/casta-cacho-alado.svg', 1);
+INSERT INTO utilizador_avatar (avatar_name, avatar_category_id, avatar_path_image, avatar_is_active)
+VALUES ('Cacho solto', (SELECT avatar_categoria_id FROM avatar_categoria WHERE avatar_categoria_value = 'Castas'), 'icones/avatares/casta-cacho-solto.svg', 1);
+INSERT INTO utilizador_avatar (avatar_name, avatar_category_id, avatar_path_image, avatar_is_active)
+VALUES ('Bago', (SELECT avatar_categoria_id FROM avatar_categoria WHERE avatar_categoria_value = 'Castas'), 'icones/avatares/casta-bago.svg', 1);
+INSERT INTO utilizador_avatar (avatar_name, avatar_category_id, avatar_path_image, avatar_is_active)
+VALUES ('Folha de videira', (SELECT avatar_categoria_id FROM avatar_categoria WHERE avatar_categoria_value = 'Castas'), 'icones/avatares/casta-folha.svg', 1);
+INSERT INTO utilizador_avatar (avatar_name, avatar_category_id, avatar_path_image, avatar_is_active)
+VALUES ('Gavinha', (SELECT avatar_categoria_id FROM avatar_categoria WHERE avatar_categoria_value = 'Castas'), 'icones/avatares/casta-gavinha.svg', 1);
+INSERT INTO utilizador_avatar (avatar_name, avatar_category_id, avatar_path_image, avatar_is_active)
+VALUES ('Ramo', (SELECT avatar_categoria_id FROM avatar_categoria WHERE avatar_categoria_value = 'Castas'), 'icones/avatares/casta-ramo.svg', 1);
+INSERT INTO utilizador_avatar (avatar_name, avatar_category_id, avatar_path_image, avatar_is_active)
+VALUES ('Videira', (SELECT avatar_categoria_id FROM avatar_categoria WHERE avatar_categoria_value = 'Castas'), 'icones/avatares/casta-videira.svg', 1);
+
+INSERT INTO utilizador_avatar (avatar_name, avatar_category_id, avatar_path_image, avatar_is_active)
+VALUES ('Bordalesa', (SELECT avatar_categoria_id FROM avatar_categoria WHERE avatar_categoria_value = 'Garrafas'), 'icones/avatares/garrafa-bordalesa.svg', 1);
+INSERT INTO utilizador_avatar (avatar_name, avatar_category_id, avatar_path_image, avatar_is_active)
+VALUES ('Borgonhesa', (SELECT avatar_categoria_id FROM avatar_categoria WHERE avatar_categoria_value = 'Garrafas'), 'icones/avatares/garrafa-borgonhesa.svg', 1);
+INSERT INTO utilizador_avatar (avatar_name, avatar_category_id, avatar_path_image, avatar_is_active)
+VALUES ('Flauta', (SELECT avatar_categoria_id FROM avatar_categoria WHERE avatar_categoria_value = 'Garrafas'), 'icones/avatares/garrafa-flauta.svg', 1);
+INSERT INTO utilizador_avatar (avatar_name, avatar_category_id, avatar_path_image, avatar_is_active)
+VALUES ('Champanhe', (SELECT avatar_categoria_id FROM avatar_categoria WHERE avatar_categoria_value = 'Garrafas'), 'icones/avatares/garrafa-champanhe.svg', 1);
+INSERT INTO utilizador_avatar (avatar_name, avatar_category_id, avatar_path_image, avatar_is_active)
+VALUES ('Garrafão', (SELECT avatar_categoria_id FROM avatar_categoria WHERE avatar_categoria_value = 'Garrafas'), 'icones/avatares/garrafa-garrafao.svg', 1);
+INSERT INTO utilizador_avatar (avatar_name, avatar_category_id, avatar_path_image, avatar_is_active)
+VALUES ('Whisky', (SELECT avatar_categoria_id FROM avatar_categoria WHERE avatar_categoria_value = 'Garrafas'), 'icones/avatares/garrafa-whisky.svg', 1);
+INSERT INTO utilizador_avatar (avatar_name, avatar_category_id, avatar_path_image, avatar_is_active)
+VALUES ('Gin', (SELECT avatar_categoria_id FROM avatar_categoria WHERE avatar_categoria_value = 'Garrafas'), 'icones/avatares/garrafa-gin.svg', 1);
+INSERT INTO utilizador_avatar (avatar_name, avatar_category_id, avatar_path_image, avatar_is_active)
+VALUES ('Cerveja', (SELECT avatar_categoria_id FROM avatar_categoria WHERE avatar_categoria_value = 'Garrafas'), 'icones/avatares/garrafa-cerveja.svg', 1);
+INSERT INTO utilizador_avatar (avatar_name, avatar_category_id, avatar_path_image, avatar_is_active)
+VALUES ('Licor', (SELECT avatar_categoria_id FROM avatar_categoria WHERE avatar_categoria_value = 'Garrafas'), 'icones/avatares/garrafa-licor.svg', 1);
+
+INSERT INTO utilizador_avatar (avatar_name, avatar_category_id, avatar_path_image, avatar_is_active)
+VALUES ('Tulipa', (SELECT avatar_categoria_id FROM avatar_categoria WHERE avatar_categoria_value = 'Copos'), 'icones/avatares/copo-tulipa.svg', 1);
+INSERT INTO utilizador_avatar (avatar_name, avatar_category_id, avatar_path_image, avatar_is_active)
+VALUES ('Copo de Porto', (SELECT avatar_categoria_id FROM avatar_categoria WHERE avatar_categoria_value = 'Copos'), 'icones/avatares/copo-porto.svg', 1);
+INSERT INTO utilizador_avatar (avatar_name, avatar_category_id, avatar_path_image, avatar_is_active)
+VALUES ('Balão', (SELECT avatar_categoria_id FROM avatar_categoria WHERE avatar_categoria_value = 'Copos'), 'icones/avatares/copo-balao.svg', 1);
+INSERT INTO utilizador_avatar (avatar_name, avatar_category_id, avatar_path_image, avatar_is_active)
+VALUES ('Copo baixo', (SELECT avatar_categoria_id FROM avatar_categoria WHERE avatar_categoria_value = 'Copos'), 'icones/avatares/copo-baixo.svg', 1);
+INSERT INTO utilizador_avatar (avatar_name, avatar_category_id, avatar_path_image, avatar_is_active)
+VALUES ('Flute', (SELECT avatar_categoria_id FROM avatar_categoria WHERE avatar_categoria_value = 'Copos'), 'icones/avatares/copo-flute.svg', 1);
+INSERT INTO utilizador_avatar (avatar_name, avatar_category_id, avatar_path_image, avatar_is_active)
+VALUES ('Cálice', (SELECT avatar_categoria_id FROM avatar_categoria WHERE avatar_categoria_value = 'Copos'), 'icones/avatares/copo-calice.svg', 1);
+INSERT INTO utilizador_avatar (avatar_name, avatar_category_id, avatar_path_image, avatar_is_active)
+VALUES ('Copo de gin', (SELECT avatar_categoria_id FROM avatar_categoria WHERE avatar_categoria_value = 'Copos'), 'icones/avatares/copo-gin.svg', 1);
+INSERT INTO utilizador_avatar (avatar_name, avatar_category_id, avatar_path_image, avatar_is_active)
+VALUES ('Caneca', (SELECT avatar_categoria_id FROM avatar_categoria WHERE avatar_categoria_value = 'Copos'), 'icones/avatares/copo-caneca.svg', 1);
+INSERT INTO utilizador_avatar (avatar_name, avatar_category_id, avatar_path_image, avatar_is_active)
+VALUES ('Shot', (SELECT avatar_categoria_id FROM avatar_categoria WHERE avatar_categoria_value = 'Copos'), 'icones/avatares/copo-shot.svg', 1);
 
 -- Países (usado por bebida.origem, produtor.pais e utilizador.nationality são tabelas
 -- separadas por decisão do schema — só a de bebida/produtor é populada aqui)
