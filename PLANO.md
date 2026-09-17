@@ -32,15 +32,39 @@ nova do Claude Code (ou tu, ao voltares passado um tempo) deve ler primeiro para
 
 ## Em curso 🔜
 
-- **Mockups Figma + descrição das funções de cada ecrã** — feitos pelo utilizador, a enviar em breve.
-- **Definir os endpoints necessários para cada ecrã dos mockups**, com base nessas descrições — ainda
-  por fazer. Passo seguinte assim que o conjunto completo de mockups chegar:
-  1. Rever todos os ecrãs de uma vez (não ecrã a ecrã) para desenhar um conjunto de endpoints
-     consistente, evitando remendos/inconsistências.
-  2. Confirmar quais endpoints já existentes (ver `backend/README.md` → "Endpoints principais") cobrem
-     necessidades dos mockups, e quais faltam.
-  3. Implementar/ajustar o backend para os endpoints em falta.
-  4. Construir os ecrãs Android correspondentes contra o contrato já validado.
+### Desenho dos endpoints (concluído, 2026-09-17)
+
+Mockups Figma (29 ecrãs + 2 popups) lidos na íntegra e cruzados com o schema Oracle + backend atual.
+Contrato completo (existente vs. a ajustar vs. novo) em [`backend/API_ENDPOINTS.md`](backend/API_ENDPOINTS.md)
+— é a fonte da verdade a partir de agora, substitui a secção "Endpoints principais" do `backend/README.md`
+assim que os itens novos forem implementados.
+
+Decisões tomadas (detalhe em `API_ENDPOINTS.md`): registo em 2 fases (POST /register só com
+username/email/password; resto do wizard via PUT /api/users/me + PUT preferencias, já autenticado);
+produtor em destaque computado por rotação semanal (sem coluna nova); `casta` passa a ter `casta_tipo`
+(tinta/branca); nova tabela `utilizador_password_reset` para o fluxo de recuperação por código.
+
+### Camada BD para os novos endpoints (concluída, 2026-09-17)
+
+- Tabela de lookup `casta_tipo` (Tinta/Branca) com `casta.casta_tipo_id` como FK — consistente com o
+  padrão do resto do schema (`vinho_corpo`, `vinho_tanino`, ...), em vez de uma coluna solta (ajustado a
+  pedido do utilizador depois da 1ª versão) — e tabela `utilizador_password_reset`. Ambas adicionadas a
+  `01_tables.sql`/`02_constraints.sql` (fonte da verdade) e aplicadas à BD de dev via
+  `database/ddl/04_patch_endpoints.sql` (script one-off, não faz parte do `run-migrations.ps1/.sh` — ver
+  aviso no topo do próprio ficheiro).
+- As 10 castas seed classificadas (Touriga Nacional/Franca, Tinta Roriz, Baga, Trincadeira, Castelão =
+  tintas; Alvarinho, Arinto, Fernão Pires, Loureiro = brancas).
+- **Mojibake corrigido (2026-09-17).** Causa raiz: `docker exec ... | sqlplus` sem `NLS_LANG` definido —
+  o cliente assumia um characterset errado para os bytes UTF-8 vindos do Windows (a BD em si já era
+  `AL32UTF8`, só o cliente sqlplus interpretava mal). `run-migrations.ps1`/`.sh` agora passam
+  `-e NLS_LANG=AMERICAN_AMERICA.AL32UTF8` ao `docker exec`, prevenindo recorrência em rebuilds futuros.
+  Dados já corrompidos na BD de dev corrigidos via UPDATE (`bebida`, `produtor` incl. `produtor_regiao`,
+  `utilizador_nationality`, `pais`, `produtor_pais`, `vinho_tipo`, além das 2 castas já corrigidas antes).
+  Os ficheiros `.sql` de seed em si nunca estiveram corrompidos — só os dados inseridos na BD.
+
+**Próximo passo — camada backend:** implementar os endpoints novos/ajustados listados em
+`API_ENDPOINTS.md` (auth de recuperação de password, `LookupController`, filtros expandidos do catálogo,
+enriquecimento dos DTOs de bebida/cave/produtor/perfil), depois os ecrãs Android correspondentes.
 
 ## Por fazer depois (fora de âmbito imediato)
 

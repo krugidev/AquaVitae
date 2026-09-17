@@ -75,16 +75,19 @@ INSERT INTO vinho_tipo (vinho_tipo_value) VALUES ('Espumante');
 INSERT INTO vinho_tipo (vinho_tipo_value) VALUES ('Verde');
 INSERT INTO vinho_tipo (vinho_tipo_value) VALUES ('Generoso');
 
-INSERT INTO casta (casta_name) VALUES ('Touriga Nacional');
-INSERT INTO casta (casta_name) VALUES ('Touriga Franca');
-INSERT INTO casta (casta_name) VALUES ('Tinta Roriz');
-INSERT INTO casta (casta_name) VALUES ('Alvarinho');
-INSERT INTO casta (casta_name) VALUES ('Baga');
-INSERT INTO casta (casta_name) VALUES ('Arinto');
-INSERT INTO casta (casta_name) VALUES ('Fernão Pires');
-INSERT INTO casta (casta_name) VALUES ('Trincadeira');
-INSERT INTO casta (casta_name) VALUES ('Castelão');
-INSERT INTO casta (casta_name) VALUES ('Loureiro');
+INSERT INTO casta_tipo (casta_tipo_value) VALUES ('Tinta');
+INSERT INTO casta_tipo (casta_tipo_value) VALUES ('Branca');
+
+INSERT INTO casta (casta_name, casta_tipo_id) VALUES ('Touriga Nacional', (SELECT casta_tipo_id FROM casta_tipo WHERE casta_tipo_value = 'Tinta'));
+INSERT INTO casta (casta_name, casta_tipo_id) VALUES ('Touriga Franca', (SELECT casta_tipo_id FROM casta_tipo WHERE casta_tipo_value = 'Tinta'));
+INSERT INTO casta (casta_name, casta_tipo_id) VALUES ('Tinta Roriz', (SELECT casta_tipo_id FROM casta_tipo WHERE casta_tipo_value = 'Tinta'));
+INSERT INTO casta (casta_name, casta_tipo_id) VALUES ('Alvarinho', (SELECT casta_tipo_id FROM casta_tipo WHERE casta_tipo_value = 'Branca'));
+INSERT INTO casta (casta_name, casta_tipo_id) VALUES ('Baga', (SELECT casta_tipo_id FROM casta_tipo WHERE casta_tipo_value = 'Tinta'));
+INSERT INTO casta (casta_name, casta_tipo_id) VALUES ('Arinto', (SELECT casta_tipo_id FROM casta_tipo WHERE casta_tipo_value = 'Branca'));
+INSERT INTO casta (casta_name, casta_tipo_id) VALUES ('Fernão Pires', (SELECT casta_tipo_id FROM casta_tipo WHERE casta_tipo_value = 'Branca'));
+INSERT INTO casta (casta_name, casta_tipo_id) VALUES ('Trincadeira', (SELECT casta_tipo_id FROM casta_tipo WHERE casta_tipo_value = 'Tinta'));
+INSERT INTO casta (casta_name, casta_tipo_id) VALUES ('Castelão', (SELECT casta_tipo_id FROM casta_tipo WHERE casta_tipo_value = 'Tinta'));
+INSERT INTO casta (casta_name, casta_tipo_id) VALUES ('Loureiro', (SELECT casta_tipo_id FROM casta_tipo WHERE casta_tipo_value = 'Branca'));
 
 -- Whisky (lookups preenchidos para catálogo futuro; sem itens seed nesta categoria
 -- por não haver produção portuguesa relevante a usar como exemplo real)
