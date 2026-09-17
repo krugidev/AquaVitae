@@ -58,13 +58,38 @@ produtor em destaque computado por rotação semanal (sem coluna nova); `casta` 
   o cliente assumia um characterset errado para os bytes UTF-8 vindos do Windows (a BD em si já era
   `AL32UTF8`, só o cliente sqlplus interpretava mal). `run-migrations.ps1`/`.sh` agora passam
   `-e NLS_LANG=AMERICAN_AMERICA.AL32UTF8` ao `docker exec`, prevenindo recorrência em rebuilds futuros.
-  Dados já corrompidos na BD de dev corrigidos via UPDATE (`bebida`, `produtor` incl. `produtor_regiao`,
-  `utilizador_nationality`, `pais`, `produtor_pais`, `vinho_tipo`, além das 2 castas já corrigidas antes).
-  Os ficheiros `.sql` de seed em si nunca estiveram corrompidos — só os dados inseridos na BD.
+  Dados já corrompidos na BD de dev corrigidos via UPDATE, em duas passagens (a 2ª apanhou tabelas que a
+  1ª varredura tinha deixado escapar — o padrão "â€"/travessão corrompido é diferente do padrão "Ã"):
+  `bebida`, `produtor` (nome + `produtor_regiao`), `utilizador_nationality`, `pais`, `produtor_pais`,
+  `vinho_tipo`/`vinho_corpo`/`vinho_tanino`, `whisky_corpo`, `gin_corpo`, `botanico`, `licor_base`,
+  `sabor_licor`, `aguardente_corpo`/`aguardente_tipo_cask`/`aguardente_materia_prima`, `avatar_categoria`,
+  `utilizador_avatar`, além das castas já corrigidas antes. Confirmado que nenhum `vinho.vinho_corpo_id`/
+  `vinho_tanino_id` ficou NULL por falha de match no seed (o SELECT de lookup corria na mesma sessão
+  corrompida, por isso batia certo consigo mesmo). Os ficheiros `.sql` de seed em si nunca estiveram
+  corrompidos — só os dados inseridos na BD.
 
-**Próximo passo — camada backend:** implementar os endpoints novos/ajustados listados em
-`API_ENDPOINTS.md` (auth de recuperação de password, `LookupController`, filtros expandidos do catálogo,
-enriquecimento dos DTOs de bebida/cave/produtor/perfil), depois os ecrãs Android correspondentes.
+### Backend — fatia 1: Lookups + Perfil/Preferências (concluída, 2026-09-17)
+
+- `LookupController` novo (`/api/lookup/nacionalidades`, `/avatar-categorias`, `/avatares?categoriaId=`,
+  `/categorias-bebida`, `/castas?tipoId=`, `/casta-tipos`, `/paises`, `/regioes?paisId=` — paisId aqui é
+  `produtor_pais_id`, sem tabela nova, via `DISTINCT` —, `/vinho/corpos`, `/vinho/taninos`, `/vinho/tipos`).
+  Entidades novas `CastaTipo`, `AvatarCategoria`, `UtilizadorAvatar`; `Casta` ganhou a relação `tipo`.
+- `Utilizador` passou a mapear o avatar (`utilizador_avatar_photo_id`); `UtilizadorRepository.findByIdWithProfile`
+  (fetch explícito de `nationality`+`avatar`, mesmo padrão do `findByIdWithRole` — ver convenção no
+  `CLAUDE.md`).
+- `GET /api/users/me` enriquecido (nacionalidade, bio, avatar, data de criação, contadores de
+  provadas/reviews/favoritos/wishlist/caves/garrafas) + `PUT /api/users/me` novo — ambos em
+  `UtilizadorService` novo (antes toda a lógica estava inline no controller).
+- `GET /api/users/me/preferencias` novo (faltava para pré-popular o onboarding/editar preferências).
+- Validado a correr de verdade contra a BD de dev (`bootRun` + Hibernate `ddl-auto: validate` sem erros
+  + `curl` a todos os endpoints novos, incluindo `PUT /me` com nationality/avatar/bio).
+- Branch `feature/api-endpoints-design` (ainda sem PR aberto — fica para quando o utilizador pedir).
+
+**Próximo passo — resto do backend:** recuperação de password (auth), catálogo/bebida (filtros
+expandidos, enriquecimento dos DTOs, sugeridas, reviews com distribuição, links de compra), produtor,
+caves, enriquecimento de favoritos/wishlist/provadas — tudo listado em `API_ENDPOINTS.md`. Depois os
+ecrãs Android correspondentes. Avatares reais (PNGs) ainda por chegar do utilizador — ver secção
+"Imagens" do `API_ENDPOINTS.md` para onde ficam (`backend/src/main/resources/static/avatars/`).
 
 ## Por fazer depois (fora de âmbito imediato)
 

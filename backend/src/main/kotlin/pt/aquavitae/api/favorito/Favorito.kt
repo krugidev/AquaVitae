@@ -40,4 +40,5 @@ class Favorito(
 interface FavoritoRepository : JpaRepository<Favorito, Long> {
     fun findByUtilizador_Id(utilizadorId: Long): List<Favorito>
     fun findByUtilizador_IdAndBebida_Id(utilizadorId: Long, bebidaId: Long): Favorito?
+    fun countByUtilizador_Id(utilizadorId: Long): Long
 }
