@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AquaVitae — Catalogação e comunidade de vinhos e bebidas espirituosas</title>
+<meta name="description" content="AquaVitae é uma app Android de catalogação e comunidade para vinhos e bebidas espirituosas, focada no mercado português. Brevemente disponível.">
+<style>
+  :root {
+    --bordeaux: #5A1E1E;
+    --bordeaux-strong: #9A3324;
+    --cream: #FFF3EE;
+    --background: #F4EDE4;
+    --border: #EFE0DD;
+    --text-muted: #7A5C56;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--background);
+    color: var(--bordeaux);
+    line-height: 1.5;
+  }
+  .wrap {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 64px 24px 48px;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 56px;
+  }
+  .logo-mark {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--cream);
+    border: 1.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .logo-mark svg { width: 26px; height: 26px; }
+  .wordmark {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .wordmark span { font-weight: 400; color: var(--text-muted); }
+
+  .badge {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--bordeaux-strong);
+    background: var(--cream);
+    border: 1.5px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 14px;
+    margin-bottom: 24px;
+  }
+
+  h1 {
+    font-size: clamp(32px, 5vw, 44px);
+    line-height: 1.15;
+    margin: 0 0 20px;
+  }
+
+  .lede {
+    font-size: 18px;
+    color: var(--text-muted);
+    max-width: 60ch;
+    margin: 0 0 48px;
+  }
+
+  .icon-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 56px;
+  }
+  .icon-tile {
+    flex: 1;
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+  }
+  .icon-tile .circle {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 12px;
+    border-radius: 50%;
+    background: var(--cream);
+    border: 1.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .icon-tile svg { width: 40px; height: 40px; }
+  .icon-tile p { margin: 0; font-size: 14px; color: var(--text-muted); }
+
+  .features {
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 48px;
+  }
+  .features h2 {
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--bordeaux-strong);
+    margin: 0 0 16px;
+  }
+  .features ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 12px;
+  }
+  .features li {
+    padding-left: 24px;
+    position: relative;
+    color: var(--bordeaux);
+  }
+  .features li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 8px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--bordeaux-strong);
+  }
+
+  footer {
+    border-top: 1.5px solid var(--border);
+    padding-top: 24px;
+    font-size: 14px;
+    color: var(--text-muted);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  @media (max-width: 560px) {
+    .icon-row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo-mark">
+        <svg viewBox="0 0 100 100" fill="none" stroke="#5A1E1E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M34 22H66"></path>
+          <path d="M34 22C28 48 36 62 50 62C64 62 72 48 66 22"></path>
+          <path d="M50 62V82"></path>
+          <path d="M32 84C39 79 61 79 68 84"></path>
+        </svg>
+      </div>
+      <div class="wordmark">AQUA<span>VITAE</span></div>
+    </header>
+
+    <span class="badge">Brevemente disponível</span>
+    <h1>Catalogação e comunidade de vinhos e bebidas espirituosas</h1>
+    <p class="lede">
+      Uma app Android para descobrires, avaliares e organizares vinhos, whiskies, gins e outras bebidas
+      espirituosas — com foco no mercado e nos produtores portugueses.
+    </p>
+
+    <div class="icon-row">
+      <div class="icon-tile">
+        <div class="circle">
+          <svg viewBox="0 0 100 100" fill="none" stroke="#5A1E1E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M34 88V22"></path>
+            <path d="M34 34C44 34 50 28 54 20M34 56C46 56 54 48 58 38"></path>
+            <path d="M58 38C64 36 68 30 66 24"></path>
+            <circle cx="62" cy="56" r="7" fill="#FFF3EE"></circle>
+            <circle cx="76" cy="56" r="7" fill="#FFF3EE"></circle>
+            <circle cx="69" cy="68" r="7" fill="#FFF3EE"></circle>
+          </svg>
+        </div>
+        <p>Catálogo &amp; castas</p>
+      </div>
+      <div class="icon-tile">
+        <div class="circle">
+          <svg viewBox="0 0 100 100" fill="none" stroke="#5A1E1E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M43 12V38C36 42 34 48 34 56V86H66V56C66 48 64 42 57 38V12Z"></path>
+            <path d="M42 21H58"></path>
+          </svg>
+        </div>
+        <p>Cave virtual</p>
+      </div>
+      <div class="icon-tile">
+        <div class="circle">
+          <svg viewBox="0 0 100 100" fill="none" stroke="#5A1E1E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M34 22H66"></path>
+            <path d="M34 22C28 48 36 62 50 62C64 62 72 48 66 22"></path>
+            <path d="M50 62V82"></path>
+            <path d="M32 84C39 79 61 79 68 84"></path>
+          </svg>
+        </div>
+        <p>Reviews &amp; ratings</p>
+      </div>
+    </div>
+
+    <div class="features">
+      <h2>O que a AquaVitae permite</h2>
+      <ul>
+        <li>Catalogar e pesquisar vinhos, whiskies, gins, vodkas, licores e aguardentes</li>
+        <li>Escrever reviews e acompanhar as bebidas já provadas</li>
+        <li>Organizar a tua cave virtual, com controlo de stock e janela de consumo</li>
+        <li>Descobrir produtores portugueses e a sua história</li>
+        <li>Comparar preços entre retalhistas e comprar diretamente</li>
+      </ul>
+    </div>
+
+    <footer>
+      <span>AquaVitae — Portugal</span>
+      <span><!-- TODO: email de contacto --></span>
+    </footer>
+  </div>
+</body>
+</html>
