@@ -7,6 +7,16 @@ spring:
 server:
   port: 8080
 
+aquavitae:
+  links:
+    verificacao:
+      # Job diário que verifica se os links de compra continuam utilizáveis (sem stock / página
+      # desaparecida => is_ativo = 0, esconde o botão de compra mas mantém a linha como histórico).
+      ativo: true
+      cron: "0 0 4 * * *"   # todos os dias às 04:00 (Europe/Lisbon)
+      falhas-para-desativar: 2   # noites seguidas com link inválido antes de o desativar
+      intervalo-ms: 1000   # espaçamento mínimo entre pedidos ao mesmo retalhista
+
 jwt:
   # Em dev usa-se o valor por omissão abaixo. Em produção define sempre a
   # variável de ambiente JWT_SECRET com um valor próprio, longo e aleatório.

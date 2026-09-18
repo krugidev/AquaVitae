@@ -32,9 +32,11 @@ interface BebidaRepository : JpaRepository<Bebida, Long> {
           AND (:tipoId IS NULL OR v.tipo.id = :tipoId)
           AND (:castaIds IS NULL OR EXISTS (SELECT 1 FROM VinhoCasta vc WHERE vc.vinho = v AND vc.casta.id IN :castaIds))
           AND (:precoMin IS NULL OR EXISTS (
-                SELECT 1 FROM BebidaLinkCompra l WHERE l.bebida = b AND l.retalhista.isAtivo = true AND l.precoAtual >= :precoMin))
+                SELECT 1 FROM BebidaLinkCompra l WHERE l.bebida = b AND l.isAtivo = true
+                  AND l.retalhista.isAtivo = true AND l.precoAtual >= :precoMin))
           AND (:precoMax IS NULL OR EXISTS (
-                SELECT 1 FROM BebidaLinkCompra l WHERE l.bebida = b AND l.retalhista.isAtivo = true AND l.precoAtual <= :precoMax))
+                SELECT 1 FROM BebidaLinkCompra l WHERE l.bebida = b AND l.isAtivo = true
+                  AND l.retalhista.isAtivo = true AND l.precoAtual <= :precoMax))
         """,
     )
     fun search(

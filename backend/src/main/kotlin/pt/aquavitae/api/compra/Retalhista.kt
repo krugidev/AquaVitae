@@ -26,6 +26,11 @@ class Retalhista(
     @Column(name = "retalhista_path_logo")
     var pathLogo: String? = null,
 
+    // Só usado pela verificação de links: retalhista com rede de afiliados => o url do
+    // link tem tracking e não deve ser pedido pelo job (ver BebidaLinkCompra.urlVerificacao).
+    @Column(name = "retalhista_rede_afiliados")
+    var redeAfiliados: String? = null,
+
     @Column(name = "retalhista_is_ativo")
     var isAtivo: Boolean = true,
 )

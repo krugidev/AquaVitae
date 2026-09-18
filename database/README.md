@@ -10,6 +10,8 @@ ddl/
   01_tables.sql        CREATE TABLE de todas as tabelas (sem FKs)
   02_constraints.sql    todas as foreign keys (ALTER TABLE), uma por Ref do DBML
   03_triggers.sql        trigger de sincronização bebida_rating_medio / bebida_total_reviews
+  04_patch_endpoints.sql   patch one-off p/ BD de dev JÁ existente (casta_tipo, utilizador_password_reset)
+  05_patch_link_verificacao.sql   patch one-off p/ BD de dev JÁ existente (estado/verificação dos links de compra)
 seed/
   01_lookups.sql         tabelas de lookup preenchidas (corpo, taninos, castas, países, ...)
   02_bebidas.sql          produtores, retalhistas e ~16 bebidas de exemplo (maioritariamente portuguesas)
@@ -41,6 +43,10 @@ ou, em bash:
 
 Isto corre `ddl/01_tables.sql`, `ddl/02_constraints.sql`, `ddl/03_triggers.sql`,
 `seed/01_lookups.sql` e `seed/02_bebidas.sql`, por esta ordem, ligando como o `APP_USER` definido no `.env`.
+
+Os ficheiros `04_*` e `05_*` **não** fazem parte desta sequência: as alterações que fazem já estão em
+`01_tables.sql`/`02_constraints.sql`, por isso só servem para pôr ao dia uma BD que já existia antes delas
+(cada um explica no topo como se corre). Ao mexer no schema: atualizar `01_tables.sql` **e** criar um patch novo.
 
 ## Ligar via SQL Developer
 

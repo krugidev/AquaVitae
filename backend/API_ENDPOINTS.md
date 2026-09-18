@@ -83,12 +83,43 @@ aqui é `produtor_pais_id`), `/vinho/corpos`, `/vinho/taninos`, `/vinho/tipos`.
 
 ✅ **Implementado** (2026-09-18). Entidades novas `Retalhista`, `BebidaLinkCompra`, `CliqueCompra`
 (faltavam por completo — já estava sinalizado como pendente no README antigo).
-- `GET /api/bebidas/{id}/links-compra` — todos os links ativos, ordenados por preço
-- `POST /api/bebidas/{id}/links-compra/{linkId}/clique` (auth) — regista `clique_compra`
+- `GET /api/bebidas/{id}/links-compra` — **todos** os links de retalhistas ativos, disponíveis primeiro (mais
+  barato primeiro) e indisponíveis no fim. Cada item traz `disponivel`, `motivoIndisponivel`
+  ("Sem stock" / "Página indisponível"), `indisponivelDesde` e `precoAtualizadoEm`; para um indisponível,
+  `preco` é o último preço conhecido.
+- `POST /api/bebidas/{id}/links-compra/{linkId}/clique` (auth) — regista `clique_compra`; **409** se o link
+  estiver indisponível.
 - `CompraService.cheapestByBebidaIds()` — usado em lote pelo `BebidaSummaryAssembler` (não faz 1 query por
-  bebida na listagem)
-- `Retalhista` só mapeia `nome`/`pathLogo`/`isAtivo` — campos de negócio do afiliado (rede/código/comissão)
-  não são expostos pela API, o `bebida_link_compra_url` já é o link de afiliado final definido pelo admin
+  bebida na listagem). **Só considera links disponíveis**: `precoDesde`, `linkCompra` do detalhe e os
+  filtros `precoMin/Max` ignoram os indisponíveis; uma bebida sem nenhum fica sem preço/botão de compra.
+- `Retalhista` só mapeia `nome`/`pathLogo`/`isAtivo`/`redeAfiliados` — campos de negócio do afiliado
+  (código/comissão) não são expostos pela API, o `bebida_link_compra_url` já é o link de afiliado final
+  definido pelo admin.
+
+### Verificação diária dos links (2026-09-18)
+
+Job (`LinkVerificacaoService` + `LinkVerificacaoScheduler`, `@Scheduled` às 04:00 Europe/Lisbon) que decide se
+cada link continua utilizável. Um link sem stock ou cuja página desapareceu passa a `is_ativo = 0` (esconde o
+botão de compra) mas **a linha fica como histórico**, e volta a ativo sozinho se a página voltar.
+- **O que se pede:** `bebida_link_compra_url_verificacao` (página do produto **sem tracking**). Sem ela: retalhista
+  com rede de afiliados => o link **não é verificado** (pedir o link de tracking contaria como cliques);
+  retalhista sem rede => usa-se o próprio `url`.
+- **Como decide:** 404/410 e redirect para a homepage ("soft 404") = link inválido, desativa à **2ª noite seguida**
+  (`aquavitae.links.verificacao.falhas-para-desativar`); `OutOfStock`/`SoldOut`/`Discontinued` nos dados
+  estruturados (JSON-LD `schema.org` ou meta `product:availability`) = sem stock, desativa logo; página sem dados
+  estruturados = disponível ("stock não confirmado"); timeouts, 403/429/5xx e falhas de rede = **inconclusivo**
+  (não altera nada).
+- **Salvaguarda:** se ≥ 5 links e mais de metade das respostas conclusivas forem inválidos numa execução
+  (rede em baixo? IP bloqueado?), nada é desativado (`execucaoSuspeita`).
+- **Tráfego:** `User-Agent: AquaVitaeLinkChecker/1.0 (+landing page)`, 1 pedido por segundo por retalhista,
+  não lê mais de 2 MB por página. Não respeita `robots.txt`.
+- **Limitações conhecidas:** só deteta stock em lojas que publicam dados estruturados; não atualiza o preço; só
+  uma instância do backend deve ter o agendamento ativo (com várias, usar um lock partilhado, p.ex. ShedLock).
+- `POST /api/admin/links-compra/verificar` (**só `ROLE_ADMIN`**) — dispara a verificação em segundo plano (202;
+  409 se já houver uma em curso). Correr logo a seguir a cada lote de seed, para não deixar links errados como
+  "disponíveis" até às 04:00. `GET /api/admin/links-compra/verificacao` — estado e resumo da última execução.
+- Configuração em `application.yml` (`aquavitae.links.verificacao.*`: `ativo`, `cron`, `falhas-para-desativar`,
+  `intervalo-ms`).
 
 ## Bebidas / Catálogo (`/api/bebidas`)
 
@@ -228,6 +259,25 @@ Query params novos a suportar:
 - `GET /api/produtores/{id}/bebidas` — `?categoriaId=&page=&size=`
 
 ---
+
+## Lacunas descobertas ao reler os mockups (2026-09-18) — por implementar
+
+Não estavam no desenho inicial; saíram de cruzar o código com o texto dos ecrãs.
+
+| O quê | Mockup | Proposta |
+|---|---|---|
+| Autor da review | tab Reviews: "avatar, nome, há quanto tempo, conteúdo, rating" | `ReviewResponse` ganha `utilizadorNome` e `utilizadorAvatar` (path). Fetch explícito do avatar (LAZY). |
+| Histórico de reviews do perfil | Perfil: "histórico de reviews (terá outra tela)" | `GET /api/users/me/reviews` (auth): as reviews do utilizador com a bebida associada (`BebidaSummaryDto`). |
+| Pesquisa por produtor e casta | Homepage/Catálogo: "pesquisar por nomes de bebidas, produtores, castas" | `search` de `GET /api/bebidas` passa a casar também `produtor.nome` e `casta.name` (via `vinho_casta`). A decidir: produtores como resultado próprio (`GET /api/produtores?search=`)? |
+| Filtro por região | Popup de filtros: "as pílulas das regiões mudam com o país" | `regiao` (texto, `produtor.regiao`) em `GET /api/bebidas`. **Ids:** `/lookup/regioes?paisId=` usa `produtor_pais`, o filtro do catálogo usa `pais` — tabelas separadas com ids independentes; unificar (p.ex. o endpoint de regiões aceitar o id de `pais`). |
+| Lista da cave | Caves: "quantidade, nome, categoria, intervalo de consumo, preço/unidade, nota" | `CaveBebidaResponse` ganha `janelaInicio`, `janelaFim`, `categoriaNome` (e imagem). |
+| Consumir uma garrafa | Caves: "marcar como consumida (sai da lista e reduz o contador em 1)" | Hoje o `PATCH` marca a linha toda como consumida. Proposta: consumir 1 = decrementar `quantidade` e criar linha consumida com `quantidade = 1` + `data_consumo` (mantém o histórico). **A decidir.** |
+| "Pronta a abrir" | Caves: "hoje dentro da janela" | A decidir: e depois de a janela acabar (ainda pronta, "a passar do ponto")? Sem janela = "em guarda"? |
+| Termos e condições | Login/Registo: popup | A decidir: texto embutido na app ou servido pela API. |
+| Categorias além de vinho | Cartões/detalhe: "as características dependerão da categoria" | Subtypes whisky/gin/licor/vodka/aguardente (depende de haver dados reais). |
+
+Já corrigido no fim do dia: a pesquisa do catálogo não tinha `ORDER BY` (paginação não determinística); usa agora
+`ratingMedio` desc, `nome`, `id` quando o cliente não pede `sort`.
 
 ## Por confirmar durante a implementação (não bloqueia o desenho)
 

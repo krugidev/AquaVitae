@@ -418,7 +418,17 @@ CREATE TABLE bebida_link_compra (
     retalhista_id                       NUMBER,
     bebida_link_compra_url              VARCHAR2(500 CHAR),
     bebida_link_compra_preco_atual      NUMBER(8,2),
-    bebida_link_compra_data_atualizacao TIMESTAMP DEFAULT SYSTIMESTAMP
+    bebida_link_compra_data_atualizacao TIMESTAMP DEFAULT SYSTIMESTAMP,
+    -- Verificação diária de disponibilidade (ver backend/.../compra/LinkVerificacaoService).
+    -- url_verificacao: página do produto SEM tracking, a que o job vai pedir — pedir o link de
+    -- afiliado todos os dias contaria como cliques. Se for NULL e o retalhista tiver rede de
+    -- afiliados, o link não é verificado; sem rede, usa-se url.
+    bebida_link_compra_url_verificacao   VARCHAR2(500 CHAR),
+    bebida_link_compra_is_ativo          NUMBER(1) DEFAULT 1 NOT NULL CHECK (bebida_link_compra_is_ativo IN (0, 1)),
+    bebida_link_compra_data_verificacao  TIMESTAMP,
+    bebida_link_compra_falhas_seguidas   NUMBER DEFAULT 0 NOT NULL,
+    bebida_link_compra_data_indisponivel TIMESTAMP,
+    bebida_link_compra_motivo            VARCHAR2(200 CHAR)
 );
 
 CREATE TABLE clique_compra (

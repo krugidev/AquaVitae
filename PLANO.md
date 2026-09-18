@@ -3,6 +3,57 @@
 Roadmap vivo do MVP. Atualizar isto no fim de cada sessão de trabalho relevante — é o que uma sessão
 nova do Claude Code (ou tu, ao voltares passado um tempo) deve ler primeiro para saber onde ficámos.
 
+## ▶ Retomar aqui (última atualização: 2026-09-18, fim de sessão)
+
+**Ponto da situação:** BD e backend estão quase fechados para uma 1.ª versão; o Android ainda é só esqueleto.
+Contrato completo dos endpoints (o que existe, o que falta) em [`backend/API_ENDPOINTS.md`](backend/API_ENDPOINTS.md).
+
+**Git:** todo o trabalho está na branch `feature/api-endpoints-design`, PR aberto:
+https://github.com/krugidev/AquaVitae/pull/1 (a descrição do PR ainda só fala da 1.ª fatia — atualizar antes de
+o dar por fechado). A `main` só tem a landing page em `docs/` (GitHub Pages) além do que já lá estava.
+`gh` está instalado e autenticado, mas no Git Bash não está no PATH: `export PATH="/c/Program Files/GitHub CLI:$PATH"`.
+
+**O que falta no backend, por ordem sugerida** (tudo desenhado; nada disto está implementado):
+1. **Produtor** — `GET /api/produtores/{id}` ganha `totalProdutos`; `GET /api/produtores/{id}/bebidas?categoriaId=`;
+   `GET /api/produtores/destaque` (produtor da semana, **computado**, sem coluna nova). Hoje o
+   `ProdutorController` é mínimo (só `GET /{id}`, sem service).
+2. **Caves** — `CaveResponse` com `totalGarrafas`/`valorTotal`/`totalProntasAAbrir`; `CaveDetailResponse` separado em
+   `prontasAAbrir[]`/`emGuarda[]` (`?sort=preco|dataConsumo`); `CaveBebidaRequest` com `janelaInicio`/`janelaFim`/
+   `notas`; **`CaveBebidaResponse` também precisa de `janelaInicio`/`janelaFim` e da categoria da bebida** (a lista do
+   mockup mostra-os). **A decidir antes de implementar:** (a) "pronta a abrir" = hoje dentro da janela, e depois de a
+   janela acabar? (b) "marcar como consumida" no mockup "reduz o contador em 1" — o `PATCH` atual marca a linha
+   inteira como consumida; o mais limpo é consumir 1 garrafa (decrementar `quantidade`, e guardar a consumida numa
+   linha própria com `data_consumo` para não perder histórico).
+3. **Lacunas descobertas ao reler os mockups** (não estavam em `API_ENDPOINTS.md`):
+   - `ReviewResponse` devolve só o username: o mockup pede **avatar + nome** do autor em cada review.
+   - **Histórico de reviews do perfil** → falta `GET /api/users/me/reviews` (com a bebida associada).
+   - **Pesquisa** só procura no nome da bebida; o mockup pede também por **produtor** e por **casta** (e, talvez,
+     produtores como resultado próprio — a decidir).
+   - **Filtro por região** não existe em `GET /api/bebidas` (só `paisId`). E `/api/lookup/regioes?paisId=` usa o id
+     de `produtor_pais`, enquanto o filtro do catálogo usa o de `pais` — são tabelas separadas com ids
+     independentes; unificar antes de o Android usar os dois juntos.
+   - **Detalhe/cartões das outras categorias** (whisky/gin/licor/vodka/aguardente): só `vinho` tem subtype
+     implementado. Depende de haver dados reais dessas categorias.
+   - **Termos e condições** (popup no login/registo): decidir se é texto embutido na app ou servido pela API.
+   - **Email do código de recuperação de password:** endpoint pronto, envio real por email adiado (só log).
+4. **Transversal:** só há testes automáticos para a verificação de links (21); nenhum para services/controllers.
+   `Page<...>` sai como JSON do Spring (aviso de "não estável"); trocar por DTO próprio antes de produção.
+
+**Coisas do utilizador em paralelo (não bloqueiam o backend):**
+- Documento de **seeds** (`—--------------- DADOS A INSERIR NA.txt`, na raiz, não commitado). Ver "Decisões de dados"
+  mais abaixo: 250 castas (a lista capturada do Figma **ainda não foi confirmada pelo utilizador**), catálogo real de
+  bebidas/produtores, lookups das outras categorias (propostas de valores já dadas em conversa; **por escrever no
+  seed**). Para cada link de retalhista com rede de afiliados são precisas **duas URLs** (afiliado + página do
+  produto sem tracking, para a verificação diária). Correr `POST /api/admin/links-compra/verificar` depois de cada lote.
+- **Awin:** candidatura submetida (Promotional Type = Comparison Engine, sector "Wine, spirits and tobacco"),
+  **pendente de aprovação**. Site enviado: `https://krugidev.github.io/AquaVitae/` — **não mudar o nome do
+  repositório nem pôr "Custom domain" nas definições do Pages** (aconteceu por engano uma vez e desviou o site;
+  já revertido). A ver outros afiliados/retalhistas com programa próprio.
+
+**Depois do backend:** ecrãs Android por feature, contra o contrato validado. O `AquaVitaeApi.kt` está desatualizado
+(reviews, favoritos/wishlist/provadas, filtros, campos novos) — sincronizar ecrã a ecrã, ver fim do `API_ENDPOINTS.md`.
+Ecrã "Onde comprar" desenhado em conversa (lista de retalhistas com disponível/indisponível, aviso de afiliação).
+
 ## Feito ✅
 
 ### Base de dados (validada de ponta a ponta, 2026-09-13/14)
@@ -129,14 +180,78 @@ autenticado nesta máquina a partir de 2026-09-17, próximos PRs podem ser abert
   provadas, filtros do catálogo) — sincronizar só quando chegar a vez de construir esses ecrãs (ver secção
   própria no `API_ENDPOINTS.md`), não antes, para não quebrar o desenvolvimento sequencial.
 
-**Próximo passo — resto do backend:** produtor (destaque computado, bebidas por produtor, totalProdutos),
-caves (agregados, split prontas-a-abrir/em-guarda, campos novos no request de criação) — tudo já desenhado
-em `API_ENDPOINTS.md`. Depois os ecrãs Android correspondentes.
+- **Bug meu apanhado no fim do dia:** a pesquisa do catálogo ficou sem `ORDER BY` quando foi reescrita com os
+  filtros, o que tornava a paginação não determinística. `BebidaService` usa agora a ordenação do mockup
+  (`ratingMedio` desc, `nome`, `id`) quando o cliente não pede outra; `sort=` do cliente continua a ser
+  respeitado. Verificado: 3 páginas, 16 bebidas, sem repetições.
+
+(Próximos passos: ver "Retomar aqui", no topo.)
+
+### Backend — fatia 3: verificação diária dos links de compra (concluída, 2026-09-18)
+
+Ideia do utilizador: um job diário que verifica se os links continuam válidos e esconde o botão de compra
+quando já não existem, mantendo a linha como histórico. Detalhe do funcionamento em `API_ENDPOINTS.md`
+("Verificação diária dos links").
+
+- **BD** (`05_patch_link_verificacao.sql`, aplicado à BD de dev; `01_tables.sql` atualizado): 6 colunas novas em
+  `bebida_link_compra` — `url_verificacao`, `is_ativo` (`NOT NULL`, default 1), `data_verificacao`,
+  `falhas_seguidas` (`NOT NULL`, default 0), `data_indisponivel`, `motivo`. Os links já existentes ficam ativos.
+- **Decisão importante — não se pede o link de afiliado:** o job usa `url_verificacao` (página do produto sem
+  tracking), porque pedir o link de tracking todos os dias contaria como cliques. **Ao preparar o seed:** para
+  retalhistas com rede de afiliados, cada link precisa de **duas URLs** (a de afiliado em `url` e a do produto em
+  `url_verificacao`); sem a segunda, o link nunca é verificado. Retalhistas sem rede (link direto) usam `url`.
+- **API:** `GET /links-compra` devolve também os indisponíveis (marcados, no fim); `precoDesde`, `linkCompra` e os
+  filtros de preço só contam links disponíveis; o clique num link indisponível dá 409.
+- **Job** (`compra/verificacao/`): `@Scheduled` às 04:00 (`Europe/Lisbon`), configurável; `POST
+  /api/admin/links-compra/verificar` (só admin) corre-o na hora — usar depois de cada lote de seed.
+  Salvaguarda contra execuções em massa suspeitas; desativa à 2ª noite seguida com link inválido, mas logo se
+  `OutOfStock`; reativa sozinho se a página voltar.
+- **Primeiros testes automáticos do projeto:** 21 (`DisponibilidadeParserTest` 11, `LinkVerificadorTest` 10, este
+  contra um servidor HTTP local do JDK: 404/410/403/500, soft 404, redirects, ligação recusada, User-Agent).
+- **Validado de ponta a ponta** contra a BD real com um retalhista falso local: scheduler a disparar sozinho, link
+  sem stock desativado logo, 404 e soft 404 só à 2ª falha, 403 ignorado, link de retalhista com rede verificado
+  pelo `url_verificacao` (tracking nunca pedido), regresso automático a ativo, `precoDesde` a ignorar links
+  indisponíveis, clique em indisponível = 409. Dados de teste removidos depois.
+- **Bug antigo apanhado de caminho:** um utilizador autenticado sem permissão recebia **401 em vez de 403**
+  (o reencaminhamento interno para `/error` não passa pelo filtro JWT). Corrigido em `SecurityConfig`
+  (`dispatcherTypeMatchers(ERROR).permitAll()`); só era visível agora por ser o 1.º endpoint com um papel exigido.
+- **Ainda por fazer:** atualizar o preço a partir do JSON-LD (já é lido, não é usado); para links da Awin, o
+  melhor sinal de "ainda existe" será o próprio feed (produto saiu do feed / `in_stock = 0`) quando houver
+  aprovação; o ecrã Android "Onde comprar" (ver secção seguinte do `API_ENDPOINTS.md` quando for a vez dele).
+
+### Decisões de dados: catálogo curado vs. ofertas de afiliados (2026-09-18)
+
+- **Catálogo** (`bebida` + subtypes, `produtor`) é curado à mão e é a fonte de todos os atributos mostrados
+  na app (corpo, castas, botânicos, ...). **Ofertas** (`bebida_link_compra` + `retalhista`) é a única parte
+  que vem de afiliados: preço, link (já com tracking), retalhista. Os feeds da Awin não trazem atributos
+  sensoriais/de produção, por isso não é deles que dependemos.
+- **Não ficamos limitados à Awin**: `retalhista_rede_afiliados` é só uma etiqueta; retalhistas de redes
+  diferentes ou com programa próprio convivem na mesma tabela. A app funciona sem afiliado nenhum (uma
+  bebida sem oferta aparece só sem botão de compra).
+- **`null` = "não disponível".** O schema já suporta isto: todas as colunas de atributo do catálogo são
+  anuláveis e os `CHECK (... BETWEEN 1 AND 5)` aceitam NULL (só `utilizador_password_reset` tem `NOT NULL`).
+  Regra de UI (a aplicar quando se construírem os ecrãs): omitir o que faltar nos cartões de lista; secção
+  condicional no detalhe; "Não disponível" só em linhas rotuladas que o utilizador espera ver. Os filtros por
+  acidez/doçura/corpo excluem bebidas sem esse valor.
+- **Escalas 1–5 (acidez, doçura, defumado, suavidade) só com fonte** (ficha técnica, prova própria) — melhor
+  `null` do que um valor inventado.
+- **Cuidado ao inserir por SQL:** colunas-flag com `DEFAULT` cujo campo na entidade Kotlin é não-nulo
+  (`produtor_permite_visitas`, `retalhista_is_ativo`, `avatar_is_active`, `cave_bebida_is_consumida`,
+  `cave_bebida_quantidade`, `bebida_rating_medio`, `bebida_total_reviews`) — nunca inserir NULL explícito
+  (a leitura pela API rebenta nessa linha); omitir a coluna ou usar 0/1. Sem reviews, `bebida_rating_medio`
+  é 0: a UI deve usar `totalReviews == 0` para mostrar "sem avaliações", não 0 estrelas.
+- **Mínimo por categoria ainda por fechar** (proposta: todas — nome, categoria, produtor, país, teor,
+  volume; vinho + tipo e castas; whisky + tipo e idade; gin + destilação). A BD não o impõe (`bebida_name`,
+  `bebida_category_id`, etc. são anuláveis) — fica por disciplina + um script de verificação a correr
+  depois de cada lote de seed (por escrever, inclui bebida sem linha no subtype da sua categoria e vice-versa).
 
 ## Por fazer depois (fora de âmbito imediato)
 
 - Subtypes whisky/gin/licor/vodka/aguardente no `BebidaService` (replicar o padrão de `vinho/`).
-- Testes automatizados (nenhum ainda).
+- Testes automatizados de services/controllers (só existem os 21 da verificação de links, em `src/test`).
+- Script de verificação do catálogo depois de cada lote de seed (mínimo por categoria, subtype em falta).
+- Gin sem "estilo" (London Dry, Old Tom, ...) e `bebida` sem EAN — lacunas de schema só a decidir se/quando forem
+  precisas (ver conversa sobre valores de lookup).
 - CI/build pipeline, Dockerfile da API para deploy.
 - Trocar `Page<BebidaSummaryDto>` por um DTO de paginação próprio antes de produção.
 - Conceitos de escalabilidade/otimização — deliberadamente adiados até tudo funcionar ponta a ponta.

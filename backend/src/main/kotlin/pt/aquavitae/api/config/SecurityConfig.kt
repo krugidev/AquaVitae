@@ -1,5 +1,6 @@
 package pt.aquavitae.api.config
 
+import jakarta.servlet.DispatcherType
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -29,6 +30,11 @@ class SecurityConfig(
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests { auth ->
                 auth
+                    // Quando o Spring recusa um pedido (ex.: 403), reencaminha internamente para /error para
+                    // gerar a resposta. Esse reencaminhamento não passa pelo filtro JWT, por isso, sem esta
+                    // linha, chega sem autenticação e o 403 era convertido em 401 (o cliente não conseguiria
+                    // distinguir "faz login" de "sem permissão").
+                    .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                     .requestMatchers("/api/auth/**").permitAll()
                     // Mais específico primeiro: sugeridas exige auth (usa as preferências do
                     // utilizador), senão cairia no permitAll genérico de /api/bebidas/** abaixo.
@@ -37,6 +43,8 @@ class SecurityConfig(
                     // Recursos estáticos (avatares, e futuramente fotos de bebidas/produtores) — sem
                     // auth, servidos diretamente pelo Spring de src/main/resources/static/.
                     .requestMatchers(HttpMethod.GET, "/icones/**").permitAll()
+                    // Manutenção (ex.: disparar a verificação de links de compra) — só admins.
+                    .requestMatchers("/api/admin/**").hasRole("ADMIN")
                     .anyRequest().authenticated()
             }
             .exceptionHandling { exceptions ->
