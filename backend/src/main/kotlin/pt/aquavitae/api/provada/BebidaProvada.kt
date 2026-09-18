@@ -39,5 +39,6 @@ class BebidaProvada(
 interface BebidaProvadaRepository : JpaRepository<BebidaProvada, Long> {
     fun findByUtilizador_Id(utilizadorId: Long): List<BebidaProvada>
     fun findByUtilizador_IdAndBebida_Id(utilizadorId: Long, bebidaId: Long): BebidaProvada?
+    fun findByUtilizador_IdAndBebida_IdIn(utilizadorId: Long, bebidaIds: Collection<Long>): List<BebidaProvada>
     fun countByUtilizador_Id(utilizadorId: Long): Long
 }

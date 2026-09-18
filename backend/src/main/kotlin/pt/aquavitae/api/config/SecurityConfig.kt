@@ -30,6 +30,9 @@ class SecurityConfig(
             .authorizeHttpRequests { auth ->
                 auth
                     .requestMatchers("/api/auth/**").permitAll()
+                    // Mais específico primeiro: sugeridas exige auth (usa as preferências do
+                    // utilizador), senão cairia no permitAll genérico de /api/bebidas/** abaixo.
+                    .requestMatchers(HttpMethod.GET, "/api/bebidas/sugeridas").authenticated()
                     .requestMatchers(HttpMethod.GET, "/api/bebidas/**", "/api/produtores/**", "/api/lookup/**").permitAll()
                     // Recursos estáticos (avatares, e futuramente fotos de bebidas/produtores) — sem
                     // auth, servidos diretamente pelo Spring de src/main/resources/static/.

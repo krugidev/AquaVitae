@@ -3,6 +3,26 @@ package pt.aquavitae.api.bebida.dto
 import pt.aquavitae.api.bebida.Bebida
 import java.math.BigDecimal
 
+// Filtros do popup "Filtros do catálogo" dos mockups. categoriaIds/castaIds vêm
+// null quando a lista pedida vier vazia (ver BebidaController) — "sem filtro",
+// não "não bate com nada", que é o que aconteceria com um IN () vazio em JPQL.
+data class BebidaFiltro(
+    val search: String? = null,
+    val categoriaIds: List<Long>? = null,
+    val paisId: Long? = null,
+    val ratingMin: BigDecimal? = null,
+    val acidezMin: Int? = null,
+    val acidezMax: Int? = null,
+    val docuraMin: Int? = null,
+    val docuraMax: Int? = null,
+    val corpoId: Long? = null,
+    val taninoId: Long? = null,
+    val tipoId: Long? = null,
+    val castaIds: List<Long>? = null,
+    val precoMin: BigDecimal? = null,
+    val precoMax: BigDecimal? = null,
+)
+
 data class BebidaSummaryDto(
     val id: Long,
     val nome: String?,
@@ -11,6 +31,18 @@ data class BebidaSummaryDto(
     val ratingMedio: BigDecimal,
     val totalReviews: Int,
     val imagePath: String?,
+    // Enriquecimento (preenchido pelo BebidaSummaryAssembler — ver esse ficheiro
+    // para o porquê de isto não estar no `from` estático abaixo).
+    val precoDesde: BigDecimal? = null,
+    val retalhistaNome: String? = null,
+    val corpo: String? = null,
+    val nivelAcidez: Int? = null,
+    val nivelDocura: Int? = null,
+    // null = utilizador não autenticado; true/false = autenticado, com/sem a marcação.
+    val isFavorito: Boolean? = null,
+    val isWishlist: Boolean? = null,
+    val isProvada: Boolean? = null,
+    val notaPropria: BigDecimal? = null,
 ) {
     companion object {
         fun from(bebida: Bebida) = BebidaSummaryDto(
@@ -25,6 +57,15 @@ data class BebidaSummaryDto(
     }
 }
 
+// Wrapper usado pelas listas de favoritos/wishlist/provadas: a data (de
+// adição/marcação) e o estado de review pertencem à relação utilizador<->bebida,
+// não à bebida em si, por isso não vivem dentro de BebidaSummaryDto.
+data class BebidaRelacaoDto(
+    val bebida: BebidaSummaryDto,
+    val data: java.time.Instant?,
+    val hasReview: Boolean? = null,
+)
+
 data class CastaPercentagemDto(
     val casta: String?,
     val percentagem: BigDecimal?,
@@ -37,6 +78,14 @@ data class VinhoDetalheDto(
     val tanino: String?,
     val tipo: String?,
     val castas: List<CastaPercentagemDto>,
+)
+
+data class ProdutorResumoDto(
+    val id: Long,
+    val nome: String?,
+    val regiao: String?,
+    val anoFundacao: Int?,
+    val permiteVisitas: Boolean,
 )
 
 data class BebidaDetailDto(
@@ -53,6 +102,12 @@ data class BebidaDetailDto(
     val ratingMedio: BigDecimal,
     val totalReviews: Int,
     val vinhoDetalhe: VinhoDetalheDto?,
+    val produtorResumo: ProdutorResumoDto? = null,
+    val linkCompra: pt.aquavitae.api.compra.dto.LinkCompraDto? = null,
+    val isFavorito: Boolean? = null,
+    val isWishlist: Boolean? = null,
+    val isProvada: Boolean? = null,
+    val notaPropria: BigDecimal? = null,
 ) {
     companion object {
         fun from(bebida: Bebida, vinhoDetalhe: VinhoDetalheDto?) = BebidaDetailDto(
@@ -69,6 +124,15 @@ data class BebidaDetailDto(
             ratingMedio = bebida.ratingMedio,
             totalReviews = bebida.totalReviews,
             vinhoDetalhe = vinhoDetalhe,
+            produtorResumo = bebida.produtor?.let {
+                ProdutorResumoDto(
+                    id = it.id,
+                    nome = it.nome,
+                    regiao = it.regiao,
+                    anoFundacao = it.anoFundacao,
+                    permiteVisitas = it.permiteVisitas,
+                )
+            },
         )
     }
 }

@@ -37,5 +37,7 @@ class Wishlist(
 interface WishlistRepository : JpaRepository<Wishlist, Long> {
     fun findByUtilizador_Id(utilizadorId: Long): List<Wishlist>
     fun findByUtilizador_IdAndBebida_Id(utilizadorId: Long, bebidaId: Long): Wishlist?
+    fun findByUtilizador_IdAndBebida_IdIn(utilizadorId: Long, bebidaIds: Collection<Long>): List<Wishlist>
     fun countByUtilizador_Id(utilizadorId: Long): Long
+    fun findByUtilizador_IdOrderByDataCriacaoDesc(utilizadorId: Long): List<Wishlist>
 }

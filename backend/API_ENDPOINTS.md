@@ -59,70 +59,74 @@ brancas) — texto já capturado, falta só o `UPDATE` em massa no seed.
 |---|---|---|---|
 | POST | `/register` | — | ✅ |
 | POST | `/login` | — | ✅ |
-| POST | `/recuperar-password` `{ email }` | — | 🆕 gera código de 6 dígitos, grava em `utilizador_password_reset`, envia por email (ou log em dev), 202 sempre (não revela se o email existe) |
-| POST | `/verificar-codigo` `{ email, codigo }` | — | 🆕 valida código não usado e não expirado → 200 |
-| POST | `/redefinir-password` `{ email, codigo, novaPassword }` | — | 🆕 valida código de novo, atualiza password, marca código usado → 200 |
+| POST | `/recuperar-password` `{ email }` | — | ✅ **implementado** — código de 6 dígitos em `utilizador_password_reset` (15 min de validade), 202 sempre (não revela se o email existe). Envio real por email ainda por fazer — por agora só regista em log (`PasswordResetService`, combinado adiar o email) |
+| POST | `/verificar-codigo` `{ email, codigo }` | — | ✅ **implementado** — 200 se válido/não expirado/não usado, 401 "Código inválido"/"Código expirado" |
+| POST | `/redefinir-password` `{ email, codigo, novaPassword }` | — | ✅ **implementado** — valida de novo, atualiza password, marca código usado (testado: reutilizar o código dá 401) |
 
 ## Utilizador / Perfil (`/api/users/me`)
 
 | Método | Path | Estado |
 |---|---|---|
-| GET | `/api/users/me` | 🔧 enriquecer `UtilizadorMeDto`: `nationality`, `bioDesc`, `avatar {id, nome, path}`, `accountCreatedAt`, contadores (`totalProvadas`, `totalReviews`, `totalFavoritos`, `totalWishlist`, `totalCaves`, `totalGarrafas`) |
-| PUT | `/api/users/me` `{ firstName, lastName, username, nationalityId, bioDesc, avatarId }` | 🆕 edita perfil (ecrã "Editar Perfil") |
-| GET | `/api/users/me/preferencias` | 🆕 lê preferências atuais (pré-popula onboarding/editar) |
-| PUT | `/api/users/me/preferencias` | ✅ já existe (`PreferenciaRequest`: acidezMin/Max, docuraMin/Max, categoriaIds, castaIds) |
+| GET | `/api/users/me` | ✅ **implementado** (2026-09-17) — `nationality`, `bioDesc`, `avatar`, `accountCreatedAt`, contadores |
+| PUT | `/api/users/me` | ✅ **implementado** (2026-09-17) |
+| GET | `/api/users/me/preferencias` | ✅ **implementado** (2026-09-17) |
+| PUT | `/api/users/me/preferencias` | ✅ já existia |
 
 ## Lookups (`/api/lookup`) — todos GET, sem auth, read-only
 
-Não existe ainda nenhum `LookupController`. Entidades JPA já existem para a maioria; faltam apenas
-`AvatarCategoria`/`UtilizadorAvatar` (tabelas já existem no schema).
+✅ **`LookupController` implementado por completo** (2026-09-17): `/nacionalidades`, `/avatar-categorias`,
+`/avatares?categoriaId=` (nota: ficou `categoriaId`, não `categoria`, para consistência com o resto dos
+filtros), `/categorias-bebida`, `/castas?tipoId=`, `/casta-tipos`, `/paises`, `/regioes?paisId=` (paisId
+aqui é `produtor_pais_id`), `/vinho/corpos`, `/vinho/taninos`, `/vinho/tipos`.
 
-| Path | Estado | Nota |
-|---|---|---|
-| `/nacionalidades` | 🆕 | `utilizador_nationality` |
-| `/avatar-categorias` | 🆕 | `avatar_categoria` |
-| `/avatares?categoria=` | 🆕 | `utilizador_avatar` (9 por categoria) |
-| `/categorias-bebida` | 🆕 | `bebida_categoria` |
-| `/castas?tipoId=` | 🆕 | `casta` + lookup `casta_tipo` (Tinta/Branca) |
-| `/casta-tipos` | 🆕 | `casta_tipo` |
-| `/paises` | 🆕 | `pais` (país de origem da bebida) |
-| `/regioes?paisId=` | 🆕 | `DISTINCT produtor_regiao` por país (sem tabela nova) |
-| `/vinho/corpos` `/vinho/taninos` `/vinho/tipos` | 🆕 | filtros específicos de vinho |
+## Compra / afiliados (`/api/bebidas/{id}/links-compra`) — novo módulo `compra`
+
+✅ **Implementado** (2026-09-18). Entidades novas `Retalhista`, `BebidaLinkCompra`, `CliqueCompra`
+(faltavam por completo — já estava sinalizado como pendente no README antigo).
+- `GET /api/bebidas/{id}/links-compra` — todos os links ativos, ordenados por preço
+- `POST /api/bebidas/{id}/links-compra/{linkId}/clique` (auth) — regista `clique_compra`
+- `CompraService.cheapestByBebidaIds()` — usado em lote pelo `BebidaSummaryAssembler` (não faz 1 query por
+  bebida na listagem)
+- `Retalhista` só mapeia `nome`/`pathLogo`/`isAtivo` — campos de negócio do afiliado (rede/código/comissão)
+  não são expostos pela API, o `bebida_link_compra_url` já é o link de afiliado final definido pelo admin
 
 ## Bebidas / Catálogo (`/api/bebidas`)
 
 | Método | Path | Estado |
 |---|---|---|
-| GET | `/api/bebidas?search=&categoriaIds=&paisId=&precoMin=&precoMax=&ratingMin=&acidezMin=&acidezMax=&docuraMin=&docuraMax=&corpoId=&taninoId=&tipoId=&castaIds=&page=&size=` | 🔧 expandir de `categoriaId` singular para o conjunto de filtros do popup "Filtros do catálogo" |
-| GET | `/api/bebidas/sugeridas` (auth) | 🆕 até N bebidas com base nas preferências do utilizador — "Escolhidos para ti" na homepage |
-| GET | `/api/bebidas/{id}` | 🔧 incluir mini-resumo do produtor, link de compra mais barato, e (se autenticado) `isFavorito/isWishlist/isProvada/notaPropria` |
-| GET | `/api/bebidas/{id}/reviews` | 🔧 incluir distribuição de ratings (contagem por estrela 1–5) além da lista |
-| POST | `/api/bebidas/{bebidaId}/reviews` (auth) | ✅ existe — reforçar regra: só permite se houver `bebida_provada` para este utilizador+bebida |
-| PUT/DELETE | `/api/reviews/{id}` (auth, dono) | ✅ |
-| GET | `/api/bebidas/{id}/links-compra` | 🆕 lista de `bebida_link_compra` ativos (preço + retalhista + url) |
-| POST | `/api/bebidas/{id}/links-compra/{linkId}/clique` (auth) | 🆕 regista `clique_compra` (já sinalizado como pendente no README) |
+| GET | `/api/bebidas?search=&categoriaIds=&paisId=&precoMin=&precoMax=&ratingMin=&acidezMin=&acidezMax=&docuraMin=&docuraMax=&corpoId=&taninoId=&tipoId=&castaIds=&page=&size=` | ✅ **implementado** (2026-09-18) — testado com `categoriaIds`, `precoMax` |
+| GET | `/api/bebidas/sugeridas` (auth) | ✅ **implementado** — sem preferências, cai para o catálogo todo (nunca vazio); com preferências, filtra por categorias/acidez/doçura preferidas. **Algoritmo ainda simples** (sem ordenação por rating dedicada) — afinar mais tarde se necessário |
+| GET | `/api/bebidas/{id}` | ✅ **implementado** — `produtorResumo`, `linkCompra` (mais barato), flags do utilizador |
+| GET | `/api/bebidas/{id}/reviews` | ✅ **implementado** — `{ distribuicao: {1..5: n}, reviews: [...] }`. **Quebra o contrato Android atual** (`AquaVitaeApi.getReviews` ainda declara `List<ReviewResponse>`) — sincronizar quando chegar a vez do Android |
+| POST | `/api/bebidas/{bebidaId}/reviews` (auth) | ✅ **implementado** — agora exige `bebida_provada` para este utilizador+bebida (409 caso contrário), testado |
+| PUT/DELETE | `/api/reviews/{id}` (auth, dono) | ✅ já existia |
 
-`BebidaSummaryDto` 🔧 — adicionar `precoDesde`, `retalhistaNome`, atributos resumidos (corpo/acidez/doçura,
-dependendo da categoria) e, se autenticado, `isFavorito/isWishlist/isProvada/notaPropria`.
+`BebidaSummaryDto` ✅ enriquecido e testado (precoDesde/retalhistaNome/corpo/acidez/doçura/flags) via
+`BebidaSummaryAssembler` novo (`bebida` package) — usado por catálogo, sugeridas, favoritos, wishlist e
+provadas, sempre com queries em lote (nunca 1 por bebida).
 
 ## Produtores (`/api/produtores`)
 
 | Método | Path | Estado |
 |---|---|---|
-| GET | `/api/produtores/{id}` | 🔧 incluir `totalProdutos` (contagem no catálogo) |
-| GET | `/api/produtores/{id}/bebidas?categoriaId=&page=&size=` | 🆕 bebidas do produtor por categoria |
-| GET | `/api/produtores/destaque` | 🆕 produtor da semana (computado, decisão 2) |
+| GET | `/api/produtores/{id}` | 🔧 por fazer — próxima sessão |
+| GET | `/api/produtores/{id}/bebidas?categoriaId=&page=&size=` | 🆕 por fazer |
+| GET | `/api/produtores/destaque` | 🆕 por fazer |
 
 ## Favoritos / Wishlist / Provadas
+
+✅ **Implementado e testado** (2026-09-18). Mudança em relação ao desenho original: os 3 endpoints GET
+passaram a devolver `List<BebidaRelacaoDto>` (`{ bebida: BebidaSummaryDto, data, hasReview? }`) em vez de
+`List<BebidaSummaryDto>` puro — a data de adição/marcação e o `hasReview` pertencem à relação
+utilizador↔bebida, não à bebida em si, por isso não fazia sentido meter dentro do summary partilhado.
+**Quebra o contrato Android atual** (`AquaVitaeApi` declara `List<BebidaSummary>` nos 3) — sincronizar
+com o Android.
 
 | Método | Path | Estado |
 |---|---|---|
 | GET/POST/DELETE | `/api/users/me/favoritos`, `/api/bebidas/{id}/favorito` | ✅ |
-| GET/POST/DELETE | `/api/users/me/wishlist`, `/api/bebidas/{id}/wishlist` | ✅ — 🔧 GET aceita `?sort=recente\|ratingAsc\|ratingDesc` |
-| GET/POST/DELETE | `/api/users/me/provadas`, `/api/bebidas/{id}/provada` | ✅ — 🔧 GET aceita `?categoriaId=&ano=`, resposta inclui `hasReview`/`notaPropria`/`dataProvada` (agrupamento por mês fica ao cargo do cliente Android) |
-
-Os 3 summaries devolvidos por estas listas 🔧 precisam de `notaPropria` (via `review` do próprio
-utilizador), preço+retalhista mais barato, e data de adição/marcação.
+| GET/POST/DELETE | `/api/users/me/wishlist`, `/api/bebidas/{id}/wishlist` | ✅ — GET aceita `?sort=recente\|ratingAsc\|ratingDesc` (default recente) |
+| GET/POST/DELETE | `/api/users/me/provadas`, `/api/bebidas/{id}/provada` | ✅ — GET aceita `?categoriaId=&ano=` (agrupamento por mês fica ao cargo do cliente Android) |
 
 ## Caves (`/api/users/me/caves`, `/api/caves`)
 
@@ -227,7 +231,20 @@ Query params novos a suportar:
 
 ## Por confirmar durante a implementação (não bloqueia o desenho)
 
-- Envio de email do código de recuperação: **combinado adiar para quando os endpoints estiverem
-  terminados** — em dev, provavelmente só log/console para já (não há serviço de email configurado).
-- `GET /api/bebidas/sugeridas` e `/api/produtores/destaque` ainda não têm algoritmo definido ao detalhe
-  (só a regra geral acordada) — afinar quando implementar.
+- Envio de email do código de recuperação: continua adiado — endpoint funcional, só falta ligar a um
+  serviço de email real.
+- `GET /api/produtores/destaque` ainda não tem algoritmo definido ao detalhe (só a regra geral acordada:
+  computado, rotação semanal) — por implementar na próxima sessão.
+- Filtro `precoMin`/`precoMax` é "existe um link ativo dentro do intervalo", não "o link mais barato cai
+  no intervalo" — aproximação aceitável para o MVP com poucos links por bebida (ver comentário em
+  `BebidaRepository.search`).
+
+## Sincronização pendente com o Android (`AquaVitaeApi.kt`)
+
+Estes endpoints mudaram de forma desde a última vez que o contrato Retrofit foi escrito — por resolver
+quando chegar a vez de construir os ecrãs correspondentes (não bloqueia o backend):
+- `getReviews`: `List<ReviewResponse>` → `ReviewsResponse { distribuicao, reviews }`
+- `getFavoritos`/`getWishlist`/`getProvadas`: `List<BebidaSummary>` → `List<BebidaRelacaoDto>`
+- `searchBebidas`: só tinha `categoriaId` singular — agora aceita o conjunto completo de filtros do popup
+- `BebidaSummary`/`BebidaDetail` (modelo Android): faltam os campos novos (preço, corpo/acidez/doçura,
+  flags do utilizador, produtorResumo, linkCompra)

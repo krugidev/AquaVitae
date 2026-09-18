@@ -97,18 +97,45 @@ produtor em destaque computado por rotação semanal (sem coluna nova); `casta` 
   integrado — nunca chegou a ser commitada.
 
 **Branch `feature/api-endpoints-design`** com todo este trabalho (desenho + camada BD + fatia 1 do
-backend + avatares) — ainda sem PR aberto nesta sessão.
+backend + avatares). PR aberto em https://github.com/krugidev/AquaVitae/pull/1 — `gh` CLI instalado e
+autenticado nesta máquina a partir de 2026-09-17, próximos PRs podem ser abertos diretamente.
 
-**Próximo passo — resto do backend:** recuperação de password (auth), catálogo/bebida (filtros
-expandidos, enriquecimento dos DTOs, sugeridas, reviews com distribuição, links de compra), produtor,
-caves, enriquecimento de favoritos/wishlist/provadas — tudo listado em `API_ENDPOINTS.md`. Depois os
-ecrãs Android correspondentes. Avatares reais (PNGs) ainda por chegar do utilizador — ver secção
-"Imagens" do `API_ENDPOINTS.md` para onde ficam (`backend/src/main/resources/static/avatars/`).
+### Backend — fatia 2: auth de password + catálogo/bebida completo (concluída, 2026-09-18)
+
+- **Recuperação de password**: `POST /api/auth/recuperar-password`, `/verificar-codigo`,
+  `/redefinir-password` — código de 6 dígitos, 15 min de validade, `PasswordResetService` novo. Envio de
+  email continua adiado (só log por agora); fluxo completo testado (código certo/errado/expirado/reusado).
+- **Módulo `compra` novo** (não existia nada): `Retalhista`, `BebidaLinkCompra`, `CliqueCompra` +
+  `GET /api/bebidas/{id}/links-compra` + `POST .../clique`.
+- **`BebidaSummaryAssembler` novo** (`bebida` package): enriquece qualquer lista de bebidas (preço mais
+  barato, corpo/acidez/doçura do vinho, flags `isFavorito/isWishlist/isProvada` + `notaPropria` do
+  utilizador autenticado) sempre com queries em lote — usado por catálogo, sugeridas, favoritos, wishlist
+  e provadas.
+- **`GET /api/bebidas`**: filtros completos do popup de filtros (categorias, país, preço, rating,
+  acidez/doçura, corpo/tanino/tipo de vinho, castas) — join "ad hoc" JPQL a `Vinho`/`VinhoCasta`.
+- **`GET /api/bebidas/sugeridas`** novo (auth) — usa preferências do utilizador, cai para o catálogo
+  inteiro se não houver preferências definidas (nunca vazio).
+- **`GET /api/bebidas/{id}`**: produtor resumido, link de compra mais barato, flags do utilizador.
+- **`GET /api/bebidas/{id}/reviews`**: agora devolve `{ distribuicao, reviews }`; `POST` de review passou
+  a exigir `bebida_provada` (409 se não provou ainda).
+- **Favoritos/wishlist/provadas**: GET passam a devolver `BebidaRelacaoDto` (bebida + data + hasReview);
+  wishlist aceita `?sort=`, provadas aceita `?categoriaId=&ano=`.
+- Tudo testado a correr contra a BD de dev real (filtros, sugeridas, fluxo de review bloqueado/permitido,
+  reset de password ponta a ponta, contadores do perfil a bater certo com a trigger da BD).
+- **Mojibake, 3º padrão apanhado**: "Â°" (símbolo de grau, ex. "Gin 44Â°") — padrão diferente de "Ã" e de
+  "â€"; 2 registos corrigidos (`bebida`, `produtor`). Os 3 padrões já cobertos deviam apanhar a maioria dos
+  casos, mas vale a pena um `LIKE '%Â%' OR LIKE '%Ã%'` de vez em quando ao mexer em dados antigos.
+- Contrato Android (`AquaVitaeApi.kt`) ficou desatualizado em vários pontos (reviews, favoritos/wishlist/
+  provadas, filtros do catálogo) — sincronizar só quando chegar a vez de construir esses ecrãs (ver secção
+  própria no `API_ENDPOINTS.md`), não antes, para não quebrar o desenvolvimento sequencial.
+
+**Próximo passo — resto do backend:** produtor (destaque computado, bebidas por produtor, totalProdutos),
+caves (agregados, split prontas-a-abrir/em-guarda, campos novos no request de criação) — tudo já desenhado
+em `API_ENDPOINTS.md`. Depois os ecrãs Android correspondentes.
 
 ## Por fazer depois (fora de âmbito imediato)
 
 - Subtypes whisky/gin/licor/vodka/aguardente no `BebidaService` (replicar o padrão de `vinho/`).
-- `bebida_link_compra` / `clique_compra`: endpoints de leitura de links de afiliado + registo de clique.
 - Testes automatizados (nenhum ainda).
 - CI/build pipeline, Dockerfile da API para deploy.
 - Trocar `Page<BebidaSummaryDto>` por um DTO de paginação próprio antes de produção.
