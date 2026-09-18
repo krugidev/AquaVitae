@@ -27,7 +27,10 @@ SCRIPTS=(
 
 for script in "${SCRIPTS[@]}"; do
   echo "==> A correr ${script} ..."
-  docker exec -i "$CONTAINER" sqlplus -s "$CONNECT_STRING" < "$script"
+  # NLS_LANG diz ao sqlplus que os bytes recebidos via stdin já são UTF-8 (a BD é
+  # AL32UTF8) — sem isto, acentos ficam corrompidos (mojibake) nos INSERTs de texto
+  # com "ã", "ç", "é", etc. Apanhado e corrigido em 2026-09-17 (ver PLANO.md).
+  docker exec -i -e NLS_LANG=AMERICAN_AMERICA.AL32UTF8 "$CONTAINER" sqlplus -s "$CONNECT_STRING" < "$script"
 done
 
 echo "Concluído. Schema + seed aplicados em XEPDB1."

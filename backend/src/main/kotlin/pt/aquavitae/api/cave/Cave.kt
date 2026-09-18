@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
 import pt.aquavitae.api.bebida.Bebida
 import pt.aquavitae.api.utilizador.Utilizador
 import java.math.BigDecimal
@@ -88,9 +89,18 @@ class CaveBebida(
 
 interface CaveRepository : JpaRepository<Cave, Long> {
     fun findByUtilizador_Id(utilizadorId: Long): List<Cave>
+    fun countByUtilizador_Id(utilizadorId: Long): Long
 }
 
 interface CaveBebidaRepository : JpaRepository<CaveBebida, Long> {
     fun findByCave_Id(caveId: Long): List<CaveBebida>
     fun findByIdAndCave_Id(id: Long, caveId: Long): CaveBebida?
+
+    // Garrafas "ativas" (ainda não consumidas) em todas as caves do utilizador —
+    // usado no resumo de estatísticas do perfil.
+    @Query(
+        "SELECT COALESCE(SUM(cb.quantidade), 0) FROM CaveBebida cb " +
+            "WHERE cb.cave.utilizador.id = :utilizadorId AND cb.isConsumida = false",
+    )
+    fun sumQuantidadeAtivaByUtilizadorId(utilizadorId: Long): Int
 }

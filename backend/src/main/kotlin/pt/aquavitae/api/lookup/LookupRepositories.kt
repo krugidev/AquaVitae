@@ -23,4 +23,15 @@ interface VinhoTaninoRepository : JpaRepository<VinhoTanino, Long>
 
 interface VinhoTipoRepository : JpaRepository<VinhoTipo, Long>
 
-interface CastaRepository : JpaRepository<Casta, Long>
+interface CastaRepository : JpaRepository<Casta, Long> {
+    fun findByTipo_Id(tipoId: Long): List<Casta>
+}
+
+interface CastaTipoRepository : JpaRepository<CastaTipo, Long>
+
+interface AvatarCategoriaRepository : JpaRepository<AvatarCategoria, Long>
+
+interface UtilizadorAvatarRepository : JpaRepository<UtilizadorAvatar, Long> {
+    fun findByIsActiveTrue(): List<UtilizadorAvatar>
+    fun findByCategoria_IdAndIsActiveTrue(categoriaId: Long): List<UtilizadorAvatar>
+}

@@ -36,7 +36,10 @@ $scripts = @(
 foreach ($script in $scripts) {
     $path = Join-Path $PSScriptRoot $script
     Write-Host "==> A correr $script ..." -ForegroundColor Cyan
-    Get-Content $path -Raw | docker exec -i $container sqlplus -s "$connectString"
+    # NLS_LANG diz ao sqlplus que os bytes recebidos via stdin já são UTF-8 (a BD é
+    # AL32UTF8) — sem isto, acentos ficam corrompidos (mojibake) nos INSERTs de texto
+    # com "ã", "ç", "é", etc. Apanhado e corrigido em 2026-09-17 (ver PLANO.md).
+    Get-Content $path -Raw | docker exec -i -e NLS_LANG=AMERICAN_AMERICA.AL32UTF8 $container sqlplus -s "$connectString"
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Falhou a correr $script"
         exit 1

@@ -6,24 +6,44 @@ import pt.aquavitae.api.bebida.BebidaRepository
 import pt.aquavitae.api.common.ConflictException
 import pt.aquavitae.api.common.ResourceNotFoundException
 import pt.aquavitae.api.common.UnauthorizedActionException
+import pt.aquavitae.api.provada.BebidaProvadaRepository
 import pt.aquavitae.api.review.dto.ReviewRequest
 import pt.aquavitae.api.review.dto.ReviewResponse
+import pt.aquavitae.api.review.dto.ReviewsResponse
 import pt.aquavitae.api.utilizador.Utilizador
+import java.math.RoundingMode
 import java.time.Instant
 
 @Service
 class ReviewService(
     private val reviewRepository: ReviewRepository,
     private val bebidaRepository: BebidaRepository,
+    private val bebidaProvadaRepository: BebidaProvadaRepository,
 ) {
 
-    fun listByBebida(bebidaId: Long): List<ReviewResponse> =
-        reviewRepository.findByBebida_IdOrderByDataCriacaoDesc(bebidaId).map { ReviewResponse.from(it) }
+    fun listByBebida(bebidaId: Long): ReviewsResponse {
+        val reviews = reviewRepository.findByBebida_IdOrderByDataCriacaoDesc(bebidaId)
+        val distribuicao = (1..5).associateWith { estrela -> 0 }.toMutableMap()
+        reviews.forEach { review ->
+            review.rating?.let { rating ->
+                val estrela = rating.setScale(0, RoundingMode.HALF_UP).toInt().coerceIn(1, 5)
+                distribuicao[estrela] = (distribuicao[estrela] ?: 0) + 1
+            }
+        }
+        return ReviewsResponse(distribuicao = distribuicao, reviews = reviews.map { ReviewResponse.from(it) })
+    }
 
     @Transactional
     fun create(bebidaId: Long, utilizador: Utilizador, request: ReviewRequest): ReviewResponse {
         val bebida = bebidaRepository.findById(bebidaId)
             .orElseThrow { ResourceNotFoundException("Bebida $bebidaId não encontrada") }
+
+        // Só pode avaliar quem já marcou a bebida como provada (ver mockup da
+        // tab de reviews: "só poderá fazê-lo se a bebida estiver marcada como
+        // já provada").
+        if (bebidaProvadaRepository.findByUtilizador_IdAndBebida_Id(utilizador.id, bebidaId) == null) {
+            throw ConflictException("Só podes avaliar bebidas que já marcaste como provadas")
+        }
 
         // UNIQUE(bebida_id, utilizador_id) — serve também para verificar,
         // aqui, se o utilizador já avaliou esta bebida (ver briefing secção 5).

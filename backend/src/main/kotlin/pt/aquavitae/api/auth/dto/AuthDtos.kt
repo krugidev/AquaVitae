@@ -34,3 +34,27 @@ data class AuthResponse(
     val userId: Long,
     val username: String?,
 )
+
+data class RecuperarPasswordRequest(
+    @field:NotBlank @field:Email
+    val email: String,
+)
+
+data class VerificarCodigoRequest(
+    @field:NotBlank @field:Email
+    val email: String,
+
+    @field:NotBlank
+    val codigo: String,
+)
+
+data class RedefinirPasswordRequest(
+    @field:NotBlank @field:Email
+    val email: String,
+
+    @field:NotBlank
+    val codigo: String,
+
+    @field:NotBlank @field:Size(min = 8, max = 72)
+    val novaPassword: String,
+)

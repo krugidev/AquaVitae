@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 import pt.aquavitae.api.review.dto.ReviewRequest
 import pt.aquavitae.api.review.dto.ReviewResponse
+import pt.aquavitae.api.review.dto.ReviewsResponse
 import pt.aquavitae.api.utilizador.Utilizador
 
 @RestController
@@ -21,7 +22,7 @@ class ReviewController(
 ) {
 
     @GetMapping("/api/bebidas/{bebidaId}/reviews")
-    fun listByBebida(@PathVariable bebidaId: Long): List<ReviewResponse> =
+    fun listByBebida(@PathVariable bebidaId: Long): ReviewsResponse =
         reviewService.listByBebida(bebidaId)
 
     @PostMapping("/api/bebidas/{bebidaId}/reviews")

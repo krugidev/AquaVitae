@@ -15,6 +15,9 @@ ALTER TABLE utilizador ADD CONSTRAINT fk_utilizador_avatar
 ALTER TABLE utilizador ADD CONSTRAINT fk_utilizador_role
     FOREIGN KEY (utilizador_role_id) REFERENCES utilizador_role (utilizador_role_id);
 
+ALTER TABLE utilizador_password_reset ADD CONSTRAINT fk_pwd_reset_utilizador
+    FOREIGN KEY (utilizador_id) REFERENCES utilizador (utilizador_id);
+
 ALTER TABLE utilizador_avatar ADD CONSTRAINT fk_avatar_categoria
     FOREIGN KEY (avatar_category_id) REFERENCES avatar_categoria (avatar_categoria_id);
 
@@ -61,6 +64,9 @@ ALTER TABLE vinho_casta ADD CONSTRAINT fk_vinho_casta_vinho
 
 ALTER TABLE vinho_casta ADD CONSTRAINT fk_vinho_casta_casta
     FOREIGN KEY (casta_id) REFERENCES casta (casta_id);
+
+ALTER TABLE casta ADD CONSTRAINT fk_casta_tipo
+    FOREIGN KEY (casta_tipo_id) REFERENCES casta_tipo (casta_tipo_id);
 
 -- Whisky
 ALTER TABLE whisky ADD CONSTRAINT fk_whisky_tipo

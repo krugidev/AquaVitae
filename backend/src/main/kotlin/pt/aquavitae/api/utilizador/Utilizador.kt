@@ -9,6 +9,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import pt.aquavitae.api.lookup.UtilizadorAvatar
 import pt.aquavitae.api.lookup.UtilizadorNationality
 import pt.aquavitae.api.lookup.UtilizadorRole
 import java.time.Instant
@@ -40,6 +41,10 @@ class Utilizador(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "utilizador_nationality_id")
     var nationality: UtilizadorNationality? = null,
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "utilizador_avatar_photo_id")
+    var avatar: UtilizadorAvatar? = null,
 
     @Column(name = "utilizador_account_created_at")
     var accountCreatedAt: Instant? = null,
