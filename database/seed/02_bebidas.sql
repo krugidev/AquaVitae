@@ -100,7 +100,7 @@ BEGIN
 
   INSERT INTO vinho_casta (vinho_id, casta_id, vinho_casta_percentagem) VALUES (v_bebida_id, (SELECT casta_id FROM casta WHERE casta_name = 'Touriga Nacional'), 40);
   INSERT INTO vinho_casta (vinho_id, casta_id, vinho_casta_percentagem) VALUES (v_bebida_id, (SELECT casta_id FROM casta WHERE casta_name = 'Touriga Franca'), 35);
-  INSERT INTO vinho_casta (vinho_id, casta_id, vinho_casta_percentagem) VALUES (v_bebida_id, (SELECT casta_id FROM casta WHERE casta_name = 'Tinta Roriz'), 25);
+  INSERT INTO vinho_casta (vinho_id, casta_id, vinho_casta_percentagem) VALUES (v_bebida_id, (SELECT casta_id FROM casta WHERE casta_name = 'Aragonez (Tinta Roriz)'), 25);
 
   INSERT INTO bebida_link_compra (bebida_id, retalhista_id, bebida_link_compra_url, bebida_link_compra_preco_atual)
   VALUES (v_bebida_id, (SELECT retalhista_id FROM retalhista WHERE retalhista_nome = 'Garrafeira Nacional'),
@@ -128,7 +128,7 @@ BEGIN
 
   INSERT INTO vinho_casta (vinho_id, casta_id, vinho_casta_percentagem) VALUES (v_bebida_id, (SELECT casta_id FROM casta WHERE casta_name = 'Touriga Franca'), 45);
   INSERT INTO vinho_casta (vinho_id, casta_id, vinho_casta_percentagem) VALUES (v_bebida_id, (SELECT casta_id FROM casta WHERE casta_name = 'Touriga Nacional'), 30);
-  INSERT INTO vinho_casta (vinho_id, casta_id, vinho_casta_percentagem) VALUES (v_bebida_id, (SELECT casta_id FROM casta WHERE casta_name = 'Tinta Roriz'), 25);
+  INSERT INTO vinho_casta (vinho_id, casta_id, vinho_casta_percentagem) VALUES (v_bebida_id, (SELECT casta_id FROM casta WHERE casta_name = 'Aragonez (Tinta Roriz)'), 25);
 END;
 /
 
@@ -152,7 +152,7 @@ BEGIN
 
   INSERT INTO vinho_casta (vinho_id, casta_id, vinho_casta_percentagem) VALUES (v_bebida_id, (SELECT casta_id FROM casta WHERE casta_name = 'Touriga Nacional'), 35);
   INSERT INTO vinho_casta (vinho_id, casta_id, vinho_casta_percentagem) VALUES (v_bebida_id, (SELECT casta_id FROM casta WHERE casta_name = 'Touriga Franca'), 35);
-  INSERT INTO vinho_casta (vinho_id, casta_id, vinho_casta_percentagem) VALUES (v_bebida_id, (SELECT casta_id FROM casta WHERE casta_name = 'Tinta Roriz'), 30);
+  INSERT INTO vinho_casta (vinho_id, casta_id, vinho_casta_percentagem) VALUES (v_bebida_id, (SELECT casta_id FROM casta WHERE casta_name = 'Aragonez (Tinta Roriz)'), 30);
 END;
 /
 
@@ -267,7 +267,7 @@ BEGIN
 
   INSERT INTO vinho_casta (vinho_id, casta_id, vinho_casta_percentagem) VALUES (v_bebida_id, (SELECT casta_id FROM casta WHERE casta_name = 'Touriga Nacional'), 50);
   INSERT INTO vinho_casta (vinho_id, casta_id, vinho_casta_percentagem) VALUES (v_bebida_id, (SELECT casta_id FROM casta WHERE casta_name = 'Touriga Franca'), 30);
-  INSERT INTO vinho_casta (vinho_id, casta_id, vinho_casta_percentagem) VALUES (v_bebida_id, (SELECT casta_id FROM casta WHERE casta_name = 'Tinta Roriz'), 20);
+  INSERT INTO vinho_casta (vinho_id, casta_id, vinho_casta_percentagem) VALUES (v_bebida_id, (SELECT casta_id FROM casta WHERE casta_name = 'Aragonez (Tinta Roriz)'), 20);
 END;
 /
 
@@ -291,7 +291,7 @@ BEGIN
 
   INSERT INTO vinho_casta (vinho_id, casta_id, vinho_casta_percentagem) VALUES (v_bebida_id, (SELECT casta_id FROM casta WHERE casta_name = 'Touriga Nacional'), 45);
   INSERT INTO vinho_casta (vinho_id, casta_id, vinho_casta_percentagem) VALUES (v_bebida_id, (SELECT casta_id FROM casta WHERE casta_name = 'Touriga Franca'), 30);
-  INSERT INTO vinho_casta (vinho_id, casta_id, vinho_casta_percentagem) VALUES (v_bebida_id, (SELECT casta_id FROM casta WHERE casta_name = 'Tinta Roriz'), 25);
+  INSERT INTO vinho_casta (vinho_id, casta_id, vinho_casta_percentagem) VALUES (v_bebida_id, (SELECT casta_id FROM casta WHERE casta_name = 'Aragonez (Tinta Roriz)'), 25);
 END;
 /
 
@@ -312,13 +312,13 @@ BEGIN
 
   INSERT INTO gin (bebida_id, gin_tipo_destilacao_id, gin_corpo_id, gin_nivel_docura)
   VALUES (v_bebida_id,
-          (SELECT gin_destilacao_id FROM gin_destilacao WHERE gin_destilacao_value = 'Pot Still'),
+          (SELECT gin_destilacao_id FROM gin_destilacao WHERE gin_destilacao_value = 'Alambique'),
           (SELECT gin_corpo_id FROM gin_corpo WHERE gin_corpo_value = 'Médio'),
           2);
 
   INSERT INTO gin_botanico (gin_id, botanico_id) VALUES (v_bebida_id, (SELECT botanico_id FROM botanico WHERE botanico_name = 'Zimbro'));
-  INSERT INTO gin_botanico (gin_id, botanico_id) VALUES (v_bebida_id, (SELECT botanico_id FROM botanico WHERE botanico_name = 'Casca de Citrinos'));
-  INSERT INTO gin_botanico (gin_id, botanico_id) VALUES (v_bebida_id, (SELECT botanico_id FROM botanico WHERE botanico_name = 'Alecrim'));
+  INSERT INTO gin_botanico (gin_id, botanico_id) VALUES (v_bebida_id, (SELECT botanico_id FROM botanico WHERE botanico_name = 'Citrino'));
+  INSERT INTO gin_botanico (gin_id, botanico_id) VALUES (v_bebida_id, (SELECT botanico_id FROM botanico WHERE botanico_name = 'Herbáceo e Verde'));
 END;
 /
 
@@ -335,13 +335,13 @@ BEGIN
 
   INSERT INTO gin (bebida_id, gin_tipo_destilacao_id, gin_corpo_id, gin_nivel_docura)
   VALUES (v_bebida_id,
-          (SELECT gin_destilacao_id FROM gin_destilacao WHERE gin_destilacao_value = 'Vapor Infusion'),
+          (SELECT gin_destilacao_id FROM gin_destilacao WHERE gin_destilacao_value = 'Infusão de Vapor'),
           (SELECT gin_corpo_id FROM gin_corpo WHERE gin_corpo_value = 'Leve'),
           1);
 
   INSERT INTO gin_botanico (gin_id, botanico_id) VALUES (v_bebida_id, (SELECT botanico_id FROM botanico WHERE botanico_name = 'Zimbro'));
-  INSERT INTO gin_botanico (gin_id, botanico_id) VALUES (v_bebida_id, (SELECT botanico_id FROM botanico WHERE botanico_name = 'Coentros'));
-  INSERT INTO gin_botanico (gin_id, botanico_id) VALUES (v_bebida_id, (SELECT botanico_id FROM botanico WHERE botanico_name = 'Erva-Príncipe'));
+  INSERT INTO gin_botanico (gin_id, botanico_id) VALUES (v_bebida_id, (SELECT botanico_id FROM botanico WHERE botanico_name = 'Especiaria e Picante'));
+  INSERT INTO gin_botanico (gin_id, botanico_id) VALUES (v_bebida_id, (SELECT botanico_id FROM botanico WHERE botanico_name = 'Citrino'));
 END;
 /
 
@@ -362,10 +362,10 @@ BEGIN
 
   INSERT INTO licor (bebida_id, licor_base_id, licor_nivel_docura)
   VALUES (v_bebida_id,
-          (SELECT licor_base_id FROM licor_base WHERE licor_base_value = 'Aguardente Vínica'),
+          (SELECT licor_base_id FROM licor_base WHERE licor_base_value = 'Vínica'),
           3);
 
-  INSERT INTO licor_sabor (licor_id, sabor_licor_id) VALUES (v_bebida_id, (SELECT sabor_licor_id FROM sabor_licor WHERE sabor_licor_value = 'Ervas'));
+  INSERT INTO licor_sabor (licor_id, sabor_licor_id) VALUES (v_bebida_id, (SELECT sabor_licor_id FROM sabor_licor WHERE sabor_licor_value = 'Ervas e Especiarias'));
 
   INSERT INTO bebida_link_compra (bebida_id, retalhista_id, bebida_link_compra_url, bebida_link_compra_preco_atual)
   VALUES (v_bebida_id, (SELECT retalhista_id FROM retalhista WHERE retalhista_nome = 'Continente Online'),
@@ -384,10 +384,9 @@ BEGIN
           20.0, 500)
   RETURNING bebida_id INTO v_bebida_id;
 
+  -- Base sem equivalente nas notas de seed (Neutra/Vodka/Vínica/Rum/Whisky/Tequila/Mezcal): NULL = "não disponível"
   INSERT INTO licor (bebida_id, licor_base_id, licor_nivel_docura)
-  VALUES (v_bebida_id,
-          (SELECT licor_base_id FROM licor_base WHERE licor_base_value = 'Aguardente de Cereja'),
-          4);
+  VALUES (v_bebida_id, NULL, 4);
 
   INSERT INTO licor_sabor (licor_id, sabor_licor_id) VALUES (v_bebida_id, (SELECT sabor_licor_id FROM sabor_licor WHERE sabor_licor_value = 'Cereja'));
 END;
@@ -404,10 +403,9 @@ BEGIN
           19.0, 500)
   RETURNING bebida_id INTO v_bebida_id;
 
+  -- Base sem equivalente nas notas de seed (Neutra/Vodka/Vínica/Rum/Whisky/Tequila/Mezcal): NULL = "não disponível"
   INSERT INTO licor (bebida_id, licor_base_id, licor_nivel_docura)
-  VALUES (v_bebida_id,
-          (SELECT licor_base_id FROM licor_base WHERE licor_base_value = 'Aguardente de Cereja'),
-          4);
+  VALUES (v_bebida_id, NULL, 4);
 
   INSERT INTO licor_sabor (licor_id, sabor_licor_id) VALUES (v_bebida_id, (SELECT sabor_licor_id FROM sabor_licor WHERE sabor_licor_value = 'Cereja'));
 END;
@@ -430,7 +428,7 @@ BEGIN
 
   INSERT INTO aguardente (bebida_id, aguardente_materia_prima_id, aguardente_corpo_id, aguardente_idade_anos)
   VALUES (v_bebida_id,
-          (SELECT aguardente_materia_prima_id FROM aguardente_materia_prima WHERE aguardente_materia_prima_value = 'Medronho'),
+          (SELECT aguardente_materia_prima_id FROM aguardente_materia_prima WHERE aguardente_materia_prima_value = 'Fruta'),
           (SELECT aguardente_corpo_id FROM aguardente_corpo WHERE aguardente_corpo_value = 'Encorpado'),
           0);
 END;
@@ -454,7 +452,7 @@ BEGIN
           3);
 
   INSERT INTO aguardente_tipo_cask_relation (aguardente_id, aguardente_tipo_cask_id, aguardente_tipo_cask_ordem_estagio)
-  VALUES (v_bebida_id, (SELECT aguardente_tipo_cask_id FROM aguardente_tipo_cask WHERE aguardente_tipo_cask_value = 'Carvalho Novo'), 1);
+  VALUES (v_bebida_id, (SELECT aguardente_tipo_cask_id FROM aguardente_tipo_cask WHERE aguardente_tipo_cask_value = 'Carvalho'), 1);
 END;
 /
 

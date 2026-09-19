@@ -65,6 +65,15 @@ ALTER TABLE vinho_casta ADD CONSTRAINT fk_vinho_casta_vinho
 ALTER TABLE vinho_casta ADD CONSTRAINT fk_vinho_casta_casta
     FOREIGN KEY (casta_id) REFERENCES casta (casta_id);
 
+ALTER TABLE vinho_cask ADD CONSTRAINT fk_vinho_cask_vinho
+    FOREIGN KEY (vinho_id) REFERENCES vinho (bebida_id);
+
+ALTER TABLE vinho_cask ADD CONSTRAINT fk_vinho_cask_cask
+    FOREIGN KEY (cask_id) REFERENCES cask (cask_id);
+
+ALTER TABLE vinho_cask ADD CONSTRAINT fk_vinho_cask_formato
+    FOREIGN KEY (cask_formato_id) REFERENCES cask_formato (cask_formato_id);
+
 ALTER TABLE casta ADD CONSTRAINT fk_casta_tipo
     FOREIGN KEY (casta_tipo_id) REFERENCES casta_tipo (casta_tipo_id);
 

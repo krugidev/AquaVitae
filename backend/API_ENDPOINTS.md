@@ -77,7 +77,12 @@ brancas) — texto já capturado, falta só o `UPDATE` em massa no seed.
 ✅ **`LookupController` implementado por completo** (2026-09-17): `/nacionalidades`, `/avatar-categorias`,
 `/avatares?categoriaId=` (nota: ficou `categoriaId`, não `categoria`, para consistência com o resto dos
 filtros), `/categorias-bebida`, `/castas?tipoId=`, `/casta-tipos`, `/paises`, `/regioes?paisId=` (paisId
-aqui é `produtor_pais_id`), `/vinho/corpos`, `/vinho/taninos`, `/vinho/tipos`.
+aqui é `produtor_pais_id`, que coincide com o id de `pais` — ver "Filtro por região" mais abaixo),
+`/vinho/corpos`, `/vinho/taninos`, `/vinho/tipos`.
+
+**Ordem:** `/paises` (218), `/castas` (277) e `/regioes` vêm por **ordem alfabética** (collator pt-PT; o Oracle
+ordena por código de carácter e poria "África" depois de "Zimbábue"). Os restantes vêm por id, que é a ordem
+pretendida (Leve, Médio, Encorpado; Tinto, Branco, ...).
 
 ## Compra / afiliados (`/api/bebidas/{id}/links-compra`) — novo módulo `compra`
 
@@ -269,7 +274,7 @@ Não estavam no desenho inicial; saíram de cruzar o código com o texto dos ecr
 | Autor da review | tab Reviews: "avatar, nome, há quanto tempo, conteúdo, rating" | `ReviewResponse` ganha `utilizadorNome` e `utilizadorAvatar` (path). Fetch explícito do avatar (LAZY). |
 | Histórico de reviews do perfil | Perfil: "histórico de reviews (terá outra tela)" | `GET /api/users/me/reviews` (auth): as reviews do utilizador com a bebida associada (`BebidaSummaryDto`). |
 | Pesquisa por produtor e casta | Homepage/Catálogo: "pesquisar por nomes de bebidas, produtores, castas" | `search` de `GET /api/bebidas` passa a casar também `produtor.nome` e `casta.name` (via `vinho_casta`). A decidir: produtores como resultado próprio (`GET /api/produtores?search=`)? |
-| Filtro por região | Popup de filtros: "as pílulas das regiões mudam com o país" | `regiao` (texto, `produtor.regiao`) em `GET /api/bebidas`. **Ids:** `/lookup/regioes?paisId=` usa `produtor_pais`, o filtro do catálogo usa `pais` — tabelas separadas com ids independentes; unificar (p.ex. o endpoint de regiões aceitar o id de `pais`). |
+| Filtro por região | Popup de filtros: "as pílulas das regiões mudam com o país" | `regiao` (texto, `produtor.regiao`) em `GET /api/bebidas`. **Ids (resolvido em 2026-09-19):** `/lookup/regioes?paisId=` usa `produtor_pais` e o filtro do catálogo usa `pais`; continuam duas tabelas, mas com **os mesmos ids** (convenção do seed, ver `database/README.md`), por isso o mesmo `paisId` serve para os dois. Falta só o filtro `regiao` em `GET /api/bebidas`. |
 | Lista da cave | Caves: "quantidade, nome, categoria, intervalo de consumo, preço/unidade, nota" | `CaveBebidaResponse` ganha `janelaInicio`, `janelaFim`, `categoriaNome` (e imagem). |
 | Consumir uma garrafa | Caves: "marcar como consumida (sai da lista e reduz o contador em 1)" | Hoje o `PATCH` marca a linha toda como consumida. Proposta: consumir 1 = decrementar `quantidade` e criar linha consumida com `quantidade = 1` + `data_consumo` (mantém o histórico). **A decidir.** |
 | "Pronta a abrir" | Caves: "hoje dentro da janela" | A decidir: e depois de a janela acabar (ainda pronta, "a passar do ponto")? Sem janela = "em guarda"? |

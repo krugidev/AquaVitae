@@ -39,7 +39,10 @@ foreach ($script in $scripts) {
     # NLS_LANG diz ao sqlplus que os bytes recebidos via stdin já são UTF-8 (a BD é
     # AL32UTF8) — sem isto, acentos ficam corrompidos (mojibake) nos INSERTs de texto
     # com "ã", "ç", "é", etc. Apanhado e corrigido em 2026-09-17 (ver PLANO.md).
-    Get-Content $path -Raw | docker exec -i -e NLS_LANG=AMERICAN_AMERICA.AL32UTF8 $container sqlplus -s "$connectString"
+    # -Encoding UTF8: os .sql não têm BOM e no Windows PowerShell 5.1 (o único instalado nesta máquina)
+    # Get-Content lê ficheiros sem BOM como ANSI — sem isto, os acentos chegam ao sqlplus já
+    # codificados duas vezes ("França" -> "FranÃ§a"), mesmo com NLS_LANG certo. Corrigido em 2026-09-19.
+    Get-Content $path -Raw -Encoding UTF8 | docker exec -i -e NLS_LANG=AMERICAN_AMERICA.AL32UTF8 $container sqlplus -s "$connectString"
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Falhou a correr $script"
         exit 1

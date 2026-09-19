@@ -6,6 +6,7 @@
 -- Papéis e nacionalidade
 INSERT INTO utilizador_role (utilizador_role_value) VALUES ('Utilizador');
 INSERT INTO utilizador_role (utilizador_role_value) VALUES ('Admin');
+-- 'Moderador': fase futura (notas de seed) — não inserido por agora.
 
 INSERT INTO utilizador_nationality (nationality_value) VALUES ('Portuguesa');
 INSERT INTO utilizador_nationality (nationality_value) VALUES ('Espanhola');
@@ -81,22 +82,243 @@ VALUES ('Caneca', (SELECT avatar_categoria_id FROM avatar_categoria WHERE avatar
 INSERT INTO utilizador_avatar (avatar_name, avatar_category_id, avatar_path_image, avatar_is_active)
 VALUES ('Shot', (SELECT avatar_categoria_id FROM avatar_categoria WHERE avatar_categoria_value = 'Copos'), 'icones/avatares/copo-shot.svg', 1);
 
--- Países (usado por bebida.origem, produtor.pais e utilizador.nationality são tabelas
--- separadas por decisão do schema — só a de bebida/produtor é populada aqui)
-INSERT INTO pais (bebida_pais_value) VALUES ('Portugal');
-INSERT INTO pais (bebida_pais_value) VALUES ('Espanha');
-INSERT INTO pais (bebida_pais_value) VALUES ('França');
-INSERT INTO pais (bebida_pais_value) VALUES ('Escócia');
-INSERT INTO pais (bebida_pais_value) VALUES ('Itália');
-INSERT INTO pais (bebida_pais_value) VALUES ('Estados Unidos');
-INSERT INTO pais (bebida_pais_value) VALUES ('Reino Unido');
-INSERT INTO pais (bebida_pais_value) VALUES ('Alemanha');
+-- Países: a MESMA lista nas duas tabelas — `pais` (origem da bebida) e `produtor_pais` (país do
+-- produtor) —, inserida em simultâneo para os ids coincidirem. O filtro do catálogo usa
+-- pais.bebida_pais_id e /api/lookup/regioes usa produtor_pais.produtor_pais_id, e o cliente trata-os
+-- como um só id. Ao acrescentar um país: inserir com o MESMO id nas duas (receita e query de verificação em
+-- database/README.md; "na mesma ordem" não chega, os identity divergem). Numa BD nova o loop abaixo alinha-os.
+-- Fonte: android/AQUAVITAESEEDS-NOTES, com grafias em PT-PT e duplicados fundidos (Holanda = Países Baixos,
+-- Suazilândia = Essuatíni, Congo, Estados Federados da Micronésia = Micronésia).
+DECLARE
+  TYPE t_lista IS TABLE OF VARCHAR2(60 CHAR);
+  v_paises t_lista := t_lista(
+    'Portugal',
+    'Espanha',
+    'França',
+    'Escócia',
+    'Itália',
+    'Estados Unidos da América',
+    'Reino Unido',
+    'Alemanha',
+    'Abecásia',
+    'Afeganistão',
+    'África do Sul',
+    'Albânia',
+    'Andorra',
+    'Angola',
+    'Antígua e Barbuda',
+    'Arábia Saudita',
+    'Argélia',
+    'Argentina',
+    'Arménia',
+    'Aruba',
+    'Austrália',
+    'Áustria',
+    'Azerbaijão',
+    'Bahamas',
+    'Bahrein',
+    'Bangladesh',
+    'Barbados',
+    'Bélgica',
+    'Belize',
+    'Benim',
+    'Bermudas',
+    'Bielorrússia',
+    'Bolívia',
+    'Bósnia e Herzegovina',
+    'Botswana',
+    'Brasil',
+    'Brunei',
+    'Bulgária',
+    'Burkina Faso',
+    'Burundi',
+    'Butão',
+    'Cabo Verde',
+    'Camarões',
+    'Camboja',
+    'Canadá',
+    'Catar',
+    'Cazaquistão',
+    'Chade',
+    'Chile',
+    'China',
+    'Chipre',
+    'Singapura',
+    'Colômbia',
+    'Comores',
+    'Coreia do Norte',
+    'Coreia do Sul',
+    'Costa do Marfim',
+    'Costa Rica',
+    'Croácia',
+    'Cuba',
+    'Curaçau',
+    'Dinamarca',
+    'Djibouti',
+    'Dominica',
+    'Egito',
+    'El Salvador',
+    'Emirados Árabes Unidos',
+    'Equador',
+    'Eritreia',
+    'Eslováquia',
+    'Eslovénia',
+    'Estónia',
+    'Essuatíni',
+    'Etiópia',
+    'Fiji',
+    'Filipinas',
+    'Finlândia',
+    'Gabão',
+    'Gâmbia',
+    'Gana',
+    'Geórgia',
+    'Granada',
+    'Grécia',
+    'Gronelândia',
+    'Guadalupe',
+    'Guiana Francesa',
+    'Guatemala',
+    'Guiana',
+    'Guiné',
+    'Guiné-Bissau',
+    'Guiné Equatorial',
+    'Haiti',
+    'Honduras',
+    'Hong Kong',
+    'Hungria',
+    'Iémen',
+    'Índia',
+    'Indonésia',
+    'Inglaterra',
+    'Ilhas Caimão',
+    'Ilhas Marianas do Norte',
+    'Ilhas Virgens',
+    'Irão',
+    'Iraque',
+    'Irlanda do Norte',
+    'Irlanda',
+    'Islândia',
+    'Israel',
+    'Jamaica',
+    'Japão',
+    'Jordânia',
+    'Kiribati',
+    'Kosovo',
+    'Kuwait',
+    'Laos',
+    'Lesoto',
+    'Letónia',
+    'Líbano',
+    'Libéria',
+    'Líbia',
+    'Liechtenstein',
+    'Lituânia',
+    'Luxemburgo',
+    'Macedónia do Norte',
+    'Macau',
+    'Madagascar',
+    'Malásia',
+    'Malawi',
+    'Maldivas',
+    'Mali',
+    'Malta',
+    'Marrocos',
+    'Ilhas Marshall',
+    'Maurícia',
+    'Mauritânia',
+    'México',
+    'Mianmar',
+    'Micronésia',
+    'Moçambique',
+    'Moldávia',
+    'Mónaco',
+    'Mongólia',
+    'Montenegro',
+    'Namíbia',
+    'Nauru',
+    'Nepal',
+    'Nicarágua',
+    'Níger',
+    'Nigéria',
+    'Noruega',
+    'Nova Zelândia',
+    'Omã',
+    'Ossétia do Sul',
+    'País de Gales',
+    'Países Baixos',
+    'Palau',
+    'Palestina',
+    'Panamá',
+    'Papua-Nova Guiné',
+    'Paquistão',
+    'Paraguai',
+    'Peru',
+    'Polónia',
+    'Polinésia Francesa',
+    'Porto Rico',
+    'Quénia',
+    'Quirguistão',
+    'República Árabe Saaraui Democrática',
+    'República Centro-Africana',
+    'República Democrática do Congo',
+    'República do Congo',
+    'República Dominicana',
+    'República Checa',
+    'República Turca de Chipre do Norte',
+    'Roménia',
+    'Ruanda',
+    'Rússia',
+    'Ilhas Salomão',
+    'Samoa',
+    'San Marino',
+    'Santa Lúcia',
+    'São Cristóvão e Neves',
+    'São Tomé e Príncipe',
+    'São Vicente e Granadinas',
+    'Senegal',
+    'Serra Leoa',
+    'Sérvia',
+    'Seychelles',
+    'Síria',
+    'Somália',
+    'Sri Lanka',
+    'Sudão do Sul',
+    'Sudão',
+    'Suécia',
+    'Suíça',
+    'Suriname',
+    'Tailândia',
+    'Taiwan',
+    'Tajiquistão',
+    'Tanzânia',
+    'Timor-Leste',
+    'Togo',
+    'Tonga',
+    'Trinidad e Tobago',
+    'Tunísia',
+    'Turquemenistão',
+    'Turquia',
+    'Tuvalu',
+    'Ucrânia',
+    'Uganda',
+    'Uruguai',
+    'Uzbequistão',
+    'Vanuatu',
+    'Vaticano',
+    'Venezuela',
+    'Vietname',
+    'Zâmbia',
+    'Zimbábue'
 
-INSERT INTO produtor_pais (produtor_pais_value) VALUES ('Portugal');
-INSERT INTO produtor_pais (produtor_pais_value) VALUES ('Espanha');
-INSERT INTO produtor_pais (produtor_pais_value) VALUES ('França');
-INSERT INTO produtor_pais (produtor_pais_value) VALUES ('Escócia');
-INSERT INTO produtor_pais (produtor_pais_value) VALUES ('Itália');
+  );
+BEGIN
+  FOR i IN 1 .. v_paises.COUNT LOOP
+    INSERT INTO pais (bebida_pais_value) VALUES (v_paises(i));
+    INSERT INTO produtor_pais (produtor_pais_value) VALUES (v_paises(i));
+  END LOOP;
+END;
+/
 
 -- Retalhistas
 INSERT INTO retalhista_tipo (retalhista_tipo_value) VALUES ('Garrafeira Online');
@@ -125,93 +347,454 @@ INSERT INTO vinho_tipo (vinho_tipo_value) VALUES ('Tinto');
 INSERT INTO vinho_tipo (vinho_tipo_value) VALUES ('Branco');
 INSERT INTO vinho_tipo (vinho_tipo_value) VALUES ('Rosé');
 INSERT INTO vinho_tipo (vinho_tipo_value) VALUES ('Espumante');
-INSERT INTO vinho_tipo (vinho_tipo_value) VALUES ('Verde');
+INSERT INTO vinho_tipo (vinho_tipo_value) VALUES ('Frisante');
 INSERT INTO vinho_tipo (vinho_tipo_value) VALUES ('Generoso');
+INSERT INTO vinho_tipo (vinho_tipo_value) VALUES ('Sobremesa');
 
 INSERT INTO casta_tipo (casta_tipo_value) VALUES ('Tinta');
 INSERT INTO casta_tipo (casta_tipo_value) VALUES ('Branca');
 
-INSERT INTO casta (casta_name, casta_tipo_id) VALUES ('Touriga Nacional', (SELECT casta_tipo_id FROM casta_tipo WHERE casta_tipo_value = 'Tinta'));
-INSERT INTO casta (casta_name, casta_tipo_id) VALUES ('Touriga Franca', (SELECT casta_tipo_id FROM casta_tipo WHERE casta_tipo_value = 'Tinta'));
-INSERT INTO casta (casta_name, casta_tipo_id) VALUES ('Tinta Roriz', (SELECT casta_tipo_id FROM casta_tipo WHERE casta_tipo_value = 'Tinta'));
-INSERT INTO casta (casta_name, casta_tipo_id) VALUES ('Alvarinho', (SELECT casta_tipo_id FROM casta_tipo WHERE casta_tipo_value = 'Branca'));
-INSERT INTO casta (casta_name, casta_tipo_id) VALUES ('Baga', (SELECT casta_tipo_id FROM casta_tipo WHERE casta_tipo_value = 'Tinta'));
-INSERT INTO casta (casta_name, casta_tipo_id) VALUES ('Arinto', (SELECT casta_tipo_id FROM casta_tipo WHERE casta_tipo_value = 'Branca'));
-INSERT INTO casta (casta_name, casta_tipo_id) VALUES ('Fernão Pires', (SELECT casta_tipo_id FROM casta_tipo WHERE casta_tipo_value = 'Branca'));
-INSERT INTO casta (casta_name, casta_tipo_id) VALUES ('Trincadeira', (SELECT casta_tipo_id FROM casta_tipo WHERE casta_tipo_value = 'Tinta'));
-INSERT INTO casta (casta_name, casta_tipo_id) VALUES ('Castelão', (SELECT casta_tipo_id FROM casta_tipo WHERE casta_tipo_value = 'Tinta'));
-INSERT INTO casta (casta_name, casta_tipo_id) VALUES ('Loureiro', (SELECT casta_tipo_id FROM casta_tipo WHERE casta_tipo_value = 'Branca'));
+-- Castas portuguesas (notas de seed do utilizador). Fora ficaram 3 entradas "de enchimento" (Tinto Sem
+-- Nome, Branco Desconhecido, Branco Especial). Aragonez = Tinta Roriz (a mesma casta): uma só linha com os
+-- dois nomes, para a pesquisa por casta encontrar ambos.
+DECLARE
+  TYPE t_lista IS TABLE OF VARCHAR2(60 CHAR);
+  v_tinta   casta_tipo.casta_tipo_id%TYPE;
+  v_branca  casta_tipo.casta_tipo_id%TYPE;
+  v_tintas  t_lista := t_lista(
+    'Alcoa',
+    'Alfrocheiro',
+    'Alicante Bouschet',
+    'Alvarelhão',
+    'Alvarelhão Ceitão',
+    'Amaral',
+    'Amor-Não-Me-Deixes',
+    'Amostrinha',
+    'Aragonez (Tinta Roriz)',
+    'Aramon',
+    'Arjunção',
+    'Baga',
+    'Barca',
+    'Barreto',
+    'Bastardo',
+    'Bastardo Tinto',
+    'Bonvedro',
+    'Borraçal',
+    'Bragão',
+    'Branjo',
+    'Cabinda',
+    'Caladoc',
+    'Calrão',
+    'Camarate',
+    'Campanário',
+    'Carrega Burros',
+    'Carrega Tinto',
+    'Casculho',
+    'Castelã',
+    'Castelão',
+    'Castelino',
+    'Cidadelhe',
+    'Cidreiro',
+    'Complexa',
+    'Concieira',
+    'Coração de Galo',
+    'Cornifesto',
+    'Corropio',
+    'Corvo',
+    'Deliciosa',
+    'Doçal',
+    'Doce',
+    'Donzelinho Tinto',
+    'Engomada',
+    'Esgana Cão Tinto',
+    'Espadeiro',
+    'Espadeiro Mole',
+    'Farinheira',
+    'Fepiro',
+    'Ferral',
+    'Galego',
+    'Gonçalo Pires',
+    'Gorda',
+    'Gouveio Preto',
+    'Graciosa',
+    'Grangeal',
+    'Grossa',
+    'Jaen',
+    'Lourela',
+    'Lusitano',
+    'Malandra',
+    'Malvarisco',
+    'Malvasia Preta',
+    'Manteúdo Preto',
+    'Mário Feld',
+    'Marufo',
+    'Melhorio',
+    'Melra',
+    'Mindelo',
+    'Molar',
+    'Monvedro',
+    'Moreto',
+    'Moscargo',
+    'Moscatel Galego Tinto',
+    'Mourisco',
+    'Mourisco de Semente',
+    'Mourisco de Trevões',
+    'Mulata',
+    'Negra Mole',
+    'Nevoeira',
+    'Padeiro',
+    'Parreira Matias',
+    'Patorra',
+    'Pau Ferro',
+    'Pedral',
+    'Pero Pinhão',
+    'Péxem',
+    'Pical',
+    'Pilongo',
+    'Português Azul',
+    'Preto Cardana',
+    'Preto Martinho',
+    'Primavera',
+    'Rabo de Anho',
+    'Rabo de Lobo',
+    'Rabo de Ovelha Tinto',
+    'Ramisco',
+    'Ramisco Tinto',
+    'Ricoca',
+    'Rodo',
+    'Roseira',
+    'Rufete',
+    'Saborinho',
+    'Santareno',
+    'São Saul',
+    'Sevilhão',
+    'Sousão',
+    'Tinta',
+    'Tinta Aguiar',
+    'Tinta Aurélio',
+    'Tinta Barroca',
+    'Tinta Bastardinha',
+    'Tinta Caiada',
+    'Tinta Carvalha',
+    'Tinta Fontes',
+    'Tinta Francisca',
+    'Tinta Lameira',
+    'Tinta Lisboa',
+    'Tinta Martins',
+    'Tinta Mesquita',
+    'Tinta Miúda',
+    'Tinta Negra',
+    'Tinta Penajóia',
+    'Tinta Pereira',
+    'Tinta Pomar',
+    'Tinta Porto Santo',
+    'Tinta Tabuaço',
+    'Tintem',
+    'Tintinha',
+    'Tinto-cão',
+    'Tinto Pegões',
+    'Touriga Fêmea',
+    'Touriga Franca',
+    'Touriga Nacional',
+    'Transâncora',
+    'Trincadeira',
+    'Triunfo',
+    'Valbom',
+    'Valdosa',
+    'Varejoa',
+    'Verdelho Tinto',
+    'Verdial Tinto',
+    'Vinhão',
+    'Xara',
+    'Zé do Telheiro'
+
+  );
+  v_brancas t_lista := t_lista(
+    'Alicante Branco',
+    'Almafra',
+    'Almenhaca',
+    'Antão Vaz',
+    'Alvadurão',
+    'Alvarinho',
+    'Alvar',
+    'Alvarelhão Branco',
+    'Arinto',
+    'Arinto do Interior',
+    'Avesso',
+    'Azal',
+    'Babosa',
+    'Barcelo',
+    'Bastardo Branco',
+    'Batoca',
+    'Beba',
+    'Bical',
+    'Boal Barreiro',
+    'Boal Branco',
+    'Boal Espinho',
+    'Branca de Anadia',
+    'Branco Gouvães',
+    'Branco Guimarães',
+    'Branco João',
+    'Branda',
+    'Budelho',
+    'Caínho',
+    'Caracol',
+    'Caramela',
+    'Carão de Moça',
+    'Carrasquenho',
+    'Carrega Branco',
+    'Cascal',
+    'Castália',
+    'Castelão Branco',
+    'Castelo Branco',
+    'Casteloa',
+    'Cerceal Branco',
+    'Cercial',
+    'Côdega de Larinho',
+    'Corval',
+    'Crato Espanhol',
+    'Dedo-de-Dama',
+    'Diagalves',
+    'Dona-branca',
+    'Dona-joaquina',
+    'Donzelinho Branco',
+    'Dorinto',
+    'Encruzado',
+    'Esganinho',
+    'Esganoso',
+    'Estreito Macio',
+    'Fernão Pires',
+    'Folgasão',
+    'Folha de Figueira',
+    'Fonte Cal',
+    'Galego Dourado',
+    'Generosa',
+    'Gigante',
+    'Godelho',
+    'Gouveio',
+    'Gouveio Estimado',
+    'Gouveio Real',
+    'Granho',
+    'Lameiro',
+    'Larião',
+    'Leira',
+    'Lilás',
+    'Loureiro',
+    'Luzidio',
+    'Malvasia',
+    'Malvasia Bianca',
+    'Malvasia Branca',
+    'Malvasia Branca de S. Jorge',
+    'Malvasia Cândida',
+    'Malvasia Fina/Boal',
+    'Malvasia Parda',
+    'Malvasia Rei',
+    'Malvasia Romana',
+    'Malvia',
+    'Malvoeira',
+    'Manteúdo',
+    'Marquinhas',
+    'Molinha',
+    'Moscatel Galego Branco',
+    'Moscatel Graúdo',
+    'Moscatel Nunes',
+    'Mourisco Branco',
+    'Naia',
+    'Pé Comprido',
+    'Perigo',
+    'Perrum',
+    'Pinheira Branca',
+    'Pintosa',
+    'Praça',
+    'Promissão',
+    'Rabigato',
+    'Rabigato Franco',
+    'Rabigato Moreno',
+    'Rabo de Ovelha',
+    'Ratinho',
+    'Roupeiro Branco',
+    'Sabro',
+    'Samarrinho',
+    'Santoal',
+    'São Mamede',
+    'Sarigo',
+    'Seara Nova',
+    'Semilão',
+    'Sercial',
+    'Sercialinho',
+    'Síria',
+    'Tália',
+    'Tamarez',
+    'Terrantês',
+    'Terrantez da Terceira',
+    'Terrantez do Pico',
+    'Touriga Branca',
+    'Trajadura',
+    'Trincadeira Branca',
+    'Trincadeira-das-pratas',
+    'Uva Cão',
+    'Uva Cavaco',
+    'Uva Salsa',
+    'Valente',
+    'Valveirinho',
+    'Vencedor',
+    'Verdelho',
+    'Verdial Branco',
+    'Viosinho',
+    'Vital'
+
+  );
+BEGIN
+  SELECT casta_tipo_id INTO v_tinta  FROM casta_tipo WHERE casta_tipo_value = 'Tinta';
+  SELECT casta_tipo_id INTO v_branca FROM casta_tipo WHERE casta_tipo_value = 'Branca';
+  FOR i IN 1 .. v_tintas.COUNT LOOP
+    INSERT INTO casta (casta_name, casta_tipo_id) VALUES (v_tintas(i), v_tinta);
+  END LOOP;
+  FOR i IN 1 .. v_brancas.COUNT LOOP
+    INSERT INTO casta (casta_name, casta_tipo_id) VALUES (v_brancas(i), v_branca);
+  END LOOP;
+END;
+/
+
+-- Cask (madeira da barrica) e formato da barrica. Usados pelo vinho em vinho_cask; a madeira é também
+-- partilhada com o whisky (whisky_cask) — os "Ex-Bourbon"/"Ex-Xerez"/... do whisky entram aqui quando
+-- houver whisky real (as aguardentes têm lookup próprio, aguardente_tipo_cask).
+INSERT INTO cask (cask_value) VALUES ('Carvalho Francês');
+INSERT INTO cask (cask_value) VALUES ('Carvalho Americano');
+INSERT INTO cask (cask_value) VALUES ('Carvalho Húngaro');
+INSERT INTO cask (cask_value) VALUES ('Carvalho Esloveno');
+INSERT INTO cask (cask_value) VALUES ('Acácia');
+INSERT INTO cask (cask_value) VALUES ('Castanheiro');
+
+INSERT INTO cask_formato (cask_formato_value) VALUES ('Bordeaux');
+INSERT INTO cask_formato (cask_formato_value) VALUES ('Burgundy');
+INSERT INTO cask_formato (cask_formato_value) VALUES ('Demi-Muid');
+INSERT INTO cask_formato (cask_formato_value) VALUES ('Tonel');
+INSERT INTO cask_formato (cask_formato_value) VALUES ('Balseiro');
+INSERT INTO cask_formato (cask_formato_value) VALUES ('Foudre');
+INSERT INTO cask_formato (cask_formato_value) VALUES ('Oval');
 
 -- Whisky (lookups preenchidos para catálogo futuro; sem itens seed nesta categoria
 -- por não haver produção portuguesa relevante a usar como exemplo real)
 INSERT INTO whisky_tipo (whisky_tipo_value) VALUES ('Single Malt');
-INSERT INTO whisky_tipo (whisky_tipo_value) VALUES ('Blended');
+INSERT INTO whisky_tipo (whisky_tipo_value) VALUES ('Single Grain');
+INSERT INTO whisky_tipo (whisky_tipo_value) VALUES ('Blended Scotch');
+INSERT INTO whisky_tipo (whisky_tipo_value) VALUES ('Blended Malt');
 INSERT INTO whisky_tipo (whisky_tipo_value) VALUES ('Bourbon');
 INSERT INTO whisky_tipo (whisky_tipo_value) VALUES ('Rye');
+INSERT INTO whisky_tipo (whisky_tipo_value) VALUES ('Tennessee');
 
 INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Speyside');
-INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Islay');
 INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Highlands');
+INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Islay');
 INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Lowlands');
+INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Campbeltown');
+INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Islands');
 INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Kentucky');
+INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Tennessee');
+INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Irlanda');
+INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Japão');
+INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Canadá');
+INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Índia');
+INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Taiwan');
+INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Austrália');
+INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Portugal');
+INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Espanha');
 
 INSERT INTO whisky_corpo (whisky_corpo_value) VALUES ('Leve');
 INSERT INTO whisky_corpo (whisky_corpo_value) VALUES ('Médio');
 INSERT INTO whisky_corpo (whisky_corpo_value) VALUES ('Encorpado');
-
-INSERT INTO cask (cask_value) VALUES ('Ex-Bourbon');
-INSERT INTO cask (cask_value) VALUES ('Ex-Sherry');
-INSERT INTO cask (cask_value) VALUES ('Ex-Vinho do Porto');
-INSERT INTO cask (cask_value) VALUES ('Carvalho Novo');
 
 -- Gin
 INSERT INTO gin_corpo (gin_corpo_value) VALUES ('Leve');
 INSERT INTO gin_corpo (gin_corpo_value) VALUES ('Médio');
 INSERT INTO gin_corpo (gin_corpo_value) VALUES ('Encorpado');
 
-INSERT INTO gin_destilacao (gin_destilacao_value) VALUES ('Pot Still');
-INSERT INTO gin_destilacao (gin_destilacao_value) VALUES ('Column Still');
-INSERT INTO gin_destilacao (gin_destilacao_value) VALUES ('Vapor Infusion');
+INSERT INTO gin_destilacao (gin_destilacao_value) VALUES ('Alambique');
+INSERT INTO gin_destilacao (gin_destilacao_value) VALUES ('Infusão de Vapor');
+INSERT INTO gin_destilacao (gin_destilacao_value) VALUES ('Vácuo');
+INSERT INTO gin_destilacao (gin_destilacao_value) VALUES ('Composto');
 
+-- Botânicos: famílias aromáticas (não botânicos individuais)
 INSERT INTO botanico (botanico_name) VALUES ('Zimbro');
-INSERT INTO botanico (botanico_name) VALUES ('Coentros');
-INSERT INTO botanico (botanico_name) VALUES ('Casca de Citrinos');
-INSERT INTO botanico (botanico_name) VALUES ('Alecrim');
-INSERT INTO botanico (botanico_name) VALUES ('Alfazema');
-INSERT INTO botanico (botanico_name) VALUES ('Erva-Príncipe');
-INSERT INTO botanico (botanico_name) VALUES ('Cardamomo');
+INSERT INTO botanico (botanico_name) VALUES ('Citrino');
+INSERT INTO botanico (botanico_name) VALUES ('Especiaria e Picante');
+INSERT INTO botanico (botanico_name) VALUES ('Floral');
+INSERT INTO botanico (botanico_name) VALUES ('Herbáceo e Verde');
+INSERT INTO botanico (botanico_name) VALUES ('Terroso');
+INSERT INTO botanico (botanico_name) VALUES ('Frutado');
 
 -- Licor
-INSERT INTO licor_base (licor_base_value) VALUES ('Aguardente Vínica');
-INSERT INTO licor_base (licor_base_value) VALUES ('Aguardente Bagaceira');
-INSERT INTO licor_base (licor_base_value) VALUES ('Álcool Neutro');
-INSERT INTO licor_base (licor_base_value) VALUES ('Aguardente de Cereja');
+INSERT INTO licor_base (licor_base_value) VALUES ('Neutra');
+INSERT INTO licor_base (licor_base_value) VALUES ('Vodka');
+INSERT INTO licor_base (licor_base_value) VALUES ('Vínica');
+INSERT INTO licor_base (licor_base_value) VALUES ('Rum');
+INSERT INTO licor_base (licor_base_value) VALUES ('Whisky');
+INSERT INTO licor_base (licor_base_value) VALUES ('Tequila');
+INSERT INTO licor_base (licor_base_value) VALUES ('Mezcal');
 
-INSERT INTO sabor_licor (sabor_licor_value) VALUES ('Ervas');
 INSERT INTO sabor_licor (sabor_licor_value) VALUES ('Cereja');
-INSERT INTO sabor_licor (sabor_licor_value) VALUES ('Citrinos');
-INSERT INTO sabor_licor (sabor_licor_value) VALUES ('Amêndoa');
+INSERT INTO sabor_licor (sabor_licor_value) VALUES ('Limoncello');
+INSERT INTO sabor_licor (sabor_licor_value) VALUES ('Frutos do Bosque');
+INSERT INTO sabor_licor (sabor_licor_value) VALUES ('Pêssego');
+INSERT INTO sabor_licor (sabor_licor_value) VALUES ('Laranja');
+INSERT INTO sabor_licor (sabor_licor_value) VALUES ('Banana');
+INSERT INTO sabor_licor (sabor_licor_value) VALUES ('Maracujá');
+INSERT INTO sabor_licor (sabor_licor_value) VALUES ('Ervas e Especiarias');
+INSERT INTO sabor_licor (sabor_licor_value) VALUES ('Frutos Secos');
 INSERT INTO sabor_licor (sabor_licor_value) VALUES ('Chocolate');
+INSERT INTO sabor_licor (sabor_licor_value) VALUES ('Amêndoa');
+INSERT INTO sabor_licor (sabor_licor_value) VALUES ('Baunilha');
+INSERT INTO sabor_licor (sabor_licor_value) VALUES ('Cremosos');
+INSERT INTO sabor_licor (sabor_licor_value) VALUES ('Medronho');
+INSERT INTO sabor_licor (sabor_licor_value) VALUES ('Amora');
+INSERT INTO sabor_licor (sabor_licor_value) VALUES ('Mirtilo');
+INSERT INTO sabor_licor (sabor_licor_value) VALUES ('Groselha');
 
 -- Vodka (lookups preenchidos para catálogo futuro; sem itens seed nesta categoria
 -- pela mesma razão do whisky)
 INSERT INTO vodka_materia_prima (vodka_materia_prima_value) VALUES ('Trigo');
-INSERT INTO vodka_materia_prima (vodka_materia_prima_value) VALUES ('Batata');
 INSERT INTO vodka_materia_prima (vodka_materia_prima_value) VALUES ('Centeio');
+INSERT INTO vodka_materia_prima (vodka_materia_prima_value) VALUES ('Cevada');
 INSERT INTO vodka_materia_prima (vodka_materia_prima_value) VALUES ('Milho');
+INSERT INTO vodka_materia_prima (vodka_materia_prima_value) VALUES ('Arroz');
+INSERT INTO vodka_materia_prima (vodka_materia_prima_value) VALUES ('Batata');
+INSERT INTO vodka_materia_prima (vodka_materia_prima_value) VALUES ('Mandioca');
+INSERT INTO vodka_materia_prima (vodka_materia_prima_value) VALUES ('Cana de Açúcar');
+INSERT INTO vodka_materia_prima (vodka_materia_prima_value) VALUES ('Melaço');
+INSERT INTO vodka_materia_prima (vodka_materia_prima_value) VALUES ('Fruta');
+INSERT INTO vodka_materia_prima (vodka_materia_prima_value) VALUES ('Beterraba Sacarina');
+INSERT INTO vodka_materia_prima (vodka_materia_prima_value) VALUES ('Soro de Leite');
 
--- Aguardente
+-- Aguardente. "Sem estágio" já não é um valor de cask: uma aguardente sem barrica não tem linhas em
+-- aguardente_tipo_cask_relation (aguardente_idade_anos = 0). Base: as notas + Bagaço de Uva e Vinho
+-- (bagaceira e aguardente vínica não se distinguiriam do medronho só com 'Fruta').
 INSERT INTO aguardente_corpo (aguardente_corpo_value) VALUES ('Leve');
 INSERT INTO aguardente_corpo (aguardente_corpo_value) VALUES ('Médio');
 INSERT INTO aguardente_corpo (aguardente_corpo_value) VALUES ('Encorpado');
 
-INSERT INTO aguardente_tipo_cask (aguardente_tipo_cask_value) VALUES ('Carvalho Novo');
-INSERT INTO aguardente_tipo_cask (aguardente_tipo_cask_value) VALUES ('Ex-Vinho do Porto');
-INSERT INTO aguardente_tipo_cask (aguardente_tipo_cask_value) VALUES ('Inox (sem estágio)');
+INSERT INTO aguardente_tipo_cask (aguardente_tipo_cask_value) VALUES ('Carvalho');
+INSERT INTO aguardente_tipo_cask (aguardente_tipo_cask_value) VALUES ('Carvalho Americano');
+INSERT INTO aguardente_tipo_cask (aguardente_tipo_cask_value) VALUES ('Carvalho Francês');
+INSERT INTO aguardente_tipo_cask (aguardente_tipo_cask_value) VALUES ('Carvalho do Leste Europeu');
+INSERT INTO aguardente_tipo_cask (aguardente_tipo_cask_value) VALUES ('Madeira Nativa');
+INSERT INTO aguardente_tipo_cask (aguardente_tipo_cask_value) VALUES ('Amburana');
+INSERT INTO aguardente_tipo_cask (aguardente_tipo_cask_value) VALUES ('Bálsamo');
+INSERT INTO aguardente_tipo_cask (aguardente_tipo_cask_value) VALUES ('Jequitibá');
+INSERT INTO aguardente_tipo_cask (aguardente_tipo_cask_value) VALUES ('Castanheira');
+INSERT INTO aguardente_tipo_cask (aguardente_tipo_cask_value) VALUES ('Ipê');
+INSERT INTO aguardente_tipo_cask (aguardente_tipo_cask_value) VALUES ('Pau-Brasil');
+INSERT INTO aguardente_tipo_cask (aguardente_tipo_cask_value) VALUES ('Segundo-Uso');
+INSERT INTO aguardente_tipo_cask (aguardente_tipo_cask_value) VALUES ('Ex-Bourbon');
+INSERT INTO aguardente_tipo_cask (aguardente_tipo_cask_value) VALUES ('Ex-Xerez');
+INSERT INTO aguardente_tipo_cask (aguardente_tipo_cask_value) VALUES ('Ex-Vinho');
 
-INSERT INTO aguardente_materia_prima (aguardente_materia_prima_value) VALUES ('Medronho');
+INSERT INTO aguardente_materia_prima (aguardente_materia_prima_value) VALUES ('Fruta');
+INSERT INTO aguardente_materia_prima (aguardente_materia_prima_value) VALUES ('Cereal');
+INSERT INTO aguardente_materia_prima (aguardente_materia_prima_value) VALUES ('Cana de Açúcar');
+INSERT INTO aguardente_materia_prima (aguardente_materia_prima_value) VALUES ('Agave');
+INSERT INTO aguardente_materia_prima (aguardente_materia_prima_value) VALUES ('Tubérculo');
 INSERT INTO aguardente_materia_prima (aguardente_materia_prima_value) VALUES ('Bagaço de Uva');
-INSERT INTO aguardente_materia_prima (aguardente_materia_prima_value) VALUES ('Cereja');
-INSERT INTO aguardente_materia_prima (aguardente_materia_prima_value) VALUES ('Cana-de-açúcar');
+INSERT INTO aguardente_materia_prima (aguardente_materia_prima_value) VALUES ('Vinho');
 
 COMMIT;

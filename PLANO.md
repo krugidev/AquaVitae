@@ -3,7 +3,7 @@
 Roadmap vivo do MVP. Atualizar isto no fim de cada sessão de trabalho relevante — é o que uma sessão
 nova do Claude Code (ou tu, ao voltares passado um tempo) deve ler primeiro para saber onde ficámos.
 
-## ▶ Retomar aqui (última atualização: 2026-09-18, fim de sessão)
+## ▶ Retomar aqui (última atualização: 2026-09-19)
 
 **Ponto da situação:** BD e backend estão quase fechados para uma 1.ª versão; o Android ainda é só esqueleto.
 Contrato completo dos endpoints (o que existe, o que falta) em [`backend/API_ENDPOINTS.md`](backend/API_ENDPOINTS.md).
@@ -27,23 +27,25 @@ o dar por fechado). A `main` só tem a landing page em `docs/` (GitHub Pages) al
 3. **Lacunas descobertas ao reler os mockups** (não estavam em `API_ENDPOINTS.md`):
    - `ReviewResponse` devolve só o username: o mockup pede **avatar + nome** do autor em cada review.
    - **Histórico de reviews do perfil** → falta `GET /api/users/me/reviews` (com a bebida associada).
-   - **Pesquisa** só procura no nome da bebida; o mockup pede também por **produtor** e por **casta** (e, talvez,
-     produtores como resultado próprio — a decidir).
-   - **Filtro por região** não existe em `GET /api/bebidas` (só `paisId`). E `/api/lookup/regioes?paisId=` usa o id
-     de `produtor_pais`, enquanto o filtro do catálogo usa o de `pais` — são tabelas separadas com ids
-     independentes; unificar antes de o Android usar os dois juntos.
+   - **Pesquisa** só procura no nome da bebida; o mockup pede também por **produtor** e por **casta** na barra de pesquisa (podendo limitar os resultados aos filtros aplicados bem como limpá-los)(e, talvez,
+     produtores como resultado próprio — a decidir). 
+   - **Filtro por região** não existe em `GET /api/bebidas` (só `paisId`, dependendo do país terá diferentes regiões). Os ids de `pais` e `produtor_pais` (o de `/api/lookup/regioes?paisId=` e o do filtro do catálogo)
+     **já coincidem** (2026-09-19; mantidas as duas tabelas por decisão tua, ver `database/README.md`). Falta só o
+     filtro `regiao` em `GET /api/bebidas`.
    - **Detalhe/cartões das outras categorias** (whisky/gin/licor/vodka/aguardente): só `vinho` tem subtype
      implementado. Depende de haver dados reais dessas categorias.
    - **Termos e condições** (popup no login/registo): decidir se é texto embutido na app ou servido pela API.
    - **Email do código de recuperação de password:** endpoint pronto, envio real por email adiado (só log).
-4. **Transversal:** só há testes automáticos para a verificação de links (21); nenhum para services/controllers.
+4. **Transversal:** só há testes automáticos para a verificação de links (21) e a ordenação dos lookups (4); nenhum
+   para services/controllers.
    `Page<...>` sai como JSON do Spring (aviso de "não estável"); trocar por DTO próprio antes de produção.
 
 **Coisas do utilizador em paralelo (não bloqueiam o backend):**
-- Documento de **seeds** (`—--------------- DADOS A INSERIR NA.txt`, na raiz, não commitado). Ver "Decisões de dados"
-  mais abaixo: 250 castas (a lista capturada do Figma **ainda não foi confirmada pelo utilizador**), catálogo real de
-  bebidas/produtores, lookups das outras categorias (propostas de valores já dadas em conversa; **por escrever no
-  seed**). Para cada link de retalhista com rede de afiliados são precisas **duas URLs** (afiliado + página do
+- Documento de **seeds** (`android/AQUAVITAESEEDS-NOTES`, não commitado; a cópia da raiz, `—--------------- DADOS A
+  INSERIR NA.txt`, é a versão antiga). Castas, países e lookups **já estão no seed e na BD** (ver "Seeds das notas",
+  2026-09-19). Falta o catálogo real de bebidas/produtores/retalhistas — a cada lote (semanal), o Claude ajuda a mapear as
+  características de cada bebida aos valores dos lookups (NULL onde não houver fonte). Ver também "Decisões de dados"
+  mais abaixo. Para cada link de retalhista com rede de afiliados são precisas **duas URLs** (afiliado + página do
   produto sem tracking, para a verificação diária). Correr `POST /api/admin/links-compra/verificar` depois de cada lote.
 - **Awin:** candidatura submetida (Promotional Type = Comparison Engine, sector "Wine, spirits and tobacco"),
   **pendente de aprovação**. Site enviado: `https://krugidev.github.io/AquaVitae/` — **não mudar o nome do
@@ -218,6 +220,42 @@ quando já não existem, mantendo a linha como histórico. Detalhe do funcioname
 - **Ainda por fazer:** atualizar o preço a partir do JSON-LD (já é lido, não é usado); para links da Awin, o
   melhor sinal de "ainda existe" será o próprio feed (produto saiu do feed / `in_stock = 0`) quando houver
   aprovação; o ecrã Android "Onde comprar" (ver secção seguinte do `API_ENDPOINTS.md` quando for a vez dele).
+
+### Seeds das notas + barrica do vinho (concluída, 2026-09-19)
+
+Fonte: `android/AQUAVITAESEEDS-NOTES`. Aplicado à BD de dev por `database/ddl/06_patch_seed_notas.sql` (repetível) e
+refletido em `seed/01_lookups.sql` / `02_bebidas.sql` (rebuild do zero). **Validado:** reconstrução do zero num schema
+temporário e patch sobre o estado antigo dão conteúdo idêntico (916 linhas de dump, incluindo os atributos das 16
+bebidas demo), 0 mojibake, 25 testes verdes, API a arrancar com `ddl-auto: validate` e endpoints testados por `curl`.
+
+- **Castas: 277** (145 tintas + 132 brancas). As notas têm 280: ficaram de fora 3 entradas "de enchimento" (`Tinto Sem
+  Nome`, `Branco Desconhecido`, `Branco Especial`). `Tinta Roriz` = `Aragonez` → uma só linha `Aragonez (Tinta Roriz)`
+  (mantém a ligação aos 5 vinhos demo e a pesquisa por casta acha ambos os nomes).
+- **Países: 218** (as notas têm 222, e a lista `PAÍS` é igual à `PRODUTOR_PAÍS`): grafias em PT-PT e duplicados fundidos
+  (Holanda = Países Baixos, Suazilândia = Essuatíni, `Congo`, Estados Federados da Micronésia). **Mantidas as duas
+  tabelas** (decisão tua) com os mesmos ids — receita e verificação em `database/README.md`. As sequências identity da
+  dev tinham divergido (inserts revertidos, cache, reinícios): o 1.º patch falhou na minha própria verificação e foi
+  revertido; o patch final copia ids explícitos e reinicia o identity. Só corrigi erros claros (acentos em falta,
+  "ê/ô" brasileiros) e duplicados; deixei como estavam formas menos óbvias que têm variante PT-PT (Botswana/Botsuana,
+  Kuwait/Koweit, Djibouti/Jibuti, Quirguistão/Quirguizistão, Uzbequistão/Usbequistão, ...) — dizes se as queres trocadas.
+- **Barrica do vinho:** `cask_formato` (7) + `vinho_cask` (vinho, madeira, formato, meses de estágio) — só BD, sem
+  entidade nem endpoint (nenhum mockup mostra barrica). `cask` passou a ter as 6 madeiras do vinho; saíram os 4
+  placeholders de whisky (voltam quando houver whisky real).
+- **Lookups trocados** (dados demo remapeados no sítio, ids e relações preservados): botânicos = famílias (Zimbro,
+  Citrino, Especiaria e Picante, Floral, Herbáceo e Verde, Terroso, Frutado); destilação do gin (Alambique, Infusão de
+  Vapor, Vácuo, Composto); base de licor (Neutra, Vodka, Vínica, Rum, Whisky, Tequila, Mezcal) — as 2 ginjinhas demo
+  ficaram com base `NULL` por não terem equivalente; sabores de licor (17); aguardente: base = notas + `Bagaço de
+  Uva` e `Vinho` (acrescentados por decisão tua), 15 tipos de cask, e `Inox (sem estágio)` deixou de existir (sem
+  barrica = sem linhas na relação); `vinho_tipo`: `Verde` → `Frisante` + `Sobremesa`; whisky: tipos e regiões das
+  notas; vodka: 12 matérias-primas. `Moderador` **não** inserido (as notas dizem "futuramente").
+- **Bug do runner (não era só o `NLS_LANG`):** `run-migrations.ps1` corrompia acentos no Windows PowerShell 5.1
+  (`Get-Content` lê UTF-8 sem BOM como ANSI). Corrigido com `-Encoding UTF8`; nota em `database/README.md` e `CLAUDE.md`.
+- **API:** `/lookup/paises`, `/castas` e `/regioes` passam a vir por ordem alfabética (collator pt-PT — o Oracle ordena
+  por código de carácter e poria "África" depois de "Zimbábue"; `OrdemAlfabetica.kt`, +4 testes). Se quiseres
+  **Portugal no topo** da lista de países, é uma linha (decisão de produto, não tomada).
+- **Pendente:** `Vinho` (entidade/DTO) ainda não expõe a barrica; whisky/vodka/gin/licor/aguardente continuam sem subtype
+  no backend; `produtor_regiao` tem valores compostos nos demo (`Vinho Verde — Melgaço`, `Arraiolos — Alentejo`) que
+  dariam pílulas feias no filtro por região — no catálogo real, usar só a região ("Vinho Verde", "Alentejo").
 
 ### Decisões de dados: catálogo curado vs. ofertas de afiliados (2026-09-18)
 

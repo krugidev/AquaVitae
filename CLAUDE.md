@@ -72,7 +72,15 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
 - **Encoding do `sqlplus` (mojibake):** com `docker exec ... sqlplus` passa sempre
   `-e NLS_LANG=AMERICAN_AMERICA.AL32UTF8` (os `run-migrations` já passam) e envia o SQL **a partir de um ficheiro**,
   não em strings inline do shell com acentos. Ao mexer em dados antigos, procurar 3 padrões de corrupção:
-  `LIKE '%Ã%'`, `LIKE '%â€%'` e `LIKE '%Â%'`.
+  `LIKE '%Ã%'`, `LIKE '%â€%'` e `LIKE '%Â%'`. **No Windows PowerShell 5.1** (o único instalado nesta máquina) o
+  `Get-Content` sem `-Encoding UTF8` lê os `.sql` (UTF-8 sem BOM) como ANSI e os acentos chegam duplamente
+  codificados mesmo com `NLS_LANG` certo — o `run-migrations.ps1` já passa `-Encoding UTF8`; para scripts avulsos,
+  `docker cp` + `@ficheiro` dentro do contentor evita o PowerShell (no Git Bash: `MSYS_NO_PATHCONV=1` e `cygpath -w`
+  na origem do `docker cp`).
+- **`pais` e `produtor_pais` são duas tabelas com os MESMOS ids** (decisão do utilizador, 2026-09-19: manter as duas):
+  o filtro do catálogo usa `pais.bebida_pais_id` e `/lookup/regioes` usa `produtor_pais_id`. Ao acrescentar um país,
+  seguir a receita de `database/README.md` (mesmo id nas duas) e conferir com a query de verificação — "inserir na mesma
+  ordem" não chega: os identity das duas divergem com inserts revertidos, cache ou reinícios (aconteceu na dev).
 
 **Ferramentas nesta máquina (Windows)**
 

@@ -51,25 +51,29 @@ class LookupController(
     fun categoriasBebida(): List<LookupItemDto> =
         bebidaCategoriaRepository.findAll().map { LookupItemDto(it.id, it.value) }
 
+    // ~280 castas: por ordem alfabética (o Oracle ordenaria por código de carácter, ver OrdemAlfabetica.kt).
     @GetMapping("/castas")
     fun castas(@RequestParam tipoId: Long?): List<CastaDto> {
         val castas = if (tipoId != null) castaRepository.findByTipo_Id(tipoId) else castaRepository.findAll()
-        return castas.map { CastaDto.from(it) }
+        return castas.map { CastaDto.from(it) }.ordenadoPorNome { it.nome }
     }
 
     @GetMapping("/casta-tipos")
     fun castaTipos(): List<LookupItemDto> =
         castaTipoRepository.findAll().map { it.toLookupItemDto() }
 
+    // ~218 países: por ordem alfabética (ver OrdemAlfabetica.kt).
     @GetMapping("/paises")
     fun paises(): List<LookupItemDto> =
-        paisRepository.findAll().map { LookupItemDto(it.id, it.value) }
+        paisRepository.findAll().map { LookupItemDto(it.id, it.value) }.ordenadoPorNome { it.nome }
 
-    // paisId aqui refere-se a produtor_pais_id (regiões são um atributo do produtor,
-    // não da bebida — ver nota em ProdutorRepository.findDistinctRegioesByPaisId).
+    // paisId aqui refere-se a produtor_pais_id (regiões são um atributo do produtor, não da bebida — ver
+    // nota em ProdutorRepository.findDistinctRegioesByPaisId). pais e produtor_pais são duas tabelas mas
+    // com os MESMOS ids (convenção do seed, ver database/README.md), por isso é o mesmo id que
+    // GET /api/bebidas?paisId= e /lookup/paises devolvem.
     @GetMapping("/regioes")
     fun regioes(@RequestParam paisId: Long): List<String> =
-        produtorRepository.findDistinctRegioesByPaisId(paisId)
+        produtorRepository.findDistinctRegioesByPaisId(paisId).ordenadoPorNome { it }
 
     @GetMapping("/vinho/corpos")
     fun vinhoCorpos(): List<LookupItemDto> =
