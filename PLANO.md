@@ -5,7 +5,8 @@ nova do Claude Code (ou tu, ao voltares passado um tempo) deve ler primeiro para
 
 ## ▶ Retomar aqui (última atualização: 2026-09-19)
 
-**Ponto da situação:** BD e backend estão quase fechados para uma 1.ª versão; o Android ainda é só esqueleto.
+**Ponto da situação:** BD e backend têm agora todos os endpoints da 1.ª versão implementados e validados ao vivo
+(os últimos em 2026-09-19); o Android ainda é só esqueleto.
 Contrato completo dos endpoints (o que existe, o que falta) em [`backend/API_ENDPOINTS.md`](backend/API_ENDPOINTS.md).
 
 **Git:** todo o trabalho está na branch `feature/api-endpoints-design`, PR aberto:
@@ -13,32 +14,29 @@ https://github.com/krugidev/AquaVitae/pull/1 (a descrição do PR ainda só fala
 o dar por fechado). A `main` só tem a landing page em `docs/` (GitHub Pages) além do que já lá estava.
 `gh` está instalado e autenticado, mas no Git Bash não está no PATH: `export PATH="/c/Program Files/GitHub CLI:$PATH"`.
 
-**O que falta no backend, por ordem sugerida** (tudo desenhado; nada disto está implementado):
-1. **Produtor** — `GET /api/produtores/{id}` ganha `totalProdutos`; `GET /api/produtores/{id}/bebidas?categoriaId=`;
-   `GET /api/produtores/destaque` (produtor da semana, **computado**, sem coluna nova). Hoje o
-   `ProdutorController` é mínimo (só `GET /{id}`, sem service).
-2. **Caves** — `CaveResponse` com `totalGarrafas`/`valorTotal`/`totalProntasAAbrir`; `CaveDetailResponse` separado em
-   `prontasAAbrir[]`/`emGuarda[]` (`?sort=preco|dataConsumo`); `CaveBebidaRequest` com `janelaInicio`/`janelaFim`/
-   `notas`; **`CaveBebidaResponse` também precisa de `janelaInicio`/`janelaFim` e da categoria da bebida** (a lista do
-   mockup mostra-os). **A decidir antes de implementar:** (a) "pronta a abrir" = hoje dentro da janela, e depois de a
-   janela acabar? (b) "marcar como consumida" no mockup "reduz o contador em 1" — o `PATCH` atual marca a linha
-   inteira como consumida; o mais limpo é consumir 1 garrafa (decrementar `quantidade`, e guardar a consumida numa
-   linha própria com `data_consumo` para não perder histórico).
-3. **Lacunas descobertas ao reler os mockups** (não estavam em `API_ENDPOINTS.md`):
-   - `ReviewResponse` devolve só o username: o mockup pede **avatar + nome** do autor em cada review.
-   - **Histórico de reviews do perfil** → falta `GET /api/users/me/reviews` (com a bebida associada).
-   - **Pesquisa** só procura no nome da bebida; o mockup pede também por **produtor** e por **casta** na barra de pesquisa (podendo limitar os resultados aos filtros aplicados bem como limpá-los)(e, talvez,
-     produtores como resultado próprio — a decidir). 
-   - **Filtro por região** não existe em `GET /api/bebidas` (só `paisId`, dependendo do país terá diferentes regiões). Os ids de `pais` e `produtor_pais` (o de `/api/lookup/regioes?paisId=` e o do filtro do catálogo)
-     **já coincidem** (2026-09-19; mantidas as duas tabelas por decisão tua, ver `database/README.md`). Falta só o
-     filtro `regiao` em `GET /api/bebidas`.
-   - **Detalhe/cartões das outras categorias** (whisky/gin/licor/vodka/aguardente): só `vinho` tem subtype
-     implementado. Depende de haver dados reais dessas categorias.
-   - **Termos e condições** (popup no login/registo): decidir se é texto embutido na app ou servido pela API.
-   - **Email do código de recuperação de password:** endpoint pronto, envio real por email adiado (só log).
-4. **Transversal:** só há testes automáticos para a verificação de links (21) e a ordenação dos lookups (4); nenhum
-   para services/controllers.
-   `Page<...>` sai como JSON do Spring (aviso de "não estável"); trocar por DTO próprio antes de produção.
+**✅ Validado ao vivo (2026-09-19, contra o Oracle real):** os endpoints de Produtor, Caves, reviews (autor + histórico)
+e a pesquisa/filtro por região do catálogo correram contra a BD de dev (99 verificações, ver "Backend — fatia 4") e
+têm 57 testes automáticos que não precisam de BD. **Docker:** depois de um reinício do Windows o Docker Desktop pode
+falhar a arrancar (`sailor-ingest.sock ... rename ... The file cannot be accessed by the system`; resolveu-se com um novo
+reinício) e o contentor Oracle fica parado (`docker compose up -d` em `database/`). **Nunca "Reset to factory defaults"**
+no diálogo do Docker: apaga contentores e volumes, incluindo a BD.
+
+**O que falta no backend** (1.ª versão):
+1. ✅ **Produtor, Caves e lacunas dos mockups** (reviews com autor, histórico de reviews, pesquisa por produtor/casta,
+   filtro por região) — implementado e validado ao vivo em 2026-09-19, ver "Backend — fatia 4" mais abaixo.
+2. **A decidir (produto):** termos e condições (popup no login/registo) — texto embutido na app ou servido pela API;
+   produtores como resultado próprio da pesquisa (`GET /api/produtores?search=`).
+   **Regiões por país — decidido em 2026-09-19 (opção B), a implementar a seguir:** tabela de lookup `regiao` (país +
+   nome) e `produtor` passa a apontar para ela por FK, em vez do texto livre `produtor_regiao` (que gerava pílulas a
+   mais com gralhas ou variantes). Regiões só para os países mais populares (Portugal primeiro; Espanha, EUA, Inglaterra,
+   ...); as restantes acrescentam-se à medida que entrarem produtos. **Douro e Porto são duas regiões separadas.**
+3. **Depende de dados reais:** detalhe/cartões das outras categorias (whisky/gin/licor/vodka/aguardente) — só `vinho`
+   tem subtype implementado.
+4. **Adiado:** email do código de recuperação de password (endpoint pronto, envio real por email adiado — só log).
+5. **Transversal:** os testes são só de regras puras (verificação de links 21, ordenação alfabética 4, caves 22, produtor
+   da semana 7, HQL das `@Query` 2, arranque do contexto sem BD 1); nenhum de services/controllers com BD. `Page<...>` sai como JSON do Spring (aviso de "não
+   estável"): trocar por DTO próprio antes de produção. A pesquisa por texto distingue acentos (`Esporao` não acha
+   `Esporão`).
 
 **Coisas do utilizador em paralelo (não bloqueiam o backend):**
 - Documento de **seeds** (`android/AQUAVITAESEEDS-NOTES`, não commitado; a cópia da raiz, `—--------------- DADOS A
@@ -47,8 +45,15 @@ o dar por fechado). A `main` só tem a landing page em `docs/` (GitHub Pages) al
   características de cada bebida aos valores dos lookups (NULL onde não houver fonte). Ver também "Decisões de dados"
   mais abaixo. Para cada link de retalhista com rede de afiliados são precisas **duas URLs** (afiliado + página do
   produto sem tracking, para a verificação diária). Correr `POST /api/admin/links-compra/verificar` depois de cada lote.
-- **Awin:** candidatura submetida (Promotional Type = Comparison Engine, sector "Wine, spirits and tobacco"),
-  **pendente de aprovação**. Site enviado: `https://krugidev.github.io/AquaVitae/` — **não mudar o nome do
+- **Awin:** já és afiliado (dito por ti em 2026-09-19; a candidatura tinha sido submetida como Comparison Engine, sector
+  "Wine, spirits and tobacco"). **Para incorporar os produtos falta saber/decidir:** (a) a que anunciantes (retalhistas)
+  estás ligado e quais interessam; (b) como obter os dados — feeds de produtos da Awin (o URL do feed leva uma chave:
+  vai para variável de ambiente, **nunca para o repo**); (c) como casar cada produto do feed com uma bebida do catálogo
+  (um `bebida_ean` ajudava — lacuna de schema já registada em "Por fazer depois" —, senão por nome). Mapeamento previsto,
+  **a confirmar com um feed real**: link de afiliado → `bebida_link_compra_url`, link do produto sem tracking →
+  `..._url_verificacao`, preço → `..._preco_atual`, stock → `is_ativo` (o feed é o melhor sinal de "ainda existe").
+  Continua a valer: os atributos da bebida são curados à mão; da Awin só vêm as ofertas.
+  Site enviado: `https://krugidev.github.io/AquaVitae/` — **não mudar o nome do
   repositório nem pôr "Custom domain" nas definições do Pages** (aconteceu por engano uma vez e desviou o site;
   já revertido). A ver outros afiliados/retalhistas com programa próprio.
 
@@ -257,12 +262,54 @@ bebidas demo), 0 mojibake, 25 testes verdes, API a arrancar com `ddl-auto: valid
   no backend; `produtor_regiao` tem valores compostos nos demo (`Vinho Verde — Melgaço`, `Arraiolos — Alentejo`) que
   dariam pílulas feias no filtro por região — no catálogo real, usar só a região ("Vinho Verde", "Alentejo").
 
+### Backend — fatia 4: Produtor, Caves, reviews e catálogo (implementada e validada ao vivo, 2026-09-19)
+
+Decisões tuas (2026-09-19): **(1)** garrafa cuja janela acabou sem ser consumida = continua na lista das prontas com um aviso
+vermelho pequeno "Em atraso"; **(2)** "marcar como consumida" = consumir **uma** garrafa (decrementa `quantidade` e guarda a
+consumida numa linha própria, com `data_consumo`, para não perder histórico); **(3)** o filtro do catálogo segue o mockup
+do popup de Filtros (origem = país + regiões que mudam com o país). Contrato completo em `backend/API_ENDPOINTS.md`.
+
+- **Produtor:** `GET /api/produtores/{id}` ganha `totalProdutos`; `GET /api/produtores/{id}/bebidas?categoriaId=`;
+  `GET /api/produtores/destaque` (rotação semanal pelos 10 melhores por rating médio). Passou a ter `ProdutorService`.
+- **Caves:** `estado` de cada garrafa (`EM_GUARDA`/`PRONTA`/`EM_ATRASO`/`CONSUMIDA`, calculado ao ler), totais
+  (`totalGarrafas`, `valorTotal`, `totalProntasAAbrir`), detalhe separado em `prontasAAbrir[]`/`emGuarda[]` com `?sort=`,
+  janelas na criação e no `PATCH`, e `POST .../consumir`. **Quebra o `PATCH`:** deixou de aceitar `isConsumida`/`dataConsumo`.
+  As colunas já existiam na BD — **sem alterações de schema**. (O `API_ENDPOINTS.md` dizia que as janelas "já existiam no
+  PATCH": não existiam em lado nenhum.)
+- **Reviews:** cada review traz `utilizadorNome` e `utilizadorAvatar`; novo `GET /api/users/me/reviews`.
+- **Catálogo:** `search` casa nome da bebida, do produtor **ou** de uma casta; novo filtro `regioes`. Tudo em AND com os
+  filtros aplicados — a pesquisa limita-se aos filtros ativos e "limpar" é o cliente deixar de os enviar (requisito teu).
+  "Limpar" = **repor todos os filtros** ao estado inicial, para o utilizador poder fazer outra filtragem (confirmado por ti).
+- **Assunções (aprovadas por ti em 2026-09-19):** sem janela = `EM_GUARDA`; `valorTotal` = preço pago × quantidade (não
+  valor de mercado); `totalProntasAAbrir` conta garrafas (incluindo as em atraso); `?sort=preco` = o mais caro primeiro;
+  produtor da semana = rotação pelos **10** primeiros (não por todos); `regioes` aceita várias; `utilizadorNome` = "nome
+  apelido" do perfil ("mais clean" nas reviews).
+- **Extras:** `Pageable.comOrdenacaoPadraoDeBebidas` (o id desempata também quando o cliente escolhe o `sort`);
+  `PedidoInvalidoException` → 400; `Clock` em `Europe/Lisbon`; `HqlQueriesTest` (valida o HQL de todas as `@Query` sem
+  BD) e `ContextoArrancaTest` (o contexto Spring carrega sem BD: injeção, mapeamento, queries derivadas e rotas —
+  ambos verificados com um controlo negativo, isto é, falham quando se estraga uma query de propósito). **Não substituem**
+  o arranque contra o Oracle (`ddl-auto: validate`) nem executar SQL.
+- **Validação ao vivo (feita em 2026-09-19, BD de dev, 99 verificações):** arranque com `ddl-auto: validate`; Produtor
+  (`totalProdutos`, `/bebidas` com categoria, página e 404, `/destaque` = Licor Beirão, o que o cálculo à parte por SQL
+  previa, estável entre chamadas); catálogo (`search` por casta e por produtor, `regioes` simples, várias e combinadas com
+  `search`/`paisId`/categoria, 16 bebidas sem repetir na paginação); reviews (autor com nome e avatar; `POST` e `PUT` com
+  um autor que TEM avatar, sem `LazyInitializationException`; `/me/reviews`); Caves (os 4 estados, totais por cave,
+  ordenações, consumir 1 de 3, consumir a última, 409/400/404, `PATCH`, perfil coerente) e 4 consumos em simultâneo sobre a
+  mesma linha (5 garrafas → 1 por consumir + 4 consumidas: nada se perdeu). Log da API sem erros. Dados de teste
+  apagados e conta de teste reposta (avatar `NULL`).
+
 ### Decisões de dados: catálogo curado vs. ofertas de afiliados (2026-09-18)
 
 - **Catálogo** (`bebida` + subtypes, `produtor`) é curado à mão e é a fonte de todos os atributos mostrados
   na app (corpo, castas, botânicos, ...). **Ofertas** (`bebida_link_compra` + `retalhista`) é a única parte
   que vem de afiliados: preço, link (já com tracking), retalhista. Os feeds da Awin não trazem atributos
   sensoriais/de produção, por isso não é deles que dependemos.
+- **Atualização (2026-09-19, esclarecido por ti):** já és afiliado da Awin e os **produtos vão entrar pela Awin**; os
+  atributos que o feed não traz (corpo, castas, botânicos, ...) só se acrescentam **à mão quando os tiveres** — senão
+  ficam `NULL` (por isso os atributos são anuláveis de propósito). **A desenhar, com o 1.º feed real:** as linhas `bebida`
+  são criadas automaticamente a partir do feed (nome, marca → produtor, preço, EAN) ou continuam a ser criadas à mão, com o
+  feed a alimentar só `bebida_link_compra`? Muda o esforço semanal e o risco de duplicados (a mesma bebida em vários
+  retalhistas).
 - **Não ficamos limitados à Awin**: `retalhista_rede_afiliados` é só uma etiqueta; retalhistas de redes
   diferentes ou com programa próprio convivem na mesma tabela. A app funciona sem afiliado nenhum (uma
   bebida sem oferta aparece só sem botão de compra).

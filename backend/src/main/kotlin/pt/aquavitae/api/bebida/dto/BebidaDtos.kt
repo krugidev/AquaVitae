@@ -3,13 +3,15 @@ package pt.aquavitae.api.bebida.dto
 import pt.aquavitae.api.bebida.Bebida
 import java.math.BigDecimal
 
-// Filtros do popup "Filtros do catálogo" dos mockups. categoriaIds/castaIds vêm
+// Filtros do popup "Filtros do catálogo" dos mockups. categoriaIds/castaIds/regioes vêm
 // null quando a lista pedida vier vazia (ver BebidaController) — "sem filtro",
 // não "não bate com nada", que é o que aconteceria com um IN () vazio em JPQL.
+// `regioes` são os textos de produtor.regiao devolvidos por /lookup/regioes?paisId= (as pílulas do popup).
 data class BebidaFiltro(
     val search: String? = null,
     val categoriaIds: List<Long>? = null,
     val paisId: Long? = null,
+    val regioes: List<String>? = null,
     val ratingMin: BigDecimal? = null,
     val acidezMin: Int? = null,
     val acidezMax: Int? = null,

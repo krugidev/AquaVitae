@@ -16,12 +16,22 @@ interface BebidaRepository : JpaRepository<Bebida, Long> {
     // precoMin/Max é "existe um link ativo dentro do intervalo" — aproximação
     // aceitável para o MVP (poucos links por bebida); não garante que É o link
     // mais barato que cai no intervalo se houver vários retalhistas.
+    // `search` casa com o nome da bebida, o nome do produtor ou o nome de uma das castas (barra de pesquisa
+    // do mockup) e, como tudo o resto, combina em AND com os filtros aplicados.
+    // Produtor e região vão em EXISTS com `b.produtor.id` (a FK, sem join): navegar `b.produtor.regiao` no
+    // WHERE criaria um INNER JOIN implícito que tirava da pesquisa toda a bebida sem produtor, mesmo sem filtro.
     @Query(
         """
         SELECT b FROM Bebida b LEFT JOIN Vinho v ON v.bebidaId = b.id
-        WHERE (:search IS NULL OR UPPER(b.nome) LIKE UPPER(CONCAT('%', :search, '%')))
+        WHERE (:search IS NULL
+                OR UPPER(b.nome) LIKE UPPER(CONCAT('%', :search, '%'))
+                OR EXISTS (SELECT 1 FROM Produtor p WHERE p.id = b.produtor.id
+                             AND UPPER(p.nome) LIKE UPPER(CONCAT('%', :search, '%')))
+                OR EXISTS (SELECT 1 FROM VinhoCasta vc WHERE vc.vinho = v
+                             AND UPPER(vc.casta.name) LIKE UPPER(CONCAT('%', :search, '%'))))
           AND (:categoriaIds IS NULL OR b.categoria.id IN :categoriaIds)
           AND (:paisId IS NULL OR b.paisOrigem.id = :paisId)
+          AND (:regioes IS NULL OR EXISTS (SELECT 1 FROM Produtor p WHERE p.id = b.produtor.id AND p.regiao IN :regioes))
           AND (:ratingMin IS NULL OR b.ratingMedio >= :ratingMin)
           AND (:acidezMin IS NULL OR v.nivelAcidez >= :acidezMin)
           AND (:acidezMax IS NULL OR v.nivelAcidez <= :acidezMax)
@@ -43,6 +53,7 @@ interface BebidaRepository : JpaRepository<Bebida, Long> {
         @Param("search") search: String?,
         @Param("categoriaIds") categoriaIds: List<Long>?,
         @Param("paisId") paisId: Long?,
+        @Param("regioes") regioes: List<String>?,
         @Param("ratingMin") ratingMin: BigDecimal?,
         @Param("acidezMin") acidezMin: Int?,
         @Param("acidezMax") acidezMax: Int?,
@@ -56,4 +67,21 @@ interface BebidaRepository : JpaRepository<Bebida, Long> {
         @Param("precoMax") precoMax: BigDecimal?,
         pageable: Pageable,
     ): Page<Bebida>
+
+    // Página do produtor: "Produtos" com filtro opcional por categoria. Ambas as colunas são FKs da própria
+    // bebida (sem joins).
+    @Query(
+        """
+        SELECT b FROM Bebida b
+        WHERE b.produtor.id = :produtorId
+          AND (:categoriaId IS NULL OR b.categoria.id = :categoriaId)
+        """,
+    )
+    fun findByProdutor(
+        @Param("produtorId") produtorId: Long,
+        @Param("categoriaId") categoriaId: Long?,
+        pageable: Pageable,
+    ): Page<Bebida>
+
+    fun countByProdutor_Id(produtorId: Long): Long
 }

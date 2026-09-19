@@ -2,9 +2,7 @@ package pt.aquavitae.api.bebida
 
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
-import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
-import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import pt.aquavitae.api.bebida.dto.BebidaDetailDto
 import pt.aquavitae.api.bebida.dto.BebidaFiltro
@@ -40,26 +38,13 @@ class BebidaService(
     private val categoriaPreferidaRepository: UtilizadorCategoriaPreferidaRepository,
 ) {
 
-    // Sem ORDER BY a paginação não é determinística (o "carregar mais 15" podia repetir ou saltar
-    // bebidas), por isso, se o cliente não pedir ordenação, usa-se a do mockup: melhor rating primeiro;
-    // nome e id só desempatam.
-    private fun comOrdenacaoPadrao(pageable: Pageable): Pageable =
-        if (pageable.sort.isUnsorted) {
-            PageRequest.of(
-                pageable.pageNumber,
-                pageable.pageSize,
-                Sort.by(Sort.Order.desc("ratingMedio"), Sort.Order.asc("nome"), Sort.Order.asc("id")),
-            )
-        } else {
-            pageable
-        }
-
     fun search(filtro: BebidaFiltro, pedido: Pageable, utilizador: Utilizador?): Page<BebidaSummaryDto> {
-        val pageable = comOrdenacaoPadrao(pedido)
+        val pageable = pedido.comOrdenacaoPadraoDeBebidas()
         val page = bebidaRepository.search(
             search = filtro.search?.trim()?.ifBlank { null },
             categoriaIds = filtro.categoriaIds?.ifEmpty { null },
             paisId = filtro.paisId,
+            regioes = filtro.regioes?.ifEmpty { null },
             ratingMin = filtro.ratingMin,
             acidezMin = filtro.acidezMin,
             acidezMax = filtro.acidezMax,
@@ -79,7 +64,7 @@ class BebidaService(
     // "Escolhidos para ti": sem preferências definidas (onboarding ignorado),
     // cai para as bebidas com melhor rating em geral — nunca devolve vazio à toa.
     fun sugeridas(utilizador: Utilizador, pedido: Pageable): Page<BebidaSummaryDto> {
-        val pageable = comOrdenacaoPadrao(pedido)
+        val pageable = pedido.comOrdenacaoPadraoDeBebidas()
         val preferencia = preferenciaRepository.findByUtilizador_Id(utilizador.id).orElse(null)
         val categoriaIds = categoriaPreferidaRepository.findByUtilizador_Id(utilizador.id).mapNotNull { it.categoria?.id }
 
@@ -87,6 +72,7 @@ class BebidaService(
             search = null,
             categoriaIds = categoriaIds.ifEmpty { null },
             paisId = null,
+            regioes = null,
             ratingMin = null,
             acidezMin = preferencia?.acidezMin,
             acidezMax = preferencia?.acidezMax,

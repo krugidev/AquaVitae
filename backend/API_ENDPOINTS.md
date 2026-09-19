@@ -130,12 +130,15 @@ botão de compra) mas **a linha fica como histórico**, e volta a ativo sozinho 
 
 | Método | Path | Estado |
 |---|---|---|
-| GET | `/api/bebidas?search=&categoriaIds=&paisId=&precoMin=&precoMax=&ratingMin=&acidezMin=&acidezMax=&docuraMin=&docuraMax=&corpoId=&taninoId=&tipoId=&castaIds=&page=&size=` | ✅ **implementado** (2026-09-18) — testado com `categoriaIds`, `precoMax` |
+| GET | `/api/bebidas?search=&categoriaIds=&paisId=&regioes=&precoMin=&precoMax=&ratingMin=&acidezMin=&acidezMax=&docuraMin=&docuraMax=&corpoId=&taninoId=&tipoId=&castaIds=&page=&size=` | ✅ **implementado** (2026-09-18) — testado com `categoriaIds`, `precoMax`. 🆕 (2026-09-19, **validado ao vivo**) `regioes` (repetir o parâmetro: `regioes=Douro&regioes=Alentejo`; texto de `produtor.regiao`, os mesmos valores de `/lookup/regioes?paisId=`) e `search` que passa a casar também o **nome do produtor** e o **nome de uma casta** (tudo em AND com os filtros aplicados; "limpar" um filtro é o cliente deixar de o enviar) |
 | GET | `/api/bebidas/sugeridas` (auth) | ✅ **implementado** — sem preferências, cai para o catálogo todo (nunca vazio); com preferências, filtra por categorias/acidez/doçura preferidas. **Algoritmo ainda simples** (sem ordenação por rating dedicada) — afinar mais tarde se necessário |
 | GET | `/api/bebidas/{id}` | ✅ **implementado** — `produtorResumo`, `linkCompra` (mais barato), flags do utilizador |
 | GET | `/api/bebidas/{id}/reviews` | ✅ **implementado** — `{ distribuicao: {1..5: n}, reviews: [...] }`. **Quebra o contrato Android atual** (`AquaVitaeApi.getReviews` ainda declara `List<ReviewResponse>`) — sincronizar quando chegar a vez do Android |
 | POST | `/api/bebidas/{bebidaId}/reviews` (auth) | ✅ **implementado** — agora exige `bebida_provada` para este utilizador+bebida (409 caso contrário), testado |
 | PUT/DELETE | `/api/reviews/{id}` (auth, dono) | ✅ já existia |
+| GET | `/api/users/me/reviews` (auth) | 🆕 **implementado** (2026-09-19, validado ao vivo) — histórico de reviews do perfil: `[{ id, rating, comment, createdAt, bebida: BebidaSummaryDto }]`, mais recentes primeiro, sem paginação (como favoritos/wishlist/provadas) |
+
+`ReviewResponse` (usada em `GET /api/bebidas/{id}/reviews` e nas respostas de `POST`/`PUT`) ganhou `utilizadorNome` ("nome apelido" que o autor preencheu no perfil; se não preencheu, o username) e `utilizadorAvatar` (caminho relativo `icones/avatares/...`, ou `null` se não escolheu avatar). **Aprovado pelo utilizador (2026-09-19):** o "nome apelido" nas reviews (mais limpo do que o username); a lógica está em `Utilizador.nomeParaMostrar()`.
 
 `BebidaSummaryDto` ✅ enriquecido e testado (precoDesde/retalhistaNome/corpo/acidez/doçura/flags) via
 `BebidaSummaryAssembler` novo (`bebida` package) — usado por catálogo, sugeridas, favoritos, wishlist e
@@ -145,9 +148,17 @@ provadas, sempre com queries em lote (nunca 1 por bebida).
 
 | Método | Path | Estado |
 |---|---|---|
-| GET | `/api/produtores/{id}` | 🔧 por fazer — próxima sessão |
-| GET | `/api/produtores/{id}/bebidas?categoriaId=&page=&size=` | 🆕 por fazer |
-| GET | `/api/produtores/destaque` | 🆕 por fazer |
+| GET | `/api/produtores/{id}` | ✅ **implementado** (2026-09-19, validado ao vivo) — ganha `totalProdutos` (nº de bebidas do produtor no catálogo) |
+| GET | `/api/produtores/{id}/bebidas?categoriaId=&page=&size=` | ✅ **implementado** (2026-09-19, validado ao vivo) — `Page<BebidaSummaryDto>` (mesmo cartão do catálogo, com as marcações do utilizador se houver Bearer); ordenação por omissão como o catálogo (rating desc, nome, id); 404 se o produtor não existir |
+| GET | `/api/produtores/destaque` | ✅ **implementado** (2026-09-19, validado ao vivo) — devolve o mesmo `ProdutorDetailDto` |
+
+**Produtor da semana (`/destaque`)** — computado, sem coluna nem curadoria (decisão de 2026-09-17). Entre os produtores
+com pelo menos uma bebida, ordena por **rating médio das suas bebidas com reviews** (desc; nome e id desempatam), fica com
+os **10 primeiros** (`ProdutorDestaque.TAMANHO_ROTACAO`) e escolhe um, avançando **uma posição por semana** (segunda-feira,
+`Europe/Lisbon`; conta semanas desde 1970-01-05, sem saltos na mudança de ano). Rodar por *todos* punha na homepage, a
+meio do ano, produtores sem qualquer avaliação — daí o corte nos 10 (**aprovado pelo utilizador em 2026-09-19**). Limitação
+conhecida: o ranking usa os ratings de agora, por isso uma review nova pode trocar o produtor a meio da semana. 404 se
+ainda não houver produtores com bebidas.
 
 ## Favoritos / Wishlist / Provadas
 
@@ -168,10 +179,30 @@ com o Android.
 
 | Método | Path | Estado |
 |---|---|---|
-| GET/POST | `/api/users/me/caves` | ✅ — 🔧 `CaveResponse` ganha `totalGarrafas`, `valorTotal`, `totalProntasAAbrir` |
-| GET | `/api/caves/{id}` (auth, dono) | 🔧 `CaveDetailResponse` separa `prontasAAbrir[]` / `emGuarda[]`, aceita `?sort=preco\|dataConsumo` |
-| POST | `/api/caves/{id}/bebidas` (auth, dono) | 🔧 `CaveBebidaRequest` ganha `janelaInicio`, `janelaFim`, `notas` opcionais (hoje só existem no PATCH) |
-| PATCH/DELETE | `/api/caves/{id}/bebidas/{caveBebidaId}` (auth, dono) | ✅ |
+| GET/POST | `/api/users/me/caves` | ✅ **implementado** (2026-09-19, validado ao vivo) — `CaveResponse` ganha `totalGarrafas`, `valorTotal`, `totalProntasAAbrir`; caves por ordem de criação |
+| GET | `/api/caves/{id}` (auth, dono) | ✅ **implementado** (validado ao vivo) — `CaveDetailResponse` separa `prontasAAbrir[]` / `emGuarda[]` (+ os mesmos 3 totais), aceita `?sort=preco\|dataConsumo` (400 se outro valor) |
+| POST | `/api/caves/{id}/bebidas` (auth, dono) | ✅ **implementado** (validado ao vivo) — `CaveBebidaRequest` ganha `janelaInicio`, `janelaFim`, `notas` (400 se a janela acabar antes de começar) |
+| PATCH | `/api/caves/{id}/bebidas/{caveBebidaId}` (auth, dono) | 🔧 **mudou** (validado ao vivo) — edita `quantidade`, `precoPago`, `dataAquisicao`, `janelaInicio`, `janelaFim`, `notas` (null = fica como está, logo não há forma de limpar uma janela). **Deixou de aceitar `isConsumida`/`dataConsumo`** (ver `/consumir`); 409 numa garrafa já consumida |
+| POST | `/api/caves/{id}/bebidas/{caveBebidaId}/consumir` (auth, dono) | 🆕 **implementado** (validado ao vivo) — corpo opcional `{ dataConsumo?, notas? }` → `{ restantes, consumida }`; 409 se já consumida, 400 se a data for futura |
+| DELETE | `/api/caves/{id}/bebidas/{caveBebidaId}` (auth, dono) | ✅ |
+
+**Estado de cada garrafa** (`estado` em `CaveBebidaResponse`, calculado ao ler em `Europe/Lisbon`): `EM_GUARDA` (janela ainda não
+começou, **ou sem janela nenhuma** — sem janela não há "pronta"; aprovado em 2026-09-19) · `PRONTA` (dentro da janela, extremos
+incluídos; janela só com início já começada, ou só com fim por chegar) · **`EM_ATRASO`** (a janela acabou e continua por
+consumir — decisão do utilizador, 2026-09-19: fica na lista das prontas com um aviso vermelho pequeno "Em atraso") ·
+`CONSUMIDA` (histórico, fora das listas). `prontasAAbrir` = `PRONTA` + `EM_ATRASO`.
+
+**Consumir** é sempre **uma garrafa** (decisão do utilizador, 2026-09-19): com `quantidade > 1` a linha perde uma e a
+consumida fica **numa linha própria** (`quantidade = 1`, `data_consumo`, e a mesma janela/preço/aquisição) para não perder
+o histórico; com `quantidade = 1` a própria linha passa a consumida. As consumidas não aparecem em `GET /api/caves/{id}`
+(ainda não há endpoint do histórico da cave). O `PATCH` já não marca a linha toda como consumida. O consumo bloqueia a
+linha (`FOR UPDATE`): dois pedidos em simultâneo (duplo toque) não estragam a contagem.
+
+**Totais** (`totalGarrafas`, `valorTotal`, `totalProntasAAbrir`) só contam garrafas por consumir. `valorTotal` = preço pago
+(por unidade) × quantidade, das linhas com preço registado — (aprovado em 2026-09-19): é o que o utilizador pagou, não o valor
+de mercado. `totalProntasAAbrir` conta **garrafas** (não linhas), incluindo as em atraso. **Ordenação** (`?sort=`): `preco` =
+preço por unidade, o mais caro primeiro (sem preço no fim); `dataConsumo` (por omissão) = nas prontas o prazo (`janelaFim`)
+mais próximo ou já passado primeiro, nas em guarda o início da janela mais próximo primeiro; sem data no fim; o id desempata.
 
 ## Imagens (bebidas, produtores, avatares)
 
@@ -249,14 +280,21 @@ totalProntasAAbrir: Int
 prontasAAbrir: List<CaveBebidaResponse>
 emGuarda: List<CaveBebidaResponse>
 
-// CaveBebidaRequest (POST /api/caves/{id}/bebidas) — adicionar (já existem no Update, faltam na criação):
+// CaveBebidaRequest (POST /api/caves/{id}/bebidas) — adicionar (afinal não existiam em lado nenhum, nem no PATCH):
 janelaInicio: LocalDate?
 janelaFim: LocalDate?
 notas: String?
+
+// CaveBebidaResponse — adicionar (feito 2026-09-19):
+categoriaNome: String?
+imagePath: String?
+janelaInicio: LocalDate?
+janelaFim: LocalDate?
+estado: EM_GUARDA | PRONTA | EM_ATRASO | CONSUMIDA
 ```
 
 Query params novos a suportar:
-- `GET /api/bebidas` — `categoriaIds` (substitui `categoriaId` singular), `paisId`, `precoMin/Max`,
+- `GET /api/bebidas` — `categoriaIds` (substitui `categoriaId` singular), `paisId`, `regioes`, `precoMin/Max`,
   `ratingMin`, `acidezMin/Max`, `docuraMin/Max`, `corpoId`, `taninoId`, `tipoId`, `castaIds`
 - `GET /api/users/me/wishlist` — `?sort=recente|ratingAsc|ratingDesc`
 - `GET /api/users/me/provadas` — `?categoriaId=&ano=`
@@ -271,13 +309,13 @@ Não estavam no desenho inicial; saíram de cruzar o código com o texto dos ecr
 
 | O quê | Mockup | Proposta |
 |---|---|---|
-| Autor da review | tab Reviews: "avatar, nome, há quanto tempo, conteúdo, rating" | `ReviewResponse` ganha `utilizadorNome` e `utilizadorAvatar` (path). Fetch explícito do avatar (LAZY). |
-| Histórico de reviews do perfil | Perfil: "histórico de reviews (terá outra tela)" | `GET /api/users/me/reviews` (auth): as reviews do utilizador com a bebida associada (`BebidaSummaryDto`). |
-| Pesquisa por produtor e casta | Homepage/Catálogo: "pesquisar por nomes de bebidas, produtores, castas" | `search` de `GET /api/bebidas` passa a casar também `produtor.nome` e `casta.name` (via `vinho_casta`). A decidir: produtores como resultado próprio (`GET /api/produtores?search=`)? |
-| Filtro por região | Popup de filtros: "as pílulas das regiões mudam com o país" | `regiao` (texto, `produtor.regiao`) em `GET /api/bebidas`. **Ids (resolvido em 2026-09-19):** `/lookup/regioes?paisId=` usa `produtor_pais` e o filtro do catálogo usa `pais`; continuam duas tabelas, mas com **os mesmos ids** (convenção do seed, ver `database/README.md`), por isso o mesmo `paisId` serve para os dois. Falta só o filtro `regiao` em `GET /api/bebidas`. |
-| Lista da cave | Caves: "quantidade, nome, categoria, intervalo de consumo, preço/unidade, nota" | `CaveBebidaResponse` ganha `janelaInicio`, `janelaFim`, `categoriaNome` (e imagem). |
-| Consumir uma garrafa | Caves: "marcar como consumida (sai da lista e reduz o contador em 1)" | Hoje o `PATCH` marca a linha toda como consumida. Proposta: consumir 1 = decrementar `quantidade` e criar linha consumida com `quantidade = 1` + `data_consumo` (mantém o histórico). **A decidir.** |
-| "Pronta a abrir" | Caves: "hoje dentro da janela" | A decidir: e depois de a janela acabar (ainda pronta, "a passar do ponto")? Sem janela = "em guarda"? |
+| Autor da review | tab Reviews: "avatar, nome, há quanto tempo, conteúdo, rating" | ✅ **feito 2026-09-19 (validado ao vivo)** — `ReviewResponse` ganha `utilizadorNome` e `utilizadorAvatar` (path). Fetch explícito do avatar (LAZY); nas respostas de `POST`/`PUT` o autor é recarregado com o perfil (o utilizador do token não traz o avatar). |
+| Histórico de reviews do perfil | Perfil: "histórico de reviews (terá outra tela)" | ✅ **feito 2026-09-19 (validado ao vivo)** — `GET /api/users/me/reviews` (auth): as reviews do utilizador com a bebida associada (`BebidaSummaryDto`). |
+| Pesquisa por produtor e casta | Homepage/Catálogo: "pesquisar por nomes de bebidas, produtores, castas" | ✅ **feito 2026-09-19 (validado ao vivo)** — `search` de `GET /api/bebidas` casa também `produtor.nome` e `casta.name` (via `vinho_casta`), em AND com os filtros aplicados. **A decidir:** produtores como resultado próprio (`GET /api/produtores?search=`)? **Limitação:** a pesquisa distingue acentos (`Esporao` não acha `Esporão`) — pré-existente, ver PLANO. |
+| Filtro por região | Popup de filtros: "as pílulas das regiões mudam com o país" | ✅ **`regioes` em `GET /api/bebidas` feito 2026-09-19 (validado ao vivo)** — lista de textos de `produtor.regiao` (pílulas do popup de filtros, mockup "Origem": país + regiões), em `EXISTS` sobre o produtor para não excluir bebidas sem produtor. **Ids (resolvido em 2026-09-19):** `/lookup/regioes?paisId=` usa `produtor_pais` e o filtro do catálogo usa `pais`; continuam duas tabelas, mas com **os mesmos ids** (convenção do seed, ver `database/README.md`), por isso o mesmo `paisId` serve para os dois. |
+| Lista da cave | Caves: "quantidade, nome, categoria, intervalo de consumo, preço/unidade, nota" | ✅ **feito 2026-09-19 (validado ao vivo)** — `CaveBebidaResponse` ganha `janelaInicio`, `janelaFim`, `categoriaNome`, `imagePath` e `estado`. |
+| Consumir uma garrafa | Caves: "marcar como consumida (sai da lista e reduz o contador em 1)" | ✅ **decidido e feito 2026-09-19 (validado ao vivo)** — consumir 1 = decrementar `quantidade` e guardar a consumida numa linha própria com `data_consumo` (ver secção Caves). |
+| "Pronta a abrir" | Caves: "hoje dentro da janela" | ✅ **decidido e feito 2026-09-19 (validado ao vivo)** — depois de a janela acabar, sem consumir: continua na lista das prontas com `estado = EM_ATRASO` (aviso vermelho pequeno "Em atraso"). Sem janela = `EM_GUARDA` (aprovado em 2026-09-19). |
 | Termos e condições | Login/Registo: popup | A decidir: texto embutido na app ou servido pela API. |
 | Categorias além de vinho | Cartões/detalhe: "as características dependerão da categoria" | Subtypes whisky/gin/licor/vodka/aguardente (depende de haver dados reais). |
 
@@ -288,8 +326,8 @@ Já corrigido no fim do dia: a pesquisa do catálogo não tinha `ORDER BY` (pagi
 
 - Envio de email do código de recuperação: continua adiado — endpoint funcional, só falta ligar a um
   serviço de email real.
-- `GET /api/produtores/destaque` ainda não tem algoritmo definido ao detalhe (só a regra geral acordada:
-  computado, rotação semanal) — por implementar na próxima sessão.
+- `GET /api/produtores/destaque`: algoritmo definido e implementado em 2026-09-19 (ver secção Produtores), com o corte
+  nos 10 primeiros do ranking aprovado pelo utilizador.
 - Filtro `precoMin`/`precoMax` é "existe um link ativo dentro do intervalo", não "o link mais barato cai
   no intervalo" — aproximação aceitável para o MVP com poucos links por bebida (ver comentário em
   `BebidaRepository.search`).
@@ -300,6 +338,10 @@ Estes endpoints mudaram de forma desde a última vez que o contrato Retrofit foi
 quando chegar a vez de construir os ecrãs correspondentes (não bloqueia o backend):
 - `getReviews`: `List<ReviewResponse>` → `ReviewsResponse { distribuicao, reviews }`
 - `getFavoritos`/`getWishlist`/`getProvadas`: `List<BebidaSummary>` → `List<BebidaRelacaoDto>`
-- `searchBebidas`: só tinha `categoriaId` singular — agora aceita o conjunto completo de filtros do popup
+- `getReviews`/`ReviewResponse`: ganhou `utilizadorNome` e `utilizadorAvatar`; novo `GET /api/users/me/reviews`
+- Caves: `CaveResponse`/`CaveDetailResponse`/`CaveBebidaResponse` mudaram (totais, `prontasAAbrir`/`emGuarda`, `estado`,
+  janelas); o `PATCH .../bebidas/{id}` **deixou de aceitar `isConsumida`/`dataConsumo`** — usar `POST .../consumir`
+- Produtores: `ProdutorDetailDto.totalProdutos`, `GET /api/produtores/{id}/bebidas`, `GET /api/produtores/destaque`
+- `searchBebidas`: só tinha `categoriaId` singular — agora aceita o conjunto completo de filtros do popup (+ `regioes`)
 - `BebidaSummary`/`BebidaDetail` (modelo Android): faltam os campos novos (preço, corpo/acidez/doçura,
   flags do utilizador, produtorResumo, linkCompra)

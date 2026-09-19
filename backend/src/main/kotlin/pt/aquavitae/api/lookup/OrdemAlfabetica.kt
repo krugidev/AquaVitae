@@ -9,5 +9,7 @@ import java.util.Locale
 // ordem por id, que é a pretendida (Leve, Médio, Encorpado) — não passar por aqui.
 private val collator: Collator = Collator.getInstance(Locale.forLanguageTag("pt-PT"))
 
-fun <T> List<T>.ordenadoPorNome(nome: (T) -> String?): List<T> =
-    sortedWith { a, b -> collator.compare(nome(a).orEmpty(), nome(b).orEmpty()) }
+// Nulos contam como texto vazio (ficam primeiro).
+val comparadorAlfabeticoPt: Comparator<String?> = Comparator { a, b -> collator.compare(a.orEmpty(), b.orEmpty()) }
+
+fun <T> List<T>.ordenadoPorNome(nome: (T) -> String?): List<T> = sortedWith(compareBy(comparadorAlfabeticoPt, nome))

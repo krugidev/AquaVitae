@@ -56,3 +56,12 @@ class Utilizador(
     @JoinColumn(name = "utilizador_role_id")
     var role: UtilizadorRole? = null,
 )
+
+// Como o utilizador aparece aos outros (ex.: autor de uma review): "nome apelido", ou o username se não
+// preencheu nenhum dos dois.
+fun Utilizador.nomeParaMostrar(): String? =
+    listOfNotNull(firstName, lastName)
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+        .joinToString(" ")
+        .ifEmpty { username }

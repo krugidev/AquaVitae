@@ -31,6 +31,11 @@ class ApiExceptionHandler {
         ResponseEntity.status(HttpStatus.UNAUTHORIZED)
             .body(ApiError(HttpStatus.UNAUTHORIZED.value(), "Unauthorized", ex.message))
 
+    @ExceptionHandler(PedidoInvalidoException::class)
+    fun handlePedidoInvalido(ex: PedidoInvalidoException): ResponseEntity<ApiError> =
+        ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(ApiError(HttpStatus.BAD_REQUEST.value(), "Bad Request", ex.message))
+
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidation(ex: MethodArgumentNotValidException): ResponseEntity<ApiError> {
         val message = ex.bindingResult.fieldErrors.joinToString("; ") { "${it.field}: ${it.defaultMessage}" }

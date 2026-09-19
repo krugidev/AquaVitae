@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
+import pt.aquavitae.api.review.dto.MinhaReviewDto
 import pt.aquavitae.api.review.dto.ReviewRequest
 import pt.aquavitae.api.review.dto.ReviewResponse
 import pt.aquavitae.api.review.dto.ReviewsResponse
@@ -24,6 +25,11 @@ class ReviewController(
     @GetMapping("/api/bebidas/{bebidaId}/reviews")
     fun listByBebida(@PathVariable bebidaId: Long): ReviewsResponse =
         reviewService.listByBebida(bebidaId)
+
+    // Histórico de reviews do perfil (autenticado): as minhas, mais recentes primeiro, cada uma com a bebida.
+    @GetMapping("/api/users/me/reviews")
+    fun listMinhas(@AuthenticationPrincipal utilizador: Utilizador): List<MinhaReviewDto> =
+        reviewService.listByUtilizador(utilizador)
 
     @PostMapping("/api/bebidas/{bebidaId}/reviews")
     fun create(

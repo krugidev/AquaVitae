@@ -7,10 +7,13 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
+import jakarta.persistence.LockModeType
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import pt.aquavitae.api.bebida.Bebida
 import pt.aquavitae.api.utilizador.Utilizador
 import java.math.BigDecimal
@@ -88,13 +91,39 @@ class CaveBebida(
 )
 
 interface CaveRepository : JpaRepository<Cave, Long> {
-    fun findByUtilizador_Id(utilizadorId: Long): List<Cave>
+    // Por ordem de criação (id desempata): sem ORDER BY a lista de caves podia trocar de ordem entre pedidos.
+    fun findByUtilizador_IdOrderByDataCriacaoAscIdAsc(utilizadorId: Long): List<Cave>
     fun countByUtilizador_Id(utilizadorId: Long): Long
 }
 
 interface CaveBebidaRepository : JpaRepository<CaveBebida, Long> {
-    fun findByCave_Id(caveId: Long): List<CaveBebida>
     fun findByIdAndCave_Id(id: Long, caveId: Long): CaveBebida?
+
+    // Consumir uma garrafa lê a quantidade e escreve-a de volta: sem bloqueio, dois pedidos quase em
+    // simultâneo (duplo toque no botão) liam ambos "2", gravavam ambos "1" e criavam duas linhas consumidas.
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT cb FROM CaveBebida cb WHERE cb.id = :id AND cb.cave.id = :caveId")
+    fun findByIdAndCaveIdParaAtualizar(@Param("id") id: Long, @Param("caveId") caveId: Long): CaveBebida?
+
+    // Linhas ainda por consumir de uma cave, com a bebida e a categoria já carregadas (LAZY) — o detalhe
+    // da cave não faz uma query por garrafa.
+    @Query(
+        """
+        SELECT cb FROM CaveBebida cb
+        LEFT JOIN FETCH cb.bebida b LEFT JOIN FETCH b.categoria
+        WHERE cb.cave.id = :caveId AND cb.isConsumida = false
+        """,
+    )
+    fun findAtivasByCaveId(@Param("caveId") caveId: Long): List<CaveBebida>
+
+    // O mesmo, para todas as caves do utilizador (os totais de cada cave na lista "As minhas caves").
+    @Query(
+        """
+        SELECT cb FROM CaveBebida cb JOIN FETCH cb.cave c
+        WHERE c.utilizador.id = :utilizadorId AND cb.isConsumida = false
+        """,
+    )
+    fun findAtivasByUtilizadorId(@Param("utilizadorId") utilizadorId: Long): List<CaveBebida>
 
     // Garrafas "ativas" (ainda não consumidas) em todas as caves do utilizador —
     // usado no resumo de estatísticas do perfil.

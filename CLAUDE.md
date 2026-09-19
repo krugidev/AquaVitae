@@ -40,7 +40,8 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
 - **Jobs longos atualizam só as colunas que lhes dizem respeito** (`@Modifying` + `@Query`), nunca um `save()` da
   entidade carregada no início — senão sobrescrevem alterações feitas entretanto (p.ex. um preço mudado por SQL).
 - **Toda a paginação tem `ORDER BY` determinístico** (sem ele o "carregar mais" repete/salta itens). Se o cliente
-  não pedir `sort`, o service aplica um por omissão (ver `BebidaService.comOrdenacaoPadrao`).
+  não pedir `sort`, o service aplica um por omissão (ver `Pageable.comOrdenacaoPadraoDeBebidas`, que também
+  acrescenta o `id` como desempate quando o cliente escolhe o `sort`).
 - **Padrão supertype/subtype:** `bebida` é a tabela mãe; cada categoria (`vinho`, `whisky`, `gin`, ...)
   tem tabela própria com `bebida_id` como PK e FK partilhada. No Kotlin isto é `@OneToOne` + `@MapsId`
   (ver `Vinho.kt`). Só `vinho` tem entidade/DTO completos para já — as outras categorias seguem o mesmo
@@ -89,6 +90,14 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
   a segurar ficheiros — voltar a correr sem `--rerun-tasks`. Testes: `.\gradlew.bat test` (os que usam HTTP levantam
   um `HttpServer` local do JDK, sem rede real).
 - **Servidor a correr em background** (`bootRun`): para o parar, `Get-NetTCPConnection -LocalPort 8080` → `Stop-Process`.
+- **Docker Desktop depois de reiniciar o Windows:** o contentor Oracle fica parado (`docker compose up -d` em
+  `database/`) e o próprio Docker Desktop pode crashar ao arrancar com `sailor-ingest.sock ... rename ... The file cannot
+  be accessed by the system` — são sockets antigos que nem `del`/`fsutil` conseguem apagar; **resolveu-se reiniciando o
+  Windows outra vez**. **Nunca** escolher "Reset to factory defaults" no diálogo de erro: apaga contentores e volumes,
+  incluindo a BD Oracle.
+- **Validar a API ao vivo:** `bootRun` em background + `curl.exe` (sem `jq` nesta máquina; no PowerShell 5.1 ler as
+  respostas com `[Text.Encoding]::UTF8` e comparar números com `InvariantCulture`, senão saem com vírgula decimal); os
+  ficheiros `.ps1` sem BOM são lidos como ANSI (acentos nos literais chegam duplamente codificados à API).
 - **`gh` (GitHub CLI):** instalado e autenticado, mas no Git Bash é preciso `export PATH="/c/Program Files/GitHub CLI:$PATH"`.
 - **Git:** o trabalho corrente está numa branch de feature (ver `PLANO.md`); `docs/` (landing page) só existe na
   `main` — ao mudar de branch, ficheiros aparecem/desaparecem no disco, é esperado.
