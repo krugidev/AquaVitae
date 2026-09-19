@@ -17,50 +17,51 @@
 -- PRODUTORES
 -- ============================================================
 
-INSERT INTO produtor (produtor_nome, produtor_pais_id, produtor_regiao, produtor_ano_fundacao, produtor_website, produtor_permite_visitas)
-VALUES ('Casa Ferreirinha', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'), 'Douro', 1751, 'https://www.ferreirinha.pt', 1);
+INSERT INTO produtor (produtor_nome, produtor_pais_id, produtor_regiao_id, produtor_ano_fundacao, produtor_website, produtor_permite_visitas)
+VALUES ('Casa Ferreirinha', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'), (SELECT regiao_id FROM regiao WHERE regiao_nome = 'Douro'), 1751, 'https://www.ferreirinha.pt', 1);
 
-INSERT INTO produtor (produtor_nome, produtor_pais_id, produtor_regiao, produtor_ano_fundacao, produtor_website, produtor_permite_visitas)
-VALUES ('Quinta do Crasto', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'), 'Douro', 1615, 'https://www.quintadocrasto.pt', 1);
+INSERT INTO produtor (produtor_nome, produtor_pais_id, produtor_regiao_id, produtor_ano_fundacao, produtor_website, produtor_permite_visitas)
+VALUES ('Quinta do Crasto', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'), (SELECT regiao_id FROM regiao WHERE regiao_nome = 'Douro'), 1615, 'https://www.quintadocrasto.pt', 1);
 
-INSERT INTO produtor (produtor_nome, produtor_pais_id, produtor_regiao, produtor_ano_fundacao, produtor_website, produtor_permite_visitas)
-VALUES ('Herdade do Esporão', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'), 'Alentejo', 1973, 'https://www.esporao.com', 1);
+INSERT INTO produtor (produtor_nome, produtor_pais_id, produtor_regiao_id, produtor_ano_fundacao, produtor_website, produtor_permite_visitas)
+VALUES ('Herdade do Esporão', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'), (SELECT regiao_id FROM regiao WHERE regiao_nome = 'Alentejo'), 1973, 'https://www.esporao.com', 1);
 
-INSERT INTO produtor (produtor_nome, produtor_pais_id, produtor_regiao, produtor_ano_fundacao, produtor_website, produtor_permite_visitas)
-VALUES ('Quinta de Soalheiro', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'), 'Vinho Verde — Melgaço', 1974, 'https://www.soalheiro.com', 1);
+INSERT INTO produtor (produtor_nome, produtor_pais_id, produtor_regiao_id, produtor_ano_fundacao, produtor_website, produtor_permite_visitas)
+VALUES ('Quinta de Soalheiro', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'), (SELECT regiao_id FROM regiao WHERE regiao_nome = 'Vinho Verde'), 1974, 'https://www.soalheiro.com', 1);
 
-INSERT INTO produtor (produtor_nome, produtor_pais_id, produtor_regiao, produtor_website, produtor_permite_visitas)
-VALUES ('Luís Pato', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'), 'Bairrada', 'https://www.luispato.com', 0);
+INSERT INTO produtor (produtor_nome, produtor_pais_id, produtor_regiao_id, produtor_website, produtor_permite_visitas)
+VALUES ('Luís Pato', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'), (SELECT regiao_id FROM regiao WHERE regiao_nome = 'Bairrada'), 'https://www.luispato.com', 0);
 
-INSERT INTO produtor (produtor_nome, produtor_pais_id, produtor_regiao, produtor_ano_fundacao, produtor_website, produtor_permite_visitas)
-VALUES ('Niepoort', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'), 'Douro', 1842, 'https://www.niepoort-vinhos.com', 1);
+INSERT INTO produtor (produtor_nome, produtor_pais_id, produtor_regiao_id, produtor_ano_fundacao, produtor_website, produtor_permite_visitas)
+VALUES ('Niepoort', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'), (SELECT regiao_id FROM regiao WHERE regiao_nome = 'Douro'), 1842, 'https://www.niepoort-vinhos.com', 1);
 
-INSERT INTO produtor (produtor_nome, produtor_pais_id, produtor_regiao, produtor_website, produtor_permite_visitas)
-VALUES ('Quinta Nova de Nossa Senhora do Carmo', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'), 'Douro', 'https://www.quintanova.com', 1);
+INSERT INTO produtor (produtor_nome, produtor_pais_id, produtor_regiao_id, produtor_website, produtor_permite_visitas)
+VALUES ('Quinta Nova de Nossa Senhora do Carmo', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'), (SELECT regiao_id FROM regiao WHERE regiao_nome = 'Douro'), 'https://www.quintanova.com', 1);
 
-INSERT INTO produtor (produtor_nome, produtor_pais_id, produtor_regiao, produtor_permite_visitas)
-VALUES ('Quinta do Vale Meão', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'), 'Douro', 1);
+INSERT INTO produtor (produtor_nome, produtor_pais_id, produtor_regiao_id, produtor_permite_visitas)
+VALUES ('Quinta do Vale Meão', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'), (SELECT regiao_id FROM regiao WHERE regiao_nome = 'Douro'), 1);
 
-INSERT INTO produtor (produtor_nome, produtor_pais_id, produtor_regiao, produtor_ano_fundacao, produtor_website, produtor_permite_visitas)
-VALUES ('Destilaria Sharish', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'), 'Arraiolos — Alentejo', 2016, 'https://www.sharish.pt', 1);
+INSERT INTO produtor (produtor_nome, produtor_pais_id, produtor_regiao_id, produtor_ano_fundacao, produtor_website, produtor_permite_visitas)
+VALUES ('Destilaria Sharish', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'), (SELECT regiao_id FROM regiao WHERE regiao_nome = 'Alentejo'), 2016, 'https://www.sharish.pt', 1);
 
-INSERT INTO produtor (produtor_nome, produtor_pais_id, produtor_regiao)
-VALUES ('Gin 44°', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'), 'Peniche');
+-- Sem região atribuída: a lista de `regiao` tem regiões, não localidades (Peniche, Lousã). NULL = "não disponível".
+INSERT INTO produtor (produtor_nome, produtor_pais_id)
+VALUES ('Gin 44°', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'));
 
-INSERT INTO produtor (produtor_nome, produtor_pais_id, produtor_regiao)
-VALUES ('Licor Beirão', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'), 'Lousã — Beira Litoral');
+INSERT INTO produtor (produtor_nome, produtor_pais_id)
+VALUES ('Licor Beirão', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'));
 
-INSERT INTO produtor (produtor_nome, produtor_pais_id, produtor_regiao)
-VALUES ('Fábrica de Ginjinha de Óbidos', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'), 'Óbidos');
+INSERT INTO produtor (produtor_nome, produtor_pais_id, produtor_regiao_id)
+VALUES ('Fábrica de Ginjinha de Óbidos', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'), (SELECT regiao_id FROM regiao WHERE regiao_nome = 'Lisboa'));
 
-INSERT INTO produtor (produtor_nome, produtor_pais_id, produtor_regiao)
-VALUES ('Ginjinha Sem Rival', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'), 'Lisboa — Rossio');
+INSERT INTO produtor (produtor_nome, produtor_pais_id, produtor_regiao_id)
+VALUES ('Ginjinha Sem Rival', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'), (SELECT regiao_id FROM regiao WHERE regiao_nome = 'Lisboa'));
 
-INSERT INTO produtor (produtor_nome, produtor_pais_id, produtor_regiao)
-VALUES ('Destilaria Artesanal do Algarve', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'), 'Algarve');
+INSERT INTO produtor (produtor_nome, produtor_pais_id, produtor_regiao_id)
+VALUES ('Destilaria Artesanal do Algarve', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'), (SELECT regiao_id FROM regiao WHERE regiao_nome = 'Algarve'));
 
-INSERT INTO produtor (produtor_nome, produtor_pais_id, produtor_regiao)
-VALUES ('Adega Cooperativa do Douro', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'), 'Douro');
+INSERT INTO produtor (produtor_nome, produtor_pais_id, produtor_regiao_id)
+VALUES ('Adega Cooperativa do Douro', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'), (SELECT regiao_id FROM regiao WHERE regiao_nome = 'Douro'));
 
 -- ============================================================
 -- RETALHISTAS

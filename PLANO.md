@@ -15,8 +15,8 @@ o dar por fechado). A `main` só tem a landing page em `docs/` (GitHub Pages) al
 `gh` está instalado e autenticado, mas no Git Bash não está no PATH: `export PATH="/c/Program Files/GitHub CLI:$PATH"`.
 
 **✅ Validado ao vivo (2026-09-19, contra o Oracle real):** os endpoints de Produtor, Caves, reviews (autor + histórico)
-e a pesquisa/filtro por região do catálogo correram contra a BD de dev (99 verificações, ver "Backend — fatia 4") e
-têm 57 testes automáticos que não precisam de BD. **Docker:** depois de um reinício do Windows o Docker Desktop pode
+e a pesquisa/filtro por região do catálogo correram contra a BD de dev (99 verificações, ver "Backend — fatia 4", e mais
+28 das regiões como lookup) e têm 57 testes automáticos que não precisam de BD. **Docker:** depois de um reinício do Windows o Docker Desktop pode
 falhar a arrancar (`sailor-ingest.sock ... rename ... The file cannot be accessed by the system`; resolveu-se com um novo
 reinício) e o contentor Oracle fica parado (`docker compose up -d` em `database/`). **Nunca "Reset to factory defaults"**
 no diálogo do Docker: apaga contentores e volumes, incluindo a BD.
@@ -26,10 +26,8 @@ no diálogo do Docker: apaga contentores e volumes, incluindo a BD.
    filtro por região) — implementado e validado ao vivo em 2026-09-19, ver "Backend — fatia 4" mais abaixo.
 2. **A decidir (produto):** termos e condições (popup no login/registo) — texto embutido na app ou servido pela API;
    produtores como resultado próprio da pesquisa (`GET /api/produtores?search=`).
-   **Regiões por país — decidido em 2026-09-19 (opção B), a implementar a seguir:** tabela de lookup `regiao` (país +
-   nome) e `produtor` passa a apontar para ela por FK, em vez do texto livre `produtor_regiao` (que gerava pílulas a
-   mais com gralhas ou variantes). Regiões só para os países mais populares (Portugal primeiro; Espanha, EUA, Inglaterra,
-   ...); as restantes acrescentam-se à medida que entrarem produtos. **Douro e Porto são duas regiões separadas.**
+   ✅ **Regiões por país — feito em 2026-09-19 (opção B):** ver "Regiões como lookup" mais abaixo. **Falta rever a
+   lista provisória de regiões** (69, de 7 países) e acrescentar as dos outros países à medida que entrarem produtos.
 3. **Depende de dados reais:** detalhe/cartões das outras categorias (whisky/gin/licor/vodka/aguardente) — só `vinho`
    tem subtype implementado.
 4. **Adiado:** email do código de recuperação de password (endpoint pronto, envio real por email adiado — só log).
@@ -259,8 +257,8 @@ bebidas demo), 0 mojibake, 25 testes verdes, API a arrancar com `ddl-auto: valid
   por código de carácter e poria "África" depois de "Zimbábue"; `OrdemAlfabetica.kt`, +4 testes). Se quiseres
   **Portugal no topo** da lista de países, é uma linha (decisão de produto, não tomada).
 - **Pendente:** `Vinho` (entidade/DTO) ainda não expõe a barrica; whisky/vodka/gin/licor/aguardente continuam sem subtype
-  no backend; `produtor_regiao` tem valores compostos nos demo (`Vinho Verde — Melgaço`, `Arraiolos — Alentejo`) que
-  dariam pílulas feias no filtro por região — no catálogo real, usar só a região ("Vinho Verde", "Alentejo").
+  no backend. (Os valores compostos de região dos demo, como `Vinho Verde — Melgaço`, ficaram resolvidos em 2026-09-19:
+  as regiões passaram a lookup, ver "Regiões como lookup".)
 
 ### Backend — fatia 4: Produtor, Caves, reviews e catálogo (implementada e validada ao vivo, 2026-09-19)
 
@@ -277,12 +275,12 @@ do popup de Filtros (origem = país + regiões que mudam com o país). Contrato 
   As colunas já existiam na BD — **sem alterações de schema**. (O `API_ENDPOINTS.md` dizia que as janelas "já existiam no
   PATCH": não existiam em lado nenhum.)
 - **Reviews:** cada review traz `utilizadorNome` e `utilizadorAvatar`; novo `GET /api/users/me/reviews`.
-- **Catálogo:** `search` casa nome da bebida, do produtor **ou** de uma casta; novo filtro `regioes`. Tudo em AND com os
+- **Catálogo:** `search` casa nome da bebida, do produtor **ou** de uma casta; novo filtro por região (na altura `regioes` em texto; passou a `regiaoIds` no mesmo dia, ver "Regiões como lookup"). Tudo em AND com os
   filtros aplicados — a pesquisa limita-se aos filtros ativos e "limpar" é o cliente deixar de os enviar (requisito teu).
   "Limpar" = **repor todos os filtros** ao estado inicial, para o utilizador poder fazer outra filtragem (confirmado por ti).
 - **Assunções (aprovadas por ti em 2026-09-19):** sem janela = `EM_GUARDA`; `valorTotal` = preço pago × quantidade (não
   valor de mercado); `totalProntasAAbrir` conta garrafas (incluindo as em atraso); `?sort=preco` = o mais caro primeiro;
-  produtor da semana = rotação pelos **10** primeiros (não por todos); `regioes` aceita várias; `utilizadorNome` = "nome
+  produtor da semana = rotação pelos **10** primeiros (não por todos); o filtro por região aceita várias; `utilizadorNome` = "nome
   apelido" do perfil ("mais clean" nas reviews).
 - **Extras:** `Pageable.comOrdenacaoPadraoDeBebidas` (o id desempata também quando o cliente escolhe o `sort`);
   `PedidoInvalidoException` → 400; `Clock` em `Europe/Lisbon`; `HqlQueriesTest` (valida o HQL de todas as `@Query` sem
@@ -291,12 +289,40 @@ do popup de Filtros (origem = país + regiões que mudam com o país). Contrato 
   o arranque contra o Oracle (`ddl-auto: validate`) nem executar SQL.
 - **Validação ao vivo (feita em 2026-09-19, BD de dev, 99 verificações):** arranque com `ddl-auto: validate`; Produtor
   (`totalProdutos`, `/bebidas` com categoria, página e 404, `/destaque` = Licor Beirão, o que o cálculo à parte por SQL
-  previa, estável entre chamadas); catálogo (`search` por casta e por produtor, `regioes` simples, várias e combinadas com
+  previa, estável entre chamadas); catálogo (`search` por casta e por produtor, região simples, várias e combinadas com
   `search`/`paisId`/categoria, 16 bebidas sem repetir na paginação); reviews (autor com nome e avatar; `POST` e `PUT` com
   um autor que TEM avatar, sem `LazyInitializationException`; `/me/reviews`); Caves (os 4 estados, totais por cave,
   ordenações, consumir 1 de 3, consumir a última, 409/400/404, `PATCH`, perfil coerente) e 4 consumos em simultâneo sobre a
   mesma linha (5 garrafas → 1 por consumir + 4 consumidas: nada se perdeu). Log da API sem erros. Dados de teste
   apagados e conta de teste reposta (avatar `NULL`).
+
+### Regiões como lookup (implementada e validada ao vivo, 2026-09-19)
+
+Decisão tua (opção B): `regiao` (país + nome) e `produtor.produtor_regiao_id` (FK) em vez do texto livre
+`produtor_regiao`. Só regiões dos países mais populares; as dos outros acrescentam-se à medida que entrarem produtos
+(podes enviar-me os links das bebidas e ajustamos os dados). **Douro e Porto são duas regiões.**
+
+- **BD:** tabela `regiao` (nome único por país) e `produtor_regiao_id` no lugar do texto (`01_tables.sql`,
+  `02_constraints.sql`, patch `07_patch_regioes.sql`, repetível). **Acrescentei uma garantia de coerência (a rever):** uma FK
+  composta `(produtor_pais_id, produtor_regiao_id) → regiao(regiao_pais_id, regiao_id)` — a BD recusa uma região de outro
+  país — e um `CHECK` (região sem país não é permitida). Testado com 9 casos, recusas incluídas. Receita para produtores e
+  regiões novos em `database/README.md`. Reconstruir do zero e "estado antigo + patch" dão conteúdo idêntico.
+- **Lista provisória (69 regiões, 7 países — a rever por ti):** Portugal 15 (Vinho Verde, Trás-os-Montes, Douro, Porto,
+  Távora-Varosa, Dão, Bairrada, Beira Interior, Lisboa, Tejo, Península de Setúbal, Alentejo, Algarve, Madeira, Açores),
+  Espanha 14, França 11, Itália 10, EUA 8, Escócia 6, Inglaterra 5 (ver `seed/01_lookups.sql`). Convenção: nome PT-PT quando
+  há forma estabelecida (Bordéus, Borgonha, Califórnia, ...) e o nome local nos restantes (Rioja, Speyside, ...); sem
+  sub-regiões (Napa Valley, Cima Corgo, ...).
+- **Dados demo:** 13 produtores migrados (`Vinho Verde — Melgaço` → Vinho Verde; `Arraiolos — Alentejo` → Alentejo;
+  `Óbidos` e `Lisboa — Rossio` → Lisboa). **Gin 44° (Peniche) e Licor Beirão (Lousã) ficam sem região (`NULL`):** a lista
+  tem regiões, não localidades — e a localidade (Melgaço, Peniche, ...) perdeu-se.
+- **API:** entidade `Regiao`; `/lookup/regioes?paisId=` passou de `List<String>` a `[{ id, nome }]`, só das regiões que
+  têm bebidas; o filtro é `regiaoIds` (substitui `regioes`, que era texto); `regiaoId` em `ProdutorDetailDto` e
+  `ProdutorResumoDto`; `BebidaService.getDetail` passou a `@Transactional(readOnly = true)` (navega bebida → produtor →
+  região, ambos LAZY). Quebra o contrato do `regioes` da fatia 4 (ainda sem Android a usá-lo).
+- **Validado ao vivo (28 verificações):** regiões de Portugal com bebidas por ordem alfabética, países sem regiões → lista
+  vazia, filtro por 1 e várias regiões e combinado com `paisId`/categoria/`search`, `regiao`/`regiaoId` em produtor e
+  detalhe da bebida (também com produtor sem região) e regressão do catálogo, do destaque e dos países.
+- **Pendente:** rever a lista de regiões; acrescentar as dos outros países com os produtos reais.
 
 ### Decisões de dados: catálogo curado vs. ofertas de afiliados (2026-09-18)
 

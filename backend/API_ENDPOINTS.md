@@ -20,9 +20,10 @@ Legenda: ✅ já existe e cobre a necessidade · 🔧 existe mas precisa de ajus
 3. **`casta` passa a distinguir tinta/branca** via tabela de lookup `casta_tipo` (FK), consistente com o
    padrão do resto do schema (`vinho_corpo`, `vinho_tanino`, `vinho_tipo`, ...) — não uma coluna solta.
 4. **Recuperação de password por código** — nova tabela `utilizador_password_reset`, ver secção seguinte.
-5. **Regiões dependentes de país** (filtro do catálogo) — sem tabela nova; a API calcula
-   `SELECT DISTINCT produtor_regiao WHERE produtor_pais_id = ?` em vez de introduzir um lookup formal
-   (`produtor_regiao` continua texto livre no schema).
+5. **Regiões dependentes de país** (filtro do catálogo) — **decisão revista em 2026-09-19** (opção B do utilizador):
+   tabela de lookup `regiao` (país + nome) e `produtor.produtor_regiao_id` (FK) em vez do texto livre
+   `produtor_regiao`. A decisão original de 2026-09-17 era um `DISTINCT` sobre o texto livre, que gerava pílulas a
+   mais com gralhas ou variantes ("Duoro", "Vinho Verde — Melgaço"). Ver "Lookups" e "Filtro por região".
 
 ## Alterações à BD necessárias antes do backend (camada 1)
 
@@ -76,9 +77,13 @@ brancas) — texto já capturado, falta só o `UPDATE` em massa no seed.
 
 ✅ **`LookupController` implementado por completo** (2026-09-17): `/nacionalidades`, `/avatar-categorias`,
 `/avatares?categoriaId=` (nota: ficou `categoriaId`, não `categoria`, para consistência com o resto dos
-filtros), `/categorias-bebida`, `/castas?tipoId=`, `/casta-tipos`, `/paises`, `/regioes?paisId=` (paisId
-aqui é `produtor_pais_id`, que coincide com o id de `pais` — ver "Filtro por região" mais abaixo),
+filtros), `/categorias-bebida`, `/castas?tipoId=`, `/casta-tipos`, `/paises`, `/regioes?paisId=`,
 `/vinho/corpos`, `/vinho/taninos`, `/vinho/tipos`.
+
+**`/regioes?paisId=` (mudou em 2026-09-19):** devolve `[{ id, nome }]` — as regiões desse país **que têm pelo menos uma
+bebida** (as pílulas de "Origem" do popup de filtros nunca dão 0 resultados; acrescentar uma região à tabela `regiao`
+não a mostra até haver um produto dela). O `id` é o que se envia em `GET /api/bebidas?regiaoIds=`. `paisId` é o id do
+país, o **mesmo** em `pais` e `produtor_pais` (ver `database/README.md`). Antes devolvia `List<String>` (texto livre).
 
 **Ordem:** `/paises` (218), `/castas` (277) e `/regioes` vêm por **ordem alfabética** (collator pt-PT; o Oracle
 ordena por código de carácter e poria "África" depois de "Zimbábue"). Os restantes vêm por id, que é a ordem
@@ -130,7 +135,7 @@ botão de compra) mas **a linha fica como histórico**, e volta a ativo sozinho 
 
 | Método | Path | Estado |
 |---|---|---|
-| GET | `/api/bebidas?search=&categoriaIds=&paisId=&regioes=&precoMin=&precoMax=&ratingMin=&acidezMin=&acidezMax=&docuraMin=&docuraMax=&corpoId=&taninoId=&tipoId=&castaIds=&page=&size=` | ✅ **implementado** (2026-09-18) — testado com `categoriaIds`, `precoMax`. 🆕 (2026-09-19, **validado ao vivo**) `regioes` (repetir o parâmetro: `regioes=Douro&regioes=Alentejo`; texto de `produtor.regiao`, os mesmos valores de `/lookup/regioes?paisId=`) e `search` que passa a casar também o **nome do produtor** e o **nome de uma casta** (tudo em AND com os filtros aplicados; "limpar" um filtro é o cliente deixar de o enviar) |
+| GET | `/api/bebidas?search=&categoriaIds=&paisId=&regiaoIds=&precoMin=&precoMax=&ratingMin=&acidezMin=&acidezMax=&docuraMin=&docuraMax=&corpoId=&taninoId=&tipoId=&castaIds=&page=&size=` | ✅ **implementado** (2026-09-18) — testado com `categoriaIds`, `precoMax`. 🆕 (2026-09-19, **validado ao vivo**) `regiaoIds` (repetir o parâmetro: `regiaoIds=3&regiaoIds=7`; os ids de `/lookup/regioes?paisId=`; era `regioes` em texto, substituído no mesmo dia pela tabela `regiao`) e `search` que passa a casar também o **nome do produtor** e o **nome de uma casta** (tudo em AND com os filtros aplicados; "limpar" um filtro é o cliente deixar de o enviar) |
 | GET | `/api/bebidas/sugeridas` (auth) | ✅ **implementado** — sem preferências, cai para o catálogo todo (nunca vazio); com preferências, filtra por categorias/acidez/doçura preferidas. **Algoritmo ainda simples** (sem ordenação por rating dedicada) — afinar mais tarde se necessário |
 | GET | `/api/bebidas/{id}` | ✅ **implementado** — `produtorResumo`, `linkCompra` (mais barato), flags do utilizador |
 | GET | `/api/bebidas/{id}/reviews` | ✅ **implementado** — `{ distribuicao: {1..5: n}, reviews: [...] }`. **Quebra o contrato Android atual** (`AquaVitaeApi.getReviews` ainda declara `List<ReviewResponse>`) — sincronizar quando chegar a vez do Android |
@@ -270,6 +275,7 @@ data class ReviewsResponse(
 
 // ProdutorDetailDto (GET /api/produtores/{id}) — adicionar:
 totalProdutos: Int
+regiaoId: Long?                 // (2026-09-19) `regiao` continua a ser o nome; o mesmo em ProdutorResumoDto
 
 // CaveResponse (GET /api/users/me/caves) — adicionar:
 totalGarrafas: Int
@@ -294,7 +300,7 @@ estado: EM_GUARDA | PRONTA | EM_ATRASO | CONSUMIDA
 ```
 
 Query params novos a suportar:
-- `GET /api/bebidas` — `categoriaIds` (substitui `categoriaId` singular), `paisId`, `regioes`, `precoMin/Max`,
+- `GET /api/bebidas` — `categoriaIds` (substitui `categoriaId` singular), `paisId`, `regiaoIds`, `precoMin/Max`,
   `ratingMin`, `acidezMin/Max`, `docuraMin/Max`, `corpoId`, `taninoId`, `tipoId`, `castaIds`
 - `GET /api/users/me/wishlist` — `?sort=recente|ratingAsc|ratingDesc`
 - `GET /api/users/me/provadas` — `?categoriaId=&ano=`
@@ -312,7 +318,7 @@ Não estavam no desenho inicial; saíram de cruzar o código com o texto dos ecr
 | Autor da review | tab Reviews: "avatar, nome, há quanto tempo, conteúdo, rating" | ✅ **feito 2026-09-19 (validado ao vivo)** — `ReviewResponse` ganha `utilizadorNome` e `utilizadorAvatar` (path). Fetch explícito do avatar (LAZY); nas respostas de `POST`/`PUT` o autor é recarregado com o perfil (o utilizador do token não traz o avatar). |
 | Histórico de reviews do perfil | Perfil: "histórico de reviews (terá outra tela)" | ✅ **feito 2026-09-19 (validado ao vivo)** — `GET /api/users/me/reviews` (auth): as reviews do utilizador com a bebida associada (`BebidaSummaryDto`). |
 | Pesquisa por produtor e casta | Homepage/Catálogo: "pesquisar por nomes de bebidas, produtores, castas" | ✅ **feito 2026-09-19 (validado ao vivo)** — `search` de `GET /api/bebidas` casa também `produtor.nome` e `casta.name` (via `vinho_casta`), em AND com os filtros aplicados. **A decidir:** produtores como resultado próprio (`GET /api/produtores?search=`)? **Limitação:** a pesquisa distingue acentos (`Esporao` não acha `Esporão`) — pré-existente, ver PLANO. |
-| Filtro por região | Popup de filtros: "as pílulas das regiões mudam com o país" | ✅ **`regioes` em `GET /api/bebidas` feito 2026-09-19 (validado ao vivo)** — lista de textos de `produtor.regiao` (pílulas do popup de filtros, mockup "Origem": país + regiões), em `EXISTS` sobre o produtor para não excluir bebidas sem produtor. **Ids (resolvido em 2026-09-19):** `/lookup/regioes?paisId=` usa `produtor_pais` e o filtro do catálogo usa `pais`; continuam duas tabelas, mas com **os mesmos ids** (convenção do seed, ver `database/README.md`), por isso o mesmo `paisId` serve para os dois. |
+| Filtro por região | Popup de filtros: "as pílulas das regiões mudam com o país" | ✅ **`regiaoIds` em `GET /api/bebidas` feito 2026-09-19 (validado ao vivo)** — ids da tabela `regiao` (pílulas do popup de filtros, mockup "Origem": país + regiões), em `EXISTS` sobre o produtor para não excluir bebidas sem produtor; `/lookup/regioes` devolve `{ id, nome }` só das regiões com bebidas. A região de um produtor é do país desse produtor (FK composta na BD). **Ids (resolvido em 2026-09-19):** `/lookup/regioes?paisId=` usa `produtor_pais` e o filtro do catálogo usa `pais`; continuam duas tabelas, mas com **os mesmos ids** (convenção do seed, ver `database/README.md`), por isso o mesmo `paisId` serve para os dois. |
 | Lista da cave | Caves: "quantidade, nome, categoria, intervalo de consumo, preço/unidade, nota" | ✅ **feito 2026-09-19 (validado ao vivo)** — `CaveBebidaResponse` ganha `janelaInicio`, `janelaFim`, `categoriaNome`, `imagePath` e `estado`. |
 | Consumir uma garrafa | Caves: "marcar como consumida (sai da lista e reduz o contador em 1)" | ✅ **decidido e feito 2026-09-19 (validado ao vivo)** — consumir 1 = decrementar `quantidade` e guardar a consumida numa linha própria com `data_consumo` (ver secção Caves). |
 | "Pronta a abrir" | Caves: "hoje dentro da janela" | ✅ **decidido e feito 2026-09-19 (validado ao vivo)** — depois de a janela acabar, sem consumir: continua na lista das prontas com `estado = EM_ATRASO` (aviso vermelho pequeno "Em atraso"). Sem janela = `EM_GUARDA` (aprovado em 2026-09-19). |
@@ -342,6 +348,9 @@ quando chegar a vez de construir os ecrãs correspondentes (não bloqueia o back
 - Caves: `CaveResponse`/`CaveDetailResponse`/`CaveBebidaResponse` mudaram (totais, `prontasAAbrir`/`emGuarda`, `estado`,
   janelas); o `PATCH .../bebidas/{id}` **deixou de aceitar `isConsumida`/`dataConsumo`** — usar `POST .../consumir`
 - Produtores: `ProdutorDetailDto.totalProdutos`, `GET /api/produtores/{id}/bebidas`, `GET /api/produtores/destaque`
-- `searchBebidas`: só tinha `categoriaId` singular — agora aceita o conjunto completo de filtros do popup (+ `regioes`)
+- Regiões: `GET /api/lookup/regioes?paisId=` passou de `List<String>` a `[{ id, nome }]` (só regiões com bebidas), o filtro
+  do catálogo é `regiaoIds` (ids, não texto), e `ProdutorDetailDto`/`ProdutorResumoDto` ganharam `regiaoId` (`regiao`
+  continua a ser o nome)
+- `searchBebidas`: só tinha `categoriaId` singular — agora aceita o conjunto completo de filtros do popup (+ `regiaoIds`)
 - `BebidaSummary`/`BebidaDetail` (modelo Android): faltam os campos novos (preço, corpo/acidez/doçura,
   flags do utilizador, produtorResumo, linkCompra)

@@ -171,3 +171,21 @@ class UtilizadorAvatar(
     @Column(name = "avatar_is_active")
     var isActive: Boolean = true,
 )
+
+// Região de um país (Douro, Rioja, Bordéus, ...): o que o filtro "Origem" do catálogo mostra depois do país. Lookup
+// gerido à mão (só leitura na API). `pais` é produtor_pais (mesmos ids que `pais`, ver database/README.md).
+@Entity
+@Table(name = "regiao")
+class Regiao(
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "regiao_id")
+    var id: Long = 0,
+
+    @Column(name = "regiao_nome")
+    var nome: String? = null,
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "regiao_pais_id")
+    var pais: ProdutorPais? = null,
+)

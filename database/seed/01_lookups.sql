@@ -320,6 +320,38 @@ BEGIN
 END;
 /
 
+-- Regiões: só dos países mais populares; as restantes acrescentam-se à medida que entram produtos (basta um
+-- INSERT em `regiao` e escolher o país). Nome PT-PT quando há forma estabelecida (Bordéus, Borgonha, Califórnia,
+-- Nova Iorque, ...) e o nome local nos restantes (Rioja, Priorat, Speyside, ...). Douro e Porto são regiões
+-- separadas. LISTA PROVISÓRIA, a rever pelo utilizador. Sem sub-regiões (Napa Valley, Cima Corgo, ...) por agora.
+DECLARE
+  TYPE t_lista IS TABLE OF VARCHAR2(100 CHAR);
+
+  PROCEDURE regioes(p_pais VARCHAR2, p_nomes t_lista) IS
+    v_pais produtor_pais.produtor_pais_id%TYPE;
+  BEGIN
+    SELECT produtor_pais_id INTO v_pais FROM produtor_pais WHERE produtor_pais_value = p_pais;
+    FOR i IN 1 .. p_nomes.COUNT LOOP
+      INSERT INTO regiao (regiao_nome, regiao_pais_id) VALUES (p_nomes(i), v_pais);
+    END LOOP;
+  END regioes;
+BEGIN
+  regioes('Portugal', t_lista('Vinho Verde', 'Trás-os-Montes', 'Douro', 'Porto', 'Távora-Varosa', 'Dão', 'Bairrada',
+                              'Beira Interior', 'Lisboa', 'Tejo', 'Península de Setúbal', 'Alentejo', 'Algarve',
+                              'Madeira', 'Açores'));
+  regioes('Espanha', t_lista('Rioja', 'Ribera del Duero', 'Rías Baixas', 'Priorat', 'Rueda', 'Toro', 'Navarra',
+                             'Penedès', 'Jerez', 'Bierzo', 'La Mancha', 'Somontano', 'Jumilla', 'Montsant'));
+  regioes('França', t_lista('Bordéus', 'Borgonha', 'Champagne', 'Vale do Loire', 'Vale do Ródano', 'Alsácia',
+                            'Provença', 'Languedoc-Roussillon', 'Beaujolais', 'Cognac', 'Armagnac'));
+  regioes('Itália', t_lista('Toscana', 'Piemonte', 'Veneto', 'Sicília', 'Puglia', 'Lombardia',
+                            'Friuli-Venezia Giulia', 'Trentino-Alto Adige', 'Emilia-Romagna', 'Campania'));
+  regioes('Escócia', t_lista('Speyside', 'Highlands', 'Islay', 'Lowlands', 'Campbeltown', 'Islands'));
+  regioes('Inglaterra', t_lista('Londres', 'Kent', 'Sussex', 'Hampshire', 'Cornualha'));
+  regioes('Estados Unidos da América', t_lista('Califórnia', 'Oregon', 'Washington', 'Nova Iorque', 'Texas',
+                                               'Virgínia', 'Kentucky', 'Tennessee'));
+END;
+/
+
 -- Retalhistas
 INSERT INTO retalhista_tipo (retalhista_tipo_value) VALUES ('Garrafeira Online');
 INSERT INTO retalhista_tipo (retalhista_tipo_value) VALUES ('Supermercado');

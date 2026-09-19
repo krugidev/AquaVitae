@@ -83,6 +83,11 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
   seguir a receita de `database/README.md` (mesmo id nas duas) e conferir com a query de verificação — "inserir na mesma
   ordem" não chega: os identity das duas divergem com inserts revertidos, cache ou reinícios (aconteceu na dev).
 
+- **Regiões:** `regiao` (país + nome) é um lookup e `produtor.produtor_regiao_id` aponta para ele (nada de texto livre).
+  A BD recusa uma região de outro país (FK composta com `produtor_pais_id`) e uma região sem país. Um produtor novo
+  escolhe a região da lista; se não existir, acrescenta-se primeiro (receita em `database/README.md`). O filtro do
+  catálogo (`regiaoIds`) e `/lookup/regioes` só mostram regiões com pelo menos uma bebida.
+
 **Ferramentas nesta máquina (Windows)**
 
 - **Gradle:** se depois de editar ficheiros o `compileKotlin`/`bootRun` disser `UP-TO-DATE` ou falhar com um bean

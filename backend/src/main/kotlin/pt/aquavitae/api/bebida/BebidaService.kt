@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import pt.aquavitae.api.bebida.dto.BebidaDetailDto
 import pt.aquavitae.api.bebida.dto.BebidaFiltro
 import pt.aquavitae.api.bebida.dto.BebidaSummaryDto
@@ -44,7 +45,7 @@ class BebidaService(
             search = filtro.search?.trim()?.ifBlank { null },
             categoriaIds = filtro.categoriaIds?.ifEmpty { null },
             paisId = filtro.paisId,
-            regioes = filtro.regioes?.ifEmpty { null },
+            regiaoIds = filtro.regiaoIds?.ifEmpty { null },
             ratingMin = filtro.ratingMin,
             acidezMin = filtro.acidezMin,
             acidezMax = filtro.acidezMax,
@@ -72,7 +73,7 @@ class BebidaService(
             search = null,
             categoriaIds = categoriaIds.ifEmpty { null },
             paisId = null,
-            regioes = null,
+            regiaoIds = null,
             ratingMin = null,
             acidezMin = preferencia?.acidezMin,
             acidezMax = preferencia?.acidezMax,
@@ -89,6 +90,8 @@ class BebidaService(
         return PageImpl(bebidaSummaryAssembler.assemble(page.content, utilizador), pageable, page.totalElements)
     }
 
+    // Transação de leitura: o detalhe navega bebida -> produtor -> região (LAZY), sem depender do Open-Session-In-View.
+    @Transactional(readOnly = true)
     fun getDetail(id: Long, utilizador: Utilizador?): BebidaDetailDto {
         val bebida = bebidaRepository.findById(id)
             .orElseThrow { ResourceNotFoundException("Bebida $id não encontrada") }

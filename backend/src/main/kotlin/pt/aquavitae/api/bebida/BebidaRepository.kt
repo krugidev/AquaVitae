@@ -20,6 +20,7 @@ interface BebidaRepository : JpaRepository<Bebida, Long> {
     // do mockup) e, como tudo o resto, combina em AND com os filtros aplicados.
     // Produtor e região vão em EXISTS com `b.produtor.id` (a FK, sem join): navegar `b.produtor.regiao` no
     // WHERE criaria um INNER JOIN implícito que tirava da pesquisa toda a bebida sem produtor, mesmo sem filtro.
+    // `regiaoIds` são os ids devolvidos por /lookup/regioes?paisId= (as pílulas do popup de filtros).
     @Query(
         """
         SELECT b FROM Bebida b LEFT JOIN Vinho v ON v.bebidaId = b.id
@@ -31,7 +32,7 @@ interface BebidaRepository : JpaRepository<Bebida, Long> {
                              AND UPPER(vc.casta.name) LIKE UPPER(CONCAT('%', :search, '%'))))
           AND (:categoriaIds IS NULL OR b.categoria.id IN :categoriaIds)
           AND (:paisId IS NULL OR b.paisOrigem.id = :paisId)
-          AND (:regioes IS NULL OR EXISTS (SELECT 1 FROM Produtor p WHERE p.id = b.produtor.id AND p.regiao IN :regioes))
+          AND (:regiaoIds IS NULL OR EXISTS (SELECT 1 FROM Produtor p WHERE p.id = b.produtor.id AND p.regiao.id IN :regiaoIds))
           AND (:ratingMin IS NULL OR b.ratingMedio >= :ratingMin)
           AND (:acidezMin IS NULL OR v.nivelAcidez >= :acidezMin)
           AND (:acidezMax IS NULL OR v.nivelAcidez <= :acidezMax)
@@ -53,7 +54,7 @@ interface BebidaRepository : JpaRepository<Bebida, Long> {
         @Param("search") search: String?,
         @Param("categoriaIds") categoriaIds: List<Long>?,
         @Param("paisId") paisId: Long?,
-        @Param("regioes") regioes: List<String>?,
+        @Param("regiaoIds") regiaoIds: List<Long>?,
         @Param("ratingMin") ratingMin: BigDecimal?,
         @Param("acidezMin") acidezMin: Int?,
         @Param("acidezMax") acidezMax: Int?,

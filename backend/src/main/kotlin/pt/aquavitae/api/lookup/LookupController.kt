@@ -8,7 +8,6 @@ import pt.aquavitae.api.lookup.dto.AvatarDto
 import pt.aquavitae.api.lookup.dto.CastaDto
 import pt.aquavitae.api.lookup.dto.LookupItemDto
 import pt.aquavitae.api.lookup.dto.toLookupItemDto
-import pt.aquavitae.api.produtor.ProdutorRepository
 
 // Endpoints de leitura para as tabelas de lookup geridas pelo admin (ver
 // briefing secção 4 — a API só lê, nunca escreve aqui). Sem auth: são dados
@@ -23,7 +22,7 @@ class LookupController(
     private val castaRepository: CastaRepository,
     private val castaTipoRepository: CastaTipoRepository,
     private val paisRepository: PaisRepository,
-    private val produtorRepository: ProdutorRepository,
+    private val regiaoRepository: RegiaoRepository,
     private val vinhoCorpoRepository: VinhoCorpoRepository,
     private val vinhoTaninoRepository: VinhoTaninoRepository,
     private val vinhoTipoRepository: VinhoTipoRepository,
@@ -67,13 +66,13 @@ class LookupController(
     fun paises(): List<LookupItemDto> =
         paisRepository.findAll().map { LookupItemDto(it.id, it.value) }.ordenadoPorNome { it.nome }
 
-    // paisId aqui refere-se a produtor_pais_id (regiões são um atributo do produtor, não da bebida — ver
-    // nota em ProdutorRepository.findDistinctRegioesByPaisId). pais e produtor_pais são duas tabelas mas
-    // com os MESMOS ids (convenção do seed, ver database/README.md), por isso é o mesmo id que
-    // GET /api/bebidas?paisId= e /lookup/paises devolvem.
+    // As pílulas de "Origem" do filtro do catálogo: as regiões do país que têm pelo menos uma bebida, por ordem
+    // alfabética. `id` é o que se envia em GET /api/bebidas?regiaoIds=. paisId é produtor_pais_id: pais e
+    // produtor_pais são duas tabelas mas com os MESMOS ids (convenção do seed, ver database/README.md), por isso é
+    // o mesmo id que /lookup/paises e GET /api/bebidas?paisId= usam.
     @GetMapping("/regioes")
-    fun regioes(@RequestParam paisId: Long): List<String> =
-        produtorRepository.findDistinctRegioesByPaisId(paisId).ordenadoPorNome { it }
+    fun regioes(@RequestParam paisId: Long): List<LookupItemDto> =
+        regiaoRepository.findComBebidasByPaisId(paisId).map { LookupItemDto(it.id, it.nome) }.ordenadoPorNome { it.nome }
 
     @GetMapping("/vinho/corpos")
     fun vinhoCorpos(): List<LookupItemDto> =

@@ -14,6 +14,8 @@ ddl/
   05_patch_link_verificacao.sql   patch one-off p/ BD de dev JÁ existente (estado/verificação dos links de compra)
   06_patch_seed_notas.sql         patch p/ BD de dev JÁ existente: barrica do vinho (cask_formato, vinho_cask) + valores das
                                   notas de seed (castas, países, botânicos, ...); repetível
+  07_patch_regioes.sql            patch p/ BD de dev JÁ existente: regiões como lookup (`regiao` + `produtor_regiao_id`),
+                                  migra o texto antigo; repetível
 seed/
   01_lookups.sql         tabelas de lookup preenchidas (corpo, taninos, 277 castas, 218 países, casks, ...)
   02_bebidas.sql          produtores, retalhistas e ~16 bebidas de exemplo (maioritariamente portuguesas)
@@ -46,8 +48,8 @@ ou, em bash:
 Isto corre `ddl/01_tables.sql`, `ddl/02_constraints.sql`, `ddl/03_triggers.sql`,
 `seed/01_lookups.sql` e `seed/02_bebidas.sql`, por esta ordem, ligando como o `APP_USER` definido no `.env`.
 
-Os ficheiros `04_*`, `05_*` e `06_*` **não** fazem parte desta sequência: as alterações que fazem já estão em
-`01_tables.sql`/`02_constraints.sql` (e o `06` também em `seed/01_lookups.sql`), por isso só servem para pôr ao dia
+Os ficheiros `04_*` a `07_*` **não** fazem parte desta sequência: as alterações que fazem já estão em
+`01_tables.sql`/`02_constraints.sql` (e o `06`/`07` também em `seed/`), por isso só servem para pôr ao dia
 uma BD que já existia antes delas (cada um explica no topo como se corre). Ao mexer no schema: atualizar
 `01_tables.sql` **e** criar um patch novo.
 
@@ -118,3 +120,30 @@ Host: `localhost`, porta `1521`, serviço `XEPDB1`, utilizador/password conforme
 - Seed: nomes de produtores/marcas refletem produtos portugueses reais (Barca Velha, Licor Beirão, Gin
   Sharish, etc.), mas anos de colheita, preços e notas sensoriais são valores de desenvolvimento — não
   verificados contra a ficha técnica oficial. Revê antes de qualquer uso público.
+
+## Regiões
+
+`regiao` (país + nome) é um lookup e `produtor.produtor_regiao_id` aponta para ele (antes era o texto livre
+`produtor_regiao`, que gerava pílulas a mais no filtro do catálogo com gralhas ou variantes). Só existem regiões dos
+países mais populares (Portugal, Espanha, França, Itália, Escócia, Inglaterra, EUA); as dos outros acrescentam-se à
+medida que entram produtos. Nome PT-PT quando há forma estabelecida (Bordéus, Borgonha, Califórnia, ...) e o nome local
+nos restantes (Rioja, Speyside, ...); **Douro e Porto são duas regiões**. Sem sub-regiões por agora.
+
+**Um produtor novo:** escolher a região da lista; se não existir, acrescentá-la primeiro (o país é o do produtor):
+
+```sql
+-- exemplo: um produtor da Alemanha (que ainda não tem regiões na lista)
+INSERT INTO regiao (regiao_nome, regiao_pais_id)
+  SELECT 'Mosel', produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Alemanha';
+
+INSERT INTO produtor (produtor_nome, produtor_pais_id, produtor_regiao_id)
+  SELECT 'Weingut X', p.produtor_pais_id, r.regiao_id
+    FROM produtor_pais p JOIN regiao r ON r.regiao_pais_id = p.produtor_pais_id
+   WHERE p.produtor_pais_value = 'Alemanha' AND r.regiao_nome = 'Mosel';
+```
+
+A BD garante a coerência: a região de um produtor tem de ser do país desse produtor (FK composta
+`fk_produtor_regiao`, `ORA-02291` se não for) e um produtor com região tem sempre país (`ck_produtor_regiao_pais`,
+`ORA-02290`). O nome de uma região é único por país (`ORA-00001`), não no total: pode haver o mesmo nome em dois países.
+Sem região é permitido (`NULL` = "não disponível"). O filtro do catálogo só mostra as regiões que têm pelo menos uma
+bebida, por isso acrescentar uma região não a faz aparecer até haver um produto dela.

@@ -180,6 +180,18 @@ ALTER TABLE cave_bebida ADD CONSTRAINT fk_cave_bebida_bebida
 ALTER TABLE produtor ADD CONSTRAINT fk_produtor_pais
     FOREIGN KEY (produtor_pais_id) REFERENCES produtor_pais (produtor_pais_id);
 
+ALTER TABLE regiao ADD CONSTRAINT fk_regiao_pais
+    FOREIGN KEY (regiao_pais_id) REFERENCES produtor_pais (produtor_pais_id);
+
+-- FK composta: a região de um produtor tem de ser do país desse produtor (inserir um produtor português com uma
+-- região de Espanha falha com ORA-02291 em fk_produtor_regiao). O Oracle não confere FKs com colunas nulas, por isso
+-- o CHECK garante que um produtor com região tem sempre país — sem ele, região sem país escapava à verificação.
+ALTER TABLE produtor ADD CONSTRAINT fk_produtor_regiao
+    FOREIGN KEY (produtor_pais_id, produtor_regiao_id) REFERENCES regiao (regiao_pais_id, regiao_id);
+
+ALTER TABLE produtor ADD CONSTRAINT ck_produtor_regiao_pais
+    CHECK (produtor_regiao_id IS NULL OR produtor_pais_id IS NOT NULL);
+
 ALTER TABLE retalhista ADD CONSTRAINT fk_retalhista_tipo
     FOREIGN KEY (retalhista_tipo_id) REFERENCES retalhista_tipo (retalhista_tipo_id);
 
