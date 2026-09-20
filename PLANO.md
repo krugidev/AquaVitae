@@ -3,61 +3,70 @@
 Roadmap vivo do MVP. Atualizar isto no fim de cada sessão de trabalho relevante — é o que uma sessão
 nova do Claude Code (ou tu, ao voltares passado um tempo) deve ler primeiro para saber onde ficámos.
 
-## ▶ Retomar aqui (última atualização: 2026-09-19)
+## ▶ Retomar aqui (última atualização: 2026-09-19, fim de sessão)
 
-**Ponto da situação:** BD e backend têm agora todos os endpoints da 1.ª versão implementados e validados ao vivo
-(os últimos em 2026-09-19); o Android ainda é só esqueleto.
-Contrato completo dos endpoints (o que existe, o que falta) em [`backend/API_ENDPOINTS.md`](backend/API_ENDPOINTS.md).
+**Ponto da situação:** BD e backend têm todos os endpoints da 1.ª versão implementados e **validados ao vivo** contra o
+Oracle real (Produtor, Caves, reviews com autor, pesquisa por produtor/casta, regiões como lookup). Os seeds das notas
+(castas, países, lookups) e a barrica do vinho também estão feitos. O Android ainda é só esqueleto. Contrato dos endpoints
+em [`backend/API_ENDPOINTS.md`](backend/API_ENDPOINTS.md); o detalhe de cada fatia está mais abaixo, em "Em curso".
 
-**Git:** todo o trabalho está na branch `feature/api-endpoints-design`, PR aberto:
-https://github.com/krugidev/AquaVitae/pull/1 (a descrição do PR ainda só fala da 1.ª fatia — atualizar antes de
-o dar por fechado). A `main` só tem a landing page em `docs/` (GitHub Pages) além do que já lá estava.
-`gh` está instalado e autenticado, mas no Git Bash não está no PATH: `export PATH="/c/Program Files/GitHub CLI:$PATH"`.
+**Git:** branch `feature/api-endpoints-design`, PR aberto: https://github.com/krugidev/AquaVitae/pull/1 (a descrição só
+fala da 1.ª fatia — atualizá-la ao fazer push). **3 commits locais por enviar** (`3d9c31a` seeds das notas, `589d315`
+Produtor/Caves/reviews/pesquisa, `f7acffe` regiões como lookup): nada foi para o remoto. A `main` só tem a landing page em
+`docs/` (GitHub Pages). Ficheiros só do utilizador, **nunca commitados**: `android/AQUAVITAESEEDS-NOTES` e, na raiz,
+`—--------------- DADOS A INSERIR NA.txt` (versão antiga das notas). Sobre o `gh`, ver `CLAUDE.md` ("Ferramentas").
 
-**✅ Validado ao vivo (2026-09-19, contra o Oracle real):** os endpoints de Produtor, Caves, reviews (autor + histórico)
-e a pesquisa/filtro por região do catálogo correram contra a BD de dev (99 verificações, ver "Backend — fatia 4", e mais
-28 das regiões como lookup) e têm 57 testes automáticos que não precisam de BD. **Docker:** depois de um reinício do Windows o Docker Desktop pode
-falhar a arrancar (`sailor-ingest.sock ... rename ... The file cannot be accessed by the system`; resolveu-se com um novo
-reinício) e o contentor Oracle fica parado (`docker compose up -d` em `database/`). **Nunca "Reset to factory defaults"**
-no diálogo do Docker: apaga contentores e volumes, incluindo a BD.
+**Ambiente, como ficou:** BD de dev migrada até ao patch `07`; contentor `aquavitae-oracle-xe` a correr; API parada
+(`bootRun` em `backend/`); conta de teste `demo2@aquavitae.local` (1 review na bebida 1, 1 "provada", sem avatar). Se o
+Windows reiniciou: `docker compose up -d` em `database/` (e ver em `CLAUDE.md` o que fazer se o Docker Desktop crashar).
+Testes: `.\gradlew.bat test` em `backend/` (57, não precisam de BD).
 
-**O que falta no backend** (1.ª versão):
-1. ✅ **Produtor, Caves e lacunas dos mockups** (reviews com autor, histórico de reviews, pesquisa por produtor/casta,
-   filtro por região) — implementado e validado ao vivo em 2026-09-19, ver "Backend — fatia 4" mais abaixo.
-2. **A decidir (produto):** termos e condições (popup no login/registo) — texto embutido na app ou servido pela API;
-   produtores como resultado próprio da pesquisa (`GET /api/produtores?search=`).
-   ✅ **Regiões por país — feito em 2026-09-19 (opção B):** ver "Regiões como lookup" mais abaixo. **Falta rever a
-   lista provisória de regiões** (69, de 7 países) e acrescentar as dos outros países à medida que entrarem produtos.
-3. **Depende de dados reais:** detalhe/cartões das outras categorias (whisky/gin/licor/vodka/aguardente) — só `vinho`
-   tem subtype implementado.
-4. **Adiado:** email do código de recuperação de password (endpoint pronto, envio real por email adiado — só log).
-5. **Transversal:** os testes são só de regras puras (verificação de links 21, ordenação alfabética 4, caves 22, produtor
-   da semana 7, HQL das `@Query` 2, arranque do contexto sem BD 1); nenhum de services/controllers com BD. `Page<...>` sai como JSON do Spring (aviso de "não
-   estável"): trocar por DTO próprio antes de produção. A pesquisa por texto distingue acentos (`Esporao` não acha
-   `Esporão`).
+**Próximos passos, por ordem:**
+1. **Tu — rever a lista de regiões** (`database/seed/01_lookups.sql`: 69 regiões de 7 países, feita de conhecimento geral
+   e não de fonte oficial; corrige-se por `UPDATE`/`INSERT`, receita em `database/README.md`).
+2. **Decidir antes do 1.º lote de bebidas** (as minhas propostas): (a) acrescentar **`bebida_ean`** (anulável, único) —
+   recomendo sim: deteta duplicados quando a mesma bebida chega por outro retalhista e serve o casamento com feeds;
+   (b) **imagens das bebidas** — hoje `bebida_path_image` é um caminho relativo servido pelo backend (`API_BASE_URL +
+   path`): usar o URL da imagem do retalhista/feed (o Android passa a aceitar URL completo) ou descarregar para `static/`?;
+   (c) confirmar que os anunciantes escolhidos na Awin aceitam publishers de **comparação de preços** (cada programa tem
+   os seus termos).
+3. **1.º lote de ~30 bebidas da Awin** — fluxo combinado em "Como entram as bebidas" (logo abaixo).
+4. **Enviar o trabalho** (push e atualizar o PR #1) — só quando pedires.
+5. **Decisões de produto pendentes:** termos e condições (popup no login/registo: texto embutido na app ou servido pela
+   API); produtores como resultado próprio da pesquisa (`GET /api/produtores?search=`).
+6. **Depois do backend:** ecrãs Android por feature, contra o contrato validado. O `AquaVitaeApi.kt` está desatualizado
+   (reviews, favoritos/wishlist/provadas, filtros, regiões, Caves, campos novos) — sincronizar ecrã a ecrã, ver o fim do
+   `API_ENDPOINTS.md`. Ecrã "Onde comprar" desenhado em conversa (lista de retalhistas com disponível/indisponível, aviso
+   de afiliação).
+7. **Adiado ou dependente de dados reais:** detalhe/cartões das outras categorias (só `vinho` tem subtype); email do
+   código de recuperação de password (só log); `Page<...>` como DTO próprio; testes de services/controllers com BD; pesquisa
+   por texto sem distinção de acentos (`Esporao` não acha `Esporão`). Ver "Por fazer depois".
 
-**Coisas do utilizador em paralelo (não bloqueiam o backend):**
-- Documento de **seeds** (`android/AQUAVITAESEEDS-NOTES`, não commitado; a cópia da raiz, `—--------------- DADOS A
-  INSERIR NA.txt`, é a versão antiga). Castas, países e lookups **já estão no seed e na BD** (ver "Seeds das notas",
-  2026-09-19). Falta o catálogo real de bebidas/produtores/retalhistas — a cada lote (semanal), o Claude ajuda a mapear as
-  características de cada bebida aos valores dos lookups (NULL onde não houver fonte). Ver também "Decisões de dados"
-  mais abaixo. Para cada link de retalhista com rede de afiliados são precisas **duas URLs** (afiliado + página do
-  produto sem tracking, para a verificação diária). Correr `POST /api/admin/links-compra/verificar` depois de cada lote.
-- **Awin:** já és afiliado (dito por ti em 2026-09-19; a candidatura tinha sido submetida como Comparison Engine, sector
-  "Wine, spirits and tobacco"). **Para incorporar os produtos falta saber/decidir:** (a) a que anunciantes (retalhistas)
-  estás ligado e quais interessam; (b) como obter os dados — feeds de produtos da Awin (o URL do feed leva uma chave:
-  vai para variável de ambiente, **nunca para o repo**); (c) como casar cada produto do feed com uma bebida do catálogo
-  (um `bebida_ean` ajudava — lacuna de schema já registada em "Por fazer depois" —, senão por nome). Mapeamento previsto,
-  **a confirmar com um feed real**: link de afiliado → `bebida_link_compra_url`, link do produto sem tracking →
-  `..._url_verificacao`, preço → `..._preco_atual`, stock → `is_ativo` (o feed é o melhor sinal de "ainda existe").
-  Continua a valer: os atributos da bebida são curados à mão; da Awin só vêm as ofertas.
-  Site enviado: `https://krugidev.github.io/AquaVitae/` — **não mudar o nome do
-  repositório nem pôr "Custom domain" nas definições do Pages** (aconteceu por engano uma vez e desviou o site;
-  já revertido). A ver outros afiliados/retalhistas com programa próprio.
+**Como entram as bebidas (combinado em 2026-09-19):** as linhas `bebida` criam-se **à mão, em lotes** (~30), não
+automaticamente a partir do feed da Awin. Da Awin vêm os **links de compra** (uma bebida pode ter vários, de retalhistas
+diferentes — o schema já o permite) e a informação que ela traz (nome, marca, preço, volume, EAN, imagem, ...). Os
+atributos que a Awin não traz (corpo, castas, botânicos, ...) só se preenchem se o utilizador os tiver; senão ficam `NULL`.
+Porquê semi-manual: um feed traz acessórios, nomes inconsistentes e a mesma bebida em vários retalhistas (duplicados), e o
+catálogo é curado. Fluxo de cada lote:
+1. O utilizador escolhe os produtos na Awin e envia, **por produto**, o **link da página do produto no retalhista (sem
+   tracking)** e o **link de afiliado** (Link Builder da Awin) — ou, melhor, as linhas do **feed de produtos** desses
+   artigos (CSV) —, mais o que já souber (casta, região, ...).
+2. O Claude **nunca abre o link de afiliado** (conta como clique); lê só a página do produto sem tracking (se o retalhista
+   bloquear, o utilizador cola o texto).
+3. O Claude devolve uma **tabela de revisão**: bebida → valores (categoria, tipo, produtor, país, região, ano, teor,
+   volume, preço; o resto `NULL`; dúvidas assinaladas) e assinala **duplicados** (bebida já no catálogo → só um link novo).
+4. Aprovada a tabela, o Claude gera o **ficheiro SQL do lote** (padrão supertype/subtype de `database/seed/02_bebidas.sql`;
+   produtores e regiões novos primeiro; retalhista se for novo; `bebida_link_compra` com **as duas URLs**: `url` =
+   afiliado, `url_verificacao` = página do produto), corre-o e, no fim, `POST /api/admin/links-compra/verificar`.
+5. Anota-se aqui o que ficou por preencher. As regiões novas acrescentam-se ao `regiao` à medida que aparecem.
 
-**Depois do backend:** ecrãs Android por feature, contra o contrato validado. O `AquaVitaeApi.kt` está desatualizado
-(reviews, favoritos/wishlist/provadas, filtros, campos novos) — sincronizar ecrã a ecrã, ver fim do `API_ENDPOINTS.md`.
-Ecrã "Onde comprar" desenhado em conversa (lista de retalhistas com disponível/indisponível, aviso de afiliação).
+**Awin — estado:** já és afiliado (dito por ti em 2026-09-19; candidatura submetida como Comparison Engine, sector "Wine,
+spirits and tobacco"). Falta saber a que anunciantes estás ligado e se queres importar feeds no futuro. Mapeamento
+previsto, **a confirmar com um feed real**: link de afiliado → `bebida_link_compra_url`; página do produto sem tracking →
+`..._url_verificacao`; preço → `..._preco_atual`; stock → `is_ativo`. O URL de um feed leva uma chave: vai para variável de
+ambiente, **nunca para o repo**. Automatizar mais tarde só o **preço e o stock dos links já existentes**, não a criação de
+bebidas. Site enviado à Awin: `https://krugidev.github.io/AquaVitae/` — **não mudar o nome do repositório nem pôr "Custom
+domain" nas definições do Pages** (aconteceu por engano uma vez e desviou o site; já revertido).
 
 ## Feito ✅
 
@@ -332,10 +341,9 @@ Decisão tua (opção B): `regiao` (país + nome) e `produtor.produtor_regiao_id
   sensoriais/de produção, por isso não é deles que dependemos.
 - **Atualização (2026-09-19, esclarecido por ti):** já és afiliado da Awin e os **produtos vão entrar pela Awin**; os
   atributos que o feed não traz (corpo, castas, botânicos, ...) só se acrescentam **à mão quando os tiveres** — senão
-  ficam `NULL` (por isso os atributos são anuláveis de propósito). **A desenhar, com o 1.º feed real:** as linhas `bebida`
-  são criadas automaticamente a partir do feed (nome, marca → produtor, preço, EAN) ou continuam a ser criadas à mão, com o
-  feed a alimentar só `bebida_link_compra`? Muda o esforço semanal e o risco de duplicados (a mesma bebida em vários
-  retalhistas).
+  ficam `NULL` (por isso os atributos são anuláveis de propósito). **Resolvido no mesmo dia:** as linhas `bebida` criam-se
+  **à mão, em lotes** (não automaticamente a partir do feed), com o feed/os links da Awin a alimentar sobretudo
+  `bebida_link_compra` e a informação que traz — fluxo em "Retomar aqui", secção "Como entram as bebidas".
 - **Não ficamos limitados à Awin**: `retalhista_rede_afiliados` é só uma etiqueta; retalhistas de redes
   diferentes ou com programa próprio convivem na mesma tabela. A app funciona sem afiliado nenhum (uma
   bebida sem oferta aparece só sem botão de compra).
@@ -359,10 +367,12 @@ Decisão tua (opção B): `regiao` (país + nome) e `produtor.produtor_regiao_id
 ## Por fazer depois (fora de âmbito imediato)
 
 - Subtypes whisky/gin/licor/vodka/aguardente no `BebidaService` (replicar o padrão de `vinho/`).
-- Testes automatizados de services/controllers (só existem os 21 da verificação de links, em `src/test`).
-- Script de verificação do catálogo depois de cada lote de seed (mínimo por categoria, subtype em falta).
-- Gin sem "estilo" (London Dry, Old Tom, ...) e `bebida` sem EAN — lacunas de schema só a decidir se/quando forem
-  precisas (ver conversa sobre valores de lookup).
+- Testes automatizados de services/controllers com BD (só há testes de regras puras, 57 no total, em `src/test`; os
+  endpoints validam-se ao vivo com `bootRun` + `curl.exe`, ver `CLAUDE.md`).
+- Script de verificação do catálogo depois de cada lote de seed (mínimo por categoria, subtype em falta) — passa a ser
+  útil já com os lotes da Awin.
+- Gin sem "estilo" (London Dry, Old Tom, ...) — lacuna de schema só a decidir se/quando for precisa. **`bebida` sem EAN**
+  passou a proposta para decidir antes do 1.º lote (ver "Retomar aqui", passo 2).
 - CI/build pipeline, Dockerfile da API para deploy.
 - Trocar `Page<BebidaSummaryDto>` por um DTO de paginação próprio antes de produção.
 - Conceitos de escalabilidade/otimização — deliberadamente adiados até tudo funcionar ponta a ponta.

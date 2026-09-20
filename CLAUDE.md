@@ -36,7 +36,10 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
   `JwtAuthenticationFilter` (corre antes do Open-Session-In-View), mas também em jobs `@Scheduled`/threads próprias
   — sem um fetch explícito: `LazyInitializationException` aí manifesta-se ao cliente como um 401 genérico (no
   filtro) ou só nos logs (nos jobs). Padrão: query com `JOIN FETCH` (`UtilizadorRepository.findByIdWithRole()`,
-  `BebidaLinkCompraRepository.findAllParaVerificacao()`).
+  `BebidaLinkCompraRepository.findAllParaVerificacao()`), ou `@Transactional(readOnly = true)` no service de leitura que
+  navega LAZY em cadeia (ex.: `BebidaService.getDetail`, bebida → produtor → região). **O utilizador do token
+  (`@AuthenticationPrincipal`) vem só com o papel carregado**: para ler o avatar ou a nacionalidade, recarregá-lo com
+  `UtilizadorRepository.findByIdWithProfile()` (ver `ReviewService.autorComAvatar`).
 - **Jobs longos atualizam só as colunas que lhes dizem respeito** (`@Modifying` + `@Query`), nunca um `save()` da
   entidade carregada no início — senão sobrescrevem alterações feitas entretanto (p.ex. um preço mudado por SQL).
 - **Toda a paginação tem `ORDER BY` determinístico** (sem ele o "carregar mais" repete/salta itens). Se o cliente
@@ -58,10 +61,18 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
   pelo utilizador (conta, reviews, favoritos, wishlist, cave, "provadas", preferências).
 - **Catálogo curado vs. ofertas de afiliados:** os atributos de uma bebida (corpo, castas, botânicos, ...) são
   sempre do catálogo, curados à mão; dos afiliados só vêm as ofertas (`bebida_link_compra`: preço, link,
-  retalhista). Não estamos presos a uma rede (`retalhista_rede_afiliados` é só uma etiqueta). **Atributo sem valor
-  = `NULL` = "não disponível"** — todas as colunas de atributo são anuláveis de propósito; escalas 1–5 só com fonte.
-- **Nunca pedir automaticamente um link de afiliado** (conta como cliques). A verificação diária de links usa
-  `bebida_link_compra_url_verificacao` (página do produto sem tracking); ver `API_ENDPOINTS.md`.
+  retalhista). Não estamos presos a uma rede (`retalhista_rede_afiliados` é só uma etiqueta; a Awin é a 1.ª e uma bebida
+  pode ter links de vários retalhistas). **Atributo sem valor = `NULL` = "não disponível"** — todas as colunas de
+  atributo são anuláveis de propósito; escalas 1–5 só com fonte.
+- **As bebidas entram em lotes (~30), criadas à mão — não automaticamente a partir do feed da Awin** (combinado em
+  2026-09-19; fluxo completo no `PLANO.md`, "Como entram as bebidas"). O utilizador envia, por produto, o link da página do
+  retalhista (sem tracking) e o link de afiliado (ou linhas do feed); o Claude devolve **primeiro uma tabela de revisão**
+  (bebida → valores de lookup, `NULL` onde não houver fonte, duplicados assinalados) e **só depois de aprovada** gera o SQL
+  do lote (padrão de `database/seed/02_bebidas.sql`, com as duas URLs de cada link). Não inventar atributos: só o que a
+  página/feed diz ou o utilizador indica.
+- **Nunca abrir nem pedir automaticamente um link de afiliado** (conta como clique; nem o Claude nem o job). Ler só a
+  página do produto sem tracking. A verificação diária de links usa `bebida_link_compra_url_verificacao` (página do
+  produto sem tracking); ver `API_ENDPOINTS.md`.
 - **Ao alterar o schema:** atualizar `database/ddl/01_tables.sql` (fonte da verdade, para quem reconstrói do zero)
   **e** criar um patch `database/ddl/0N_patch_*.sql` para a BD de dev já existente (fora do `run-migrations`; só o
   README da pasta `database/` explica). Seguir os padrões existentes: atributo categórico = tabela de lookup + FK
@@ -105,7 +116,12 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
   ficheiros `.ps1` sem BOM são lidos como ANSI (acentos nos literais chegam duplamente codificados à API).
 - **`gh` (GitHub CLI):** instalado e autenticado, mas no Git Bash é preciso `export PATH="/c/Program Files/GitHub CLI:$PATH"`.
 - **Git:** o trabalho corrente está numa branch de feature (ver `PLANO.md`); `docs/` (landing page) só existe na
-  `main` — ao mudar de branch, ficheiros aparecem/desaparecem no disco, é esperado.
+  `main` — ao mudar de branch, ficheiros aparecem/desaparecem no disco, é esperado. **Nunca commitar** as notas do
+  utilizador: `android/AQUAVITAESEEDS-NOTES` e, na raiz, `—--------------- DADOS A INSERIR NA.txt` (aparecem sempre como
+  não rastreados; usar `git add` com caminhos explícitos, não `git add -A`).
+- **Testes:** os nomes de teste em backticks não podem conter `:` nem `.` (a JVM recusa). Não há testes de
+  services/controllers com BD: valida-se ao vivo (ver abaixo). `HqlQueriesTest` e `ContextoArrancaTest` apanham sem BD
+  erros de HQL, de mapeamento e de injeção — correr sempre `--rerun-tasks` depois de criar ficheiros novos.
 - **Versões:** ao escolher/atualizar versões de Gradle/Kotlin/Spring Boot, consulta a versão atual real em vez de
   usar um número de memória — `services.gradle.org/versions/current` para o Gradle,
   `repo1.maven.org/maven2/.../maven-metadata.xml` para bibliotecas/plugins Maven. Já aconteceu tentar usar
