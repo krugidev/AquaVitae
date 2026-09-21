@@ -55,6 +55,10 @@ class Utilizador(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "utilizador_role_id")
     var role: UtilizadorRole? = null,
+
+    // Quando aceitou os termos e condições (null = nunca aceitou). Ver TermosRegras.kt.
+    @Column(name = "utilizador_termos_aceites_em")
+    var termosAceitesEm: Instant? = null,
 )
 
 // Como o utilizador aparece aos outros (ex.: autor de uma review): "nome apelido", ou o username se não

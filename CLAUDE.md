@@ -70,6 +70,12 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
   (bebida → valores de lookup, `NULL` onde não houver fonte, duplicados assinalados) e **só depois de aprovada** gera o SQL
   do lote (padrão de `database/seed/02_bebidas.sql`, com as duas URLs de cada link). Não inventar atributos: só o que a
   página/feed diz ou o utilizador indica.
+- **EAN e imagem de cada bebida (2026-09-20):** `bebida_ean` é texto, **único**, anulável, 8 a 14 dígitos (tirar espaços e
+  hífenes ao gerar o SQL; `ORA-02290`/`ORA-00001` se falhar). **Antes de criar uma bebida num lote, procurar o EAN**: se já
+  existir, só se acrescenta um `bebida_link_compra` novo (assinalar como duplicado na tabela de revisão). Sem EAN, comparar
+  nome + produtor + volume. `bebida_path_image` (1000 caracteres) guarda o **URL absoluto da imagem do retalhista/feed** (ou
+  um caminho relativo de um recurso estático); o Android usa-o tal como está se começar por `http(s)://`. Sem `bebida_ean`
+  na API (é só interno).
 - **Nunca abrir nem pedir automaticamente um link de afiliado** (conta como clique; nem o Claude nem o job). Ler só a
   página do produto sem tracking. A verificação diária de links usa `bebida_link_compra_url_verificacao` (página do
   produto sem tracking); ver `API_ENDPOINTS.md`.
@@ -97,7 +103,14 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
 - **Regiões:** `regiao` (país + nome) é um lookup e `produtor.produtor_regiao_id` aponta para ele (nada de texto livre).
   A BD recusa uma região de outro país (FK composta com `produtor_pais_id`) e uma região sem país. Um produtor novo
   escolhe a região da lista; se não existir, acrescenta-se primeiro (receita em `database/README.md`). O filtro do
-  catálogo (`regiaoIds`) e `/lookup/regioes` só mostram regiões com pelo menos uma bebida.
+  catálogo (`regiaoIds`) e `/lookup/regioes` só mostram regiões com pelo menos uma bebida. **A região do whisky é da mesma
+  tabela** (`whisky.whisky_regiao_id` → `regiao`; a tabela `whisky_regiao` já não existe, 2026-09-21): um whisky de um país sem
+  regiões na lista fica sem região (`NULL`) mas mostra o país de origem. **Ao renomear um valor de lookup, procurar o nome
+  antigo nos seeds** (`02_bebidas.sql` procura regiões/países por nome e devolve `NULL` em silêncio se não achar).
+- **Termos e condições (2026-09-21):** `utilizador_termos_aceites_em` (`NULL` = nunca aceitou; só a data, sem versão). O registo
+  exige `aceitouTermos: true`; `GET /api/users/me` traz `termosAceitesEm` e `precisaAceitarTermos`; `POST
+  /api/users/me/termos/aceitar` regista a aceitação; `aquavitae.termos.em-vigor-desde` força nova aceitação. O texto é
+  `static/legal/termos.html` (público) e **hoje é um marcador provisório**: o texto final é do utilizador. Ver `API_ENDPOINTS.md`.
 
 **Ferramentas nesta máquina (Windows)**
 

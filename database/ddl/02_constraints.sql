@@ -81,8 +81,9 @@ ALTER TABLE casta ADD CONSTRAINT fk_casta_tipo
 ALTER TABLE whisky ADD CONSTRAINT fk_whisky_tipo
     FOREIGN KEY (whisky_tipo_id) REFERENCES whisky_tipo (whisky_tipo_id);
 
+-- A região do whisky é da mesma lista das regiões dos produtores (`regiao`); a tabela whisky_regiao deixou de existir.
 ALTER TABLE whisky ADD CONSTRAINT fk_whisky_regiao
-    FOREIGN KEY (whisky_regiao_id) REFERENCES whisky_regiao (whisky_regiao_id);
+    FOREIGN KEY (whisky_regiao_id) REFERENCES regiao (regiao_id);
 
 ALTER TABLE whisky ADD CONSTRAINT fk_whisky_corpo
     FOREIGN KEY (whisky_corpo_id) REFERENCES whisky_corpo (whisky_corpo_id);

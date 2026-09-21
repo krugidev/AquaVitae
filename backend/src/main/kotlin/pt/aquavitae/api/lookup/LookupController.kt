@@ -61,10 +61,11 @@ class LookupController(
     fun castaTipos(): List<LookupItemDto> =
         castaTipoRepository.findAll().map { it.toLookupItemDto() }
 
-    // ~218 países: por ordem alfabética (ver OrdemAlfabetica.kt).
+    // ~218 países: Portugal no topo e o resto por ordem alfabética (ver OrdemAlfabetica.kt).
     @GetMapping("/paises")
     fun paises(): List<LookupItemDto> =
-        paisRepository.findAll().map { LookupItemDto(it.id, it.value) }.ordenadoPorNome { it.nome }
+        paisRepository.findAll().map { LookupItemDto(it.id, it.value) }
+            .ordenadoPorNomeComDestaque(PAIS_EM_DESTAQUE) { it.nome }
 
     // As pílulas de "Origem" do filtro do catálogo: as regiões do país que têm pelo menos uma bebida, por ordem
     // alfabética. `id` é o que se envia em GET /api/bebidas?regiaoIds=. paisId é produtor_pais_id: pais e

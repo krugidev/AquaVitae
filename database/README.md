@@ -16,6 +16,14 @@ ddl/
                                   notas de seed (castas, países, botânicos, ...); repetível
   07_patch_regioes.sql            patch p/ BD de dev JÁ existente: regiões como lookup (`regiao` + `produtor_regiao_id`),
                                   migra o texto antigo; repetível
+  08_patch_ean_imagem.sql         patch p/ BD de dev JÁ existente: `bebida_ean` (único, anulável) e `bebida_path_image`
+                                  alargada a 1000; repetível
+  09_patch_paises_pt.sql          patch p/ BD de dev JÁ existente: 13 países passam à grafia PT-PT (só renome); repetível
+  10_patch_regioes_lista_final.sql  patch p/ BD de dev JÁ existente: lista final de regiões (159, 6 países); repetível
+  11_patch_whisky_regiao.sql      patch p/ BD de dev JÁ existente: `whisky.whisky_regiao_id` passa a apontar para `regiao` e a
+                                  tabela `whisky_regiao` desaparece; repetível
+  12_patch_termos_aceites.sql     patch p/ BD de dev JÁ existente: `utilizador_termos_aceites_em` (data em que aceitou os
+                                  termos); repetível
 seed/
   01_lookups.sql         tabelas de lookup preenchidas (corpo, taninos, 277 castas, 218 países, casks, ...)
   02_bebidas.sql          produtores, retalhistas e ~16 bebidas de exemplo (maioritariamente portuguesas)
@@ -48,8 +56,8 @@ ou, em bash:
 Isto corre `ddl/01_tables.sql`, `ddl/02_constraints.sql`, `ddl/03_triggers.sql`,
 `seed/01_lookups.sql` e `seed/02_bebidas.sql`, por esta ordem, ligando como o `APP_USER` definido no `.env`.
 
-Os ficheiros `04_*` a `07_*` **não** fazem parte desta sequência: as alterações que fazem já estão em
-`01_tables.sql`/`02_constraints.sql` (e o `06`/`07` também em `seed/`), por isso só servem para pôr ao dia
+Os ficheiros `04_*` a `12_*` **não** fazem parte desta sequência: as alterações que fazem já estão em
+`01_tables.sql`/`02_constraints.sql` (e o `06`, `07`, `09`, `10` e `11` também em `seed/`), por isso só servem para pôr ao dia
 uma BD que já existia antes delas (cada um explica no topo como se corre). Ao mexer no schema: atualizar
 `01_tables.sql` **e** criar um patch novo.
 
@@ -124,10 +132,14 @@ Host: `localhost`, porta `1521`, serviço `XEPDB1`, utilizador/password conforme
 ## Regiões
 
 `regiao` (país + nome) é um lookup e `produtor.produtor_regiao_id` aponta para ele (antes era o texto livre
-`produtor_regiao`, que gerava pílulas a mais no filtro do catálogo com gralhas ou variantes). Só existem regiões dos
-países mais populares (Portugal, Espanha, França, Itália, Escócia, Inglaterra, EUA); as dos outros acrescentam-se à
-medida que entram produtos. Nome PT-PT quando há forma estabelecida (Bordéus, Borgonha, Califórnia, ...) e o nome local
-nos restantes (Rioja, Speyside, ...); **Douro e Porto são duas regiões**. Sem sub-regiões por agora.
+`produtor_regiao`, que gerava pílulas a mais no filtro do catálogo com gralhas ou variantes). **Lista final (2026-09-20,
+feita pelo utilizador): 159 regiões em 6 países para começar — Portugal 14, Espanha 20, Escócia 30, Irlanda 32 (só os
+condados), Canadá 13 e EUA 50 (estados).** As regiões dos outros países acrescentam-se à medida que entram produtos
+(França, Itália e Inglaterra ficaram sem regiões). Nome PT-PT quando há forma estabelecida (Califórnia, Quebeque,
+Astúrias, ...) e o nome local nos restantes (Speyside, Highlands, Cork, ...); **Douro e Porto são duas regiões**. Sem
+sub-regiões por agora. Quando uma lista mistura níveis (Espanha: comunidades e denominações; Escócia: Speyside dentro de
+Highlands), **escolhe-se a mais específica**. As escolhas estão explicadas no topo de `10_patch_regioes_lista_final.sql`;
+o bloco de regiões de `seed/01_lookups.sql` tem de ficar igual a esse patch (foi verificado: dá o mesmo conjunto).
 
 **Um produtor novo:** escolher a região da lista; se não existir, acrescentá-la primeiro (o país é o do produtor):
 
@@ -147,3 +159,25 @@ A BD garante a coerência: a região de um produtor tem de ser do país desse pr
 `ORA-02290`). O nome de uma região é único por país (`ORA-00001`), não no total: pode haver o mesmo nome em dois países.
 Sem região é permitido (`NULL` = "não disponível"). O filtro do catálogo só mostra as regiões que têm pelo menos uma
 bebida, por isso acrescentar uma região não a faz aparecer até haver um produto dela.
+
+**Região do whisky:** também é da tabela `regiao` (desde 2026-09-21): `whisky.whisky_regiao_id` aponta para `regiao(regiao_id)` e
+a tabela `whisky_regiao` deixou de existir. Um whisky de um país sem regiões na lista fica sem região (`NULL`) mas mostra o
+país (`bebida.bebida_pais_origem_id`); quando entrarem produtos desse país, acrescenta-se a região como para um produtor. A BD
+**não** confere que a região do whisky é do país de origem da bebida (o `whisky` não tem país): fica para o script de
+verificação do catálogo.
+
+**Ao renomear um valor de lookup** (região, país, ...), procurar o nome antigo nos seeds: os `(SELECT ... WHERE nome = '...')`
+de `seed/02_bebidas.sql` não encontram nada e devolvem `NULL` **em silêncio** (a "Quinta de Soalheiro" ficou sem região quando
+"Vinho Verde" passou a "Minho"; apanhado ao reconstruir a BD do zero num schema temporário e compará-la com a de dev).
+
+## EAN e imagem das bebidas
+
+`bebida.bebida_ean` (GTIN) é **texto**, **único** e **anulável**: serve para reconhecer a mesma bebida quando chega por outro
+retalhista — antes de criar uma bebida num lote, procurar o EAN (`SELECT bebida_id, bebida_name FROM bebida WHERE bebida_ean
+= '...'`); se existir, só se acrescenta um `bebida_link_compra` novo. Aceita 8 a 14 dígitos (`ck_bebida_ean`, `ORA-02290`
+com letras, espaços ou hífenes — tirá-los ao gerar o SQL) e recusa repetidos (`uq_bebida_ean`, `ORA-00001`); vários `NULL`
+são permitidos. Sem EAN, a deteção de duplicados faz-se à mão (nome + produtor + volume). Não é exposto na API.
+
+`bebida.bebida_path_image` (até 1000 caracteres) guarda um caminho relativo (recurso estático do backend) **ou o URL absoluto
+da imagem do retalhista/feed**; o Android usa-o tal como está se começar por `http(s)://` (ver `backend/API_ENDPOINTS.md`,
+"Imagens").

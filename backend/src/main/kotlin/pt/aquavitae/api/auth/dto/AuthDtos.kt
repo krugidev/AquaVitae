@@ -1,5 +1,6 @@
 package pt.aquavitae.api.auth.dto
 
+import jakarta.validation.constraints.AssertTrue
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
@@ -19,6 +20,10 @@ data class RegisterRequest(
 
     @field:Size(max = 40)
     val lastName: String? = null,
+
+    // O popup dos termos e condições do registo: sem aceitar não há conta (400). O momento fica guardado.
+    @field:AssertTrue(message = "É preciso aceitar os termos e condições")
+    val aceitouTermos: Boolean = false,
 )
 
 data class LoginRequest(

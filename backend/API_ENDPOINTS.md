@@ -58,7 +58,7 @@ brancas) — texto já capturado, falta só o `UPDATE` em massa no seed.
 
 | Método | Path | Auth | Estado |
 |---|---|---|---|
-| POST | `/register` | — | ✅ |
+| POST | `/register` `{ username, email, password, firstName?, lastName?, aceitouTermos }` | — | ✅ — **`aceitouTermos` é obrigatório e tem de ser `true`** (o popup dos termos; sem ele, 400 `aceitouTermos: É preciso aceitar os termos e condições`). A conta nasce com os termos aceites (`utilizador_termos_aceites_em` = agora). **Mudou em 2026-09-21** |
 | POST | `/login` | — | ✅ |
 | POST | `/recuperar-password` `{ email }` | — | ✅ **implementado** — código de 6 dígitos em `utilizador_password_reset` (15 min de validade), 202 sempre (não revela se o email existe). Envio real por email ainda por fazer — por agora só regista em log (`PasswordResetService`, combinado adiar o email) |
 | POST | `/verificar-codigo` `{ email, codigo }` | — | ✅ **implementado** — 200 se válido/não expirado/não usado, 401 "Código inválido"/"Código expirado" |
@@ -68,8 +68,9 @@ brancas) — texto já capturado, falta só o `UPDATE` em massa no seed.
 
 | Método | Path | Estado |
 |---|---|---|
-| GET | `/api/users/me` | ✅ **implementado** (2026-09-17) — `nationality`, `bioDesc`, `avatar`, `accountCreatedAt`, contadores |
+| GET | `/api/users/me` | ✅ **implementado** (2026-09-17) — `nationality`, `bioDesc`, `avatar`, `accountCreatedAt`, contadores; **desde 2026-09-21 também `termosAceitesEm` (null = nunca aceitou) e `precisaAceitarTermos`** (ver "Termos e condições") |
 | PUT | `/api/users/me` | ✅ **implementado** (2026-09-17) |
+| POST | `/api/users/me/termos/aceitar` | ✅ **implementado** (2026-09-21, validado ao vivo) — sem body; regista a aceitação agora (substitui a data anterior) e devolve o `UtilizadorMeDto` atualizado. 401 sem token |
 | GET | `/api/users/me/preferencias` | ✅ **implementado** (2026-09-17) |
 | PUT | `/api/users/me/preferencias` | ✅ já existia |
 
@@ -86,8 +87,41 @@ não a mostra até haver um produto dela). O `id` é o que se envia em `GET /api
 país, o **mesmo** em `pais` e `produtor_pais` (ver `database/README.md`). Antes devolvia `List<String>` (texto livre).
 
 **Ordem:** `/paises` (218), `/castas` (277) e `/regioes` vêm por **ordem alfabética** (collator pt-PT; o Oracle
-ordena por código de carácter e poria "África" depois de "Zimbábue"). Os restantes vêm por id, que é a ordem
-pretendida (Leve, Médio, Encorpado; Tinto, Branco, ...).
+ordena por código de carácter e poria "África" depois de "Zimbabué"). **`/paises` traz Portugal sempre em primeiro**
+(decisão de produto, 2026-09-20; o resto continua alfabético) — vale para o filtro de origem e para qualquer seletor de
+país. Os restantes vêm por id, que é a ordem pretendida (Leve, Médio, Encorpado; Tinto, Branco, ...).
+
+**Grafias PT-PT dos países (2026-09-20 e 21):** 13 nomes passaram à forma portuguesa (Botsuana, Koweit, Jibuti,
+Quirguizistão, Usbequistão, Zimbabué, Malávi, Seicheles, Sri Lanca, Trindade e Tobago, Barém, Bangladeche, Quiribáti); os
+**ids não mudaram**, por isso nada do cliente que use ids é afetado.
+
+**Regiões (lista final, 2026-09-20):** 159 regiões em 6 países — Portugal 14, Espanha 20, Escócia 30, Irlanda 32
+(condados), Canadá 13 e EUA 50. Só aparecem em `/regioes` as que têm bebidas. "Vinho Verde" passou a **Minho** (mesmo id).
+
+**Região do whisky (2026-09-21):** é da mesma lista — `whisky.whisky_regiao_id` aponta para `regiao(regiao_id)` e a tabela
+`whisky_regiao` deixou de existir (patch `11`). Ainda sem endpoint nem DTO (não há subtype `whisky` no backend). O país do
+whisky é o de origem da bebida; um whisky de um país sem regiões na lista fica sem região (`NULL` = "não disponível").
+
+## Termos e condições (decidido e feito em 2026-09-21)
+
+- **O texto** é uma página estática servida pela API, o mesmo padrão dos avatares: `GET /legal/termos.html` (sem auth;
+  `backend/src/main/resources/static/legal/termos.html`). **Hoje é só um marcador "versão provisória"** — o texto final é do
+  utilizador (a preparar; convém revisão jurídica; deve incluir a maioridade 18+ e o aviso de afiliação/comissões). Para o
+  publicar basta substituir esse ficheiro. A app mostra o URL num ecrã/WebView; a BD **não** guarda o texto.
+- **A aceitação** guarda-se na própria tabela do utilizador: `utilizador_termos_aceites_em` (TIMESTAMP, `NULL` = nunca
+  aceitou). Só a data — sem número de versão.
+  - **Registo:** `POST /api/auth/register` exige `aceitouTermos: true` (o popup); a conta nasce com a data preenchida.
+  - **Login:** a app chama `GET /api/users/me` e, se `precisaAceitarTermos` for `true`, mostra o popup e chama
+    `POST /api/users/me/termos/aceitar`. `precisaAceitarTermos` é `true` quando o utilizador **nunca aceitou** (é o caso de
+    todas as contas anteriores a esta data) **ou aceitou antes de os termos em vigor serem publicados**.
+  - **Quando os termos mudarem:** define-se `aquavitae.termos.em-vigor-desde` (`application.yml`, ou a variável de ambiente
+    `AQUAVITAE_TERMOS_EM_VIGOR_DESDE`, formato `AAAA-MM-DD`, hora de Portugal) e substitui-se o ficheiro. Quem aceitou antes
+    dessa data passa a ter `precisaAceitarTermos = true`; ao voltar a aceitar, a data é substituída. Vazio (por omissão) =
+    os termos ainda não mudaram. Uma data mal escrita impede a API de arrancar (de propósito).
+  - Se um dia for preciso saber **qual** texto cada um aceitou (e não só quando), acrescenta-se uma coluna de versão; com
+    a data e o histórico dos ficheiros já se reconstrói.
+- Regra pura em `TermosRegras.kt` (9 testes). **Quebra o contrato do registo** (campo novo obrigatório): o Android ainda
+  não o envia (ver "Sincronização pendente com o Android").
 
 ## Compra / afiliados (`/api/bebidas/{id}/links-compra`) — novo módulo `compra`
 
@@ -214,10 +248,17 @@ mais próximo ou já passado primeiro, nas em guarda o início da janela mais pr
 `bebida_path_image` e `produtor_path_imagem` existem no schema mas **nunca foram populadas** no seed —
 ainda não havia decisão sobre onde as imagens ficam alojadas.
 
-**Decisão:** para o MVP, sem infraestrutura de CDN/bucket, as imagens ficam como recursos estáticos do
+**Decisão (avatares e ícones da app):** sem infraestrutura de CDN/bucket, ficam como recursos estáticos do
 próprio backend Spring Boot (`backend/src/main/resources/static/...` — Spring serve automaticamente
-qualquer ficheiro aí, sem controller nenhum). O Android resolve a imagem completa como
-`API_BASE_URL + path`. Mesmo padrão a seguir depois para fotos de bebidas/produtores, quando existirem.
+qualquer ficheiro aí, sem controller nenhum) e o campo guarda o **caminho relativo**.
+
+**Decisão (fotos das bebidas, 2026-09-20): o campo pode ser um caminho relativo OU um URL absoluto.** Nas bebidas dos
+lotes da Awin guarda-se o **URL da imagem do retalhista/feed** (`https://...`), sem descarregar nada para o backend.
+`bebida_path_image` foi alargada de 255 para **1000** caracteres (os URLs de retalhistas levam parâmetros). **Regra para o
+Android** (a aplicar ao construir os ecrãs): se o valor começa por `http://` ou `https://`, usa-o tal como está; senão
+prefixa `API_BASE_URL`. A API devolve o valor cru (`imagePath`), não o resolve. Risco assumido: o retalhista pode mudar ou
+apagar a imagem (o cartão fica sem foto, nunca com erro); e convém confirmar nos termos de cada programa da Awin que as
+imagens do feed podem ser usadas por um comparador de preços.
 
 **Avatares — feito (2026-09-18).** 27 avatares (SVG, desenho de linha, 9 por categoria: Castas/Garrafas/
 Copos) entregues pelo utilizador e integrados:
@@ -317,12 +358,12 @@ Não estavam no desenho inicial; saíram de cruzar o código com o texto dos ecr
 |---|---|---|
 | Autor da review | tab Reviews: "avatar, nome, há quanto tempo, conteúdo, rating" | ✅ **feito 2026-09-19 (validado ao vivo)** — `ReviewResponse` ganha `utilizadorNome` e `utilizadorAvatar` (path). Fetch explícito do avatar (LAZY); nas respostas de `POST`/`PUT` o autor é recarregado com o perfil (o utilizador do token não traz o avatar). |
 | Histórico de reviews do perfil | Perfil: "histórico de reviews (terá outra tela)" | ✅ **feito 2026-09-19 (validado ao vivo)** — `GET /api/users/me/reviews` (auth): as reviews do utilizador com a bebida associada (`BebidaSummaryDto`). |
-| Pesquisa por produtor e casta | Homepage/Catálogo: "pesquisar por nomes de bebidas, produtores, castas" | ✅ **feito 2026-09-19 (validado ao vivo)** — `search` de `GET /api/bebidas` casa também `produtor.nome` e `casta.name` (via `vinho_casta`), em AND com os filtros aplicados. **A decidir:** produtores como resultado próprio (`GET /api/produtores?search=`)? **Limitação:** a pesquisa distingue acentos (`Esporao` não acha `Esporão`) — pré-existente, ver PLANO. |
+| Pesquisa por produtor e casta | Homepage/Catálogo: "pesquisar por nomes de bebidas, produtores, castas" | ✅ **feito 2026-09-19 (validado ao vivo)** — `search` de `GET /api/bebidas` casa também `produtor.nome` e `casta.name` (via `vinho_casta`), em AND com os filtros aplicados. **Decidido (2026-09-20): produtores como resultado próprio (`GET /api/produtores?search=`) ficam para a próxima versão** (o produtor alcança-se pela página da bebida). **Limitação:** a pesquisa distingue acentos (`Esporao` não acha `Esporão`) — pré-existente, ver PLANO. |
 | Filtro por região | Popup de filtros: "as pílulas das regiões mudam com o país" | ✅ **`regiaoIds` em `GET /api/bebidas` feito 2026-09-19 (validado ao vivo)** — ids da tabela `regiao` (pílulas do popup de filtros, mockup "Origem": país + regiões), em `EXISTS` sobre o produtor para não excluir bebidas sem produtor; `/lookup/regioes` devolve `{ id, nome }` só das regiões com bebidas. A região de um produtor é do país desse produtor (FK composta na BD). **Ids (resolvido em 2026-09-19):** `/lookup/regioes?paisId=` usa `produtor_pais` e o filtro do catálogo usa `pais`; continuam duas tabelas, mas com **os mesmos ids** (convenção do seed, ver `database/README.md`), por isso o mesmo `paisId` serve para os dois. |
 | Lista da cave | Caves: "quantidade, nome, categoria, intervalo de consumo, preço/unidade, nota" | ✅ **feito 2026-09-19 (validado ao vivo)** — `CaveBebidaResponse` ganha `janelaInicio`, `janelaFim`, `categoriaNome`, `imagePath` e `estado`. |
 | Consumir uma garrafa | Caves: "marcar como consumida (sai da lista e reduz o contador em 1)" | ✅ **decidido e feito 2026-09-19 (validado ao vivo)** — consumir 1 = decrementar `quantidade` e guardar a consumida numa linha própria com `data_consumo` (ver secção Caves). |
 | "Pronta a abrir" | Caves: "hoje dentro da janela" | ✅ **decidido e feito 2026-09-19 (validado ao vivo)** — depois de a janela acabar, sem consumir: continua na lista das prontas com `estado = EM_ATRASO` (aviso vermelho pequeno "Em atraso"). Sem janela = `EM_GUARDA` (aprovado em 2026-09-19). |
-| Termos e condições | Login/Registo: popup | A decidir: texto embutido na app ou servido pela API. |
+| Termos e condições | Login/Registo: popup | ✅ **decidido e feito 2026-09-21 (validado ao vivo)** — ver secção "Termos e condições" abaixo. |
 | Categorias além de vinho | Cartões/detalhe: "as características dependerão da categoria" | Subtypes whisky/gin/licor/vodka/aguardente (depende de haver dados reais). |
 
 Já corrigido no fim do dia: a pesquisa do catálogo não tinha `ORDER BY` (paginação não determinística); usa agora
@@ -347,6 +388,11 @@ quando chegar a vez de construir os ecrãs correspondentes (não bloqueia o back
 - `getReviews`/`ReviewResponse`: ganhou `utilizadorNome` e `utilizadorAvatar`; novo `GET /api/users/me/reviews`
 - Caves: `CaveResponse`/`CaveDetailResponse`/`CaveBebidaResponse` mudaram (totais, `prontasAAbrir`/`emGuarda`, `estado`,
   janelas); o `PATCH .../bebidas/{id}` **deixou de aceitar `isConsumida`/`dataConsumo`** — usar `POST .../consumir`
+- **Termos (2026-09-21):** `RegisterRequest` ganhou `aceitouTermos` (**obrigatório, tem de ser `true`**: o registo que hoje
+  o Android faz **dá 400** até o popup existir); `UtilizadorMeDto` ganhou `termosAceitesEm` e `precisaAceitarTermos`; novo
+  `POST /api/users/me/termos/aceitar`. Fluxo: registo com o popup; no login, `getMe()` e, se `precisaAceitarTermos`, popup.
+- Imagens: `imagePath` pode ser um URL absoluto (`https://...`) além de um caminho relativo — resolver conforme a regra da
+  secção "Imagens".
 - Produtores: `ProdutorDetailDto.totalProdutos`, `GET /api/produtores/{id}/bebidas`, `GET /api/produtores/destaque`
 - Regiões: `GET /api/lookup/regioes?paisId=` passou de `List<String>` a `[{ id, nome }]` (só regiões com bebidas), o filtro
   do catálogo é `regiaoIds` (ids, não texto), e `ProdutorDetailDto`/`ProdutorResumoDto` ganharam `regiaoId` (`regiao`

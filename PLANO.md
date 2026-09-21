@@ -3,44 +3,51 @@
 Roadmap vivo do MVP. Atualizar isto no fim de cada sessão de trabalho relevante — é o que uma sessão
 nova do Claude Code (ou tu, ao voltares passado um tempo) deve ler primeiro para saber onde ficámos.
 
-## ▶ Retomar aqui (última atualização: 2026-09-19, fim de sessão)
+## ▶ Retomar aqui (última atualização: 2026-09-21)
 
-**Ponto da situação:** BD e backend têm todos os endpoints da 1.ª versão implementados e **validados ao vivo** contra o
-Oracle real (Produtor, Caves, reviews com autor, pesquisa por produtor/casta, regiões como lookup). Os seeds das notas
-(castas, países, lookups) e a barrica do vinho também estão feitos. O Android ainda é só esqueleto. Contrato dos endpoints
-em [`backend/API_ENDPOINTS.md`](backend/API_ENDPOINTS.md); o detalhe de cada fatia está mais abaixo, em "Em curso".
+**Ponto da situação:** **o backend da 1.ª versão está fechado.** Todos os endpoints do contrato estão implementados e
+**validados ao vivo** contra o Oracle real, e a BD reconstruída do zero (num schema temporário, com os 5 scripts do
+`run-migrations`) é idêntica à de dev. Em 2026-09-20 e 21 fecharam-se as decisões que faltavam: EAN, imagens (URL do
+retalhista), lista final de regiões (também para o whisky), Portugal no topo dos países, grafias PT-PT e a data de
+aceitação dos termos — detalhe em "Fecho do backend v1", mais abaixo. O que ficou fora do backend está adiado de propósito
+(ver "Por fazer depois"). Falta só o **script de verificação do catálogo**, que se escreve com o 1.º lote de bebidas. O
+próximo grande passo é o **Android**. Contrato dos endpoints em [`backend/API_ENDPOINTS.md`](backend/API_ENDPOINTS.md).
 
-**Git:** branch `feature/api-endpoints-design`, PR aberto: https://github.com/krugidev/AquaVitae/pull/1 (a descrição só
-fala da 1.ª fatia — atualizá-la ao fazer push). **3 commits locais por enviar** (`3d9c31a` seeds das notas, `589d315`
-Produtor/Caves/reviews/pesquisa, `f7acffe` regiões como lookup): nada foi para o remoto. A `main` só tem a landing page em
-`docs/` (GitHub Pages). Ficheiros só do utilizador, **nunca commitados**: `android/AQUAVITAESEEDS-NOTES` e, na raiz,
-`—--------------- DADOS A INSERIR NA.txt` (versão antiga das notas). Sobre o `gh`, ver `CLAUDE.md` ("Ferramentas").
+**Git:** branch `feature/api-endpoints-design`, PR aberto: https://github.com/krugidev/AquaVitae/pull/1. **Tudo commitado e
+enviado em 2026-09-21** (último commit: "Fecho do backend v1: ...", ver `git log`) e a **descrição do PR atualizada** (cobre a
+branch inteira, não só a 1.ª fatia). De fora dos commits, de propósito (regra do `CLAUDE.md`: não commitar as notas do
+utilizador): `android/AQUAVITAESEEDS-NOTES` e, na raiz, `—--------------- DADOS A INSERIR NA.txt`, que estão **em stage**, e
+`REGIÕES A AJUSTAR (...).txt` (a lista de regiões que enviaste, por rastrear). Se as quiseres no repo, commita-as tu (ou diz-me).
+Ao commitar, usar `git commit <caminhos explícitos>`. A `main` só tem a landing page em `docs/` (GitHub Pages). Sobre o `gh`, ver
+`CLAUDE.md` ("Ferramentas").
 
-**Ambiente, como ficou:** BD de dev migrada até ao patch `07`; contentor `aquavitae-oracle-xe` a correr; API parada
-(`bootRun` em `backend/`); conta de teste `demo2@aquavitae.local` (1 review na bebida 1, 1 "provada", sem avatar). Se o
-Windows reiniciou: `docker compose up -d` em `database/` (e ver em `CLAUDE.md` o que fazer se o Docker Desktop crashar).
-Testes: `.\gradlew.bat test` em `backend/` (57, não precisam de BD).
+**Ambiente, como ficou:** BD de dev migrada até ao patch `12`; contentor `aquavitae-oracle-xe` a correr; API parada
+(`bootRun` em `backend/`); contas de teste `demo2@aquavitae.local` (1 review na bebida 1, 1 "provada", sem avatar) e
+`demo@aquavitae.local`, ambas **sem termos aceites** (`NULL`: são anteriores aos termos, por isso `precisaAceitarTermos =
+true`). Se o Windows reiniciou: `docker compose up -d` em `database/` (e ver em `CLAUDE.md` o que fazer se o Docker Desktop
+crashar). Testes: `.\gradlew.bat test` em `backend/` (69, não precisam de BD).
 
 **Próximos passos, por ordem:**
-1. **Tu — rever a lista de regiões** (`database/seed/01_lookups.sql`: 69 regiões de 7 países, feita de conhecimento geral
-   e não de fonte oficial; corrige-se por `UPDATE`/`INSERT`, receita em `database/README.md`).
-2. **Decidir antes do 1.º lote de bebidas** (as minhas propostas): (a) acrescentar **`bebida_ean`** (anulável, único) —
-   recomendo sim: deteta duplicados quando a mesma bebida chega por outro retalhista e serve o casamento com feeds;
-   (b) **imagens das bebidas** — hoje `bebida_path_image` é um caminho relativo servido pelo backend (`API_BASE_URL +
-   path`): usar o URL da imagem do retalhista/feed (o Android passa a aceitar URL completo) ou descarregar para `static/`?;
-   (c) confirmar que os anunciantes escolhidos na Awin aceitam publishers de **comparação de preços** (cada programa tem
-   os seus termos).
-3. **1.º lote de ~30 bebidas da Awin** — fluxo combinado em "Como entram as bebidas" (logo abaixo).
-4. **Enviar o trabalho** (push e atualizar o PR #1) — só quando pedires.
-5. **Decisões de produto pendentes:** termos e condições (popup no login/registo: texto embutido na app ou servido pela
-   API); produtores como resultado próprio da pesquisa (`GET /api/produtores?search=`).
-6. **Depois do backend:** ecrãs Android por feature, contra o contrato validado. O `AquaVitaeApi.kt` está desatualizado
-   (reviews, favoritos/wishlist/provadas, filtros, regiões, Caves, campos novos) — sincronizar ecrã a ecrã, ver o fim do
-   `API_ENDPOINTS.md`. Ecrã "Onde comprar" desenhado em conversa (lista de retalhistas com disponível/indisponível, aviso
-   de afiliação).
-7. **Adiado ou dependente de dados reais:** detalhe/cartões das outras categorias (só `vinho` tem subtype); email do
-   código de recuperação de password (só log); `Page<...>` como DTO próprio; testes de services/controllers com BD; pesquisa
-   por texto sem distinção de acentos (`Esporao` não acha `Esporão`). Ver "Por fazer depois".
+1. **Android** — sincronizar o `AquaVitaeApi.kt` com o contrato (está desatualizado: reviews, favoritos/wishlist/provadas,
+   filtros, regiões, Caves, termos, campos novos — ver o fim do `API_ENDPOINTS.md`) e construir os ecrãs por feature.
+   Proposta de ordem: **registo/login em 2 fases com o popup dos termos** (o registo envia `aceitouTermos`; no login o
+   `getMe()` diz se `precisaAceitarTermos`; o texto está em `GET /legal/termos.html`) → onboarding → catálogo → detalhe. O
+   Android tem de aceitar **URL absoluto** nas imagens (ver "Imagens" no contrato). Ecrã "Onde comprar" desenhado em
+   conversa (lista de retalhistas com disponível/indisponível, aviso de afiliação). **O registo que o Android faz hoje dá
+   400** até o popup existir (campo novo obrigatório).
+2. **1.º lote de ~30 bebidas da Awin** (em paralelo com o Android; não depende dele) — fluxo em "Como entram as bebidas"
+   (logo abaixo). Escrevo então o **script de verificação do catálogo** (aprovado: mínimo por categoria = nome, categoria,
+   produtor, país, teor, volume; vinho + tipo e castas; whisky + tipo e idade; gin + destilação; bebida sem linha no
+   subtype da categoria e vice-versa; e whisky com região de um país diferente do país de origem da bebida). Antes, **tu**
+   avalias os termos dos programas escolhidos na Awin (comparação de preços; uso das imagens do feed).
+3. **Termos e condições — a concluir quando tiveres o texto (tu avisas):** substitui-se
+   `backend/src/main/resources/static/legal/termos.html` (hoje é só um marcador "versão provisória") e fica a implementação
+   concluída. O texto deve incluir a maioridade 18+ e o aviso de afiliação/comissões; convém revisão jurídica. Não bloqueia o
+   Android, mas é preciso antes do lançamento (a Google Play também exige uma política de privacidade com URL público).
+4. **Adiado — "Por fazer depois":** decidido em 2026-09-21 que se trabalha nessa lista **quando a 1.ª versão da app estiver
+   pronta**. Inclui os subtypes das outras categorias (**nota:** se o 1.º lote trouxer gins/whiskies, o detalhe só mostra os
+   campos gerais da bebida, sem os atributos da categoria), o email do código de recuperação de password, a pesquisa de
+   produtores à parte, o `Page<...>` como DTO próprio, os testes com BD, a pesquisa sem distinção de acentos e o CI/Dockerfile.
 
 **Como entram as bebidas (combinado em 2026-09-19):** as linhas `bebida` criam-se **à mão, em lotes** (~30), não
 automaticamente a partir do feed da Awin. Da Awin vêm os **links de compra** (uma bebida pode ter vários, de retalhistas
@@ -54,10 +61,12 @@ catálogo é curado. Fluxo de cada lote:
 2. O Claude **nunca abre o link de afiliado** (conta como clique); lê só a página do produto sem tracking (se o retalhista
    bloquear, o utilizador cola o texto).
 3. O Claude devolve uma **tabela de revisão**: bebida → valores (categoria, tipo, produtor, país, região, ano, teor,
-   volume, preço; o resto `NULL`; dúvidas assinaladas) e assinala **duplicados** (bebida já no catálogo → só um link novo).
+   volume, preço; o resto `NULL`; dúvidas assinaladas) e assinala **duplicados** (bebida já no catálogo, reconhecida pelo **EAN** quando o houver, senão por nome + produtor +
+   volume → só um link novo); a tabela mostra também o EAN e o URL da imagem de cada bebida.
 4. Aprovada a tabela, o Claude gera o **ficheiro SQL do lote** (padrão supertype/subtype de `database/seed/02_bebidas.sql`;
    produtores e regiões novos primeiro; retalhista se for novo; `bebida_link_compra` com **as duas URLs**: `url` =
-   afiliado, `url_verificacao` = página do produto), corre-o e, no fim, `POST /api/admin/links-compra/verificar`.
+   afiliado, `url_verificacao` = página do produto; `bebida_ean` só com dígitos, sem espaços nem hífenes;
+   `bebida_path_image` = URL da imagem do retalhista/feed), corre-o e, no fim, `POST /api/admin/links-compra/verificar`.
 5. Anota-se aqui o que ficou por preencher. As regiões novas acrescentam-se ao `regiao` à medida que aparecem.
 
 **Awin — estado:** já és afiliado (dito por ti em 2026-09-19; candidatura submetida como Comparison Engine, sector "Wine,
@@ -250,6 +259,7 @@ bebidas demo), 0 mojibake, 25 testes verdes, API a arrancar com `ddl-auto: valid
   revertido; o patch final copia ids explícitos e reinicia o identity. Só corrigi erros claros (acentos em falta,
   "ê/ô" brasileiros) e duplicados; deixei como estavam formas menos óbvias que têm variante PT-PT (Botswana/Botsuana,
   Kuwait/Koweit, Djibouti/Jibuti, Quirguistão/Quirguizistão, Uzbequistão/Usbequistão, ...) — dizes se as queres trocadas.
+  **Trocadas em 2026-09-20** (10 nomes), ver "Fecho do backend v1".
 - **Barrica do vinho:** `cask_formato` (7) + `vinho_cask` (vinho, madeira, formato, meses de estágio) — só BD, sem
   entidade nem endpoint (nenhum mockup mostra barrica). `cask` passou a ter as 6 madeiras do vinho; saíram os 4
   placeholders de whisky (voltam quando houver whisky real).
@@ -263,8 +273,8 @@ bebidas demo), 0 mojibake, 25 testes verdes, API a arrancar com `ddl-auto: valid
 - **Bug do runner (não era só o `NLS_LANG`):** `run-migrations.ps1` corrompia acentos no Windows PowerShell 5.1
   (`Get-Content` lê UTF-8 sem BOM como ANSI). Corrigido com `-Encoding UTF8`; nota em `database/README.md` e `CLAUDE.md`.
 - **API:** `/lookup/paises`, `/castas` e `/regioes` passam a vir por ordem alfabética (collator pt-PT — o Oracle ordena
-  por código de carácter e poria "África" depois de "Zimbábue"; `OrdemAlfabetica.kt`, +4 testes). Se quiseres
-  **Portugal no topo** da lista de países, é uma linha (decisão de produto, não tomada).
+  por código de carácter e poria "África" depois de "Zimbabué"; `OrdemAlfabetica.kt`, +4 testes). **Portugal no topo**
+  da lista de países: decidido e feito em 2026-09-20, ver "Fecho do backend v1".
 - **Pendente:** `Vinho` (entidade/DTO) ainda não expõe a barrica; whisky/vodka/gin/licor/aguardente continuam sem subtype
   no backend. (Os valores compostos de região dos demo, como `Vinho Verde — Melgaço`, ficaram resolvidos em 2026-09-19:
   as regiões passaram a lookup, ver "Regiões como lookup".)
@@ -331,7 +341,73 @@ Decisão tua (opção B): `regiao` (país + nome) e `produtor.produtor_regiao_id
 - **Validado ao vivo (28 verificações):** regiões de Portugal com bebidas por ordem alfabética, países sem regiões → lista
   vazia, filtro por 1 e várias regiões e combinado com `paisId`/categoria/`search`, `regiao`/`regiaoId` em produtor e
   detalhe da bebida (também com produtor sem região) e regressão do catálogo, do destaque e dos países.
-- **Pendente:** rever a lista de regiões; acrescentar as dos outros países com os produtos reais.
+- **Revista e substituída em 2026-09-20** pela lista do utilizador (159 regiões, 6 países) — ver "Fecho do backend v1".
+  **Pendente:** acrescentar as regiões dos outros países com os produtos reais.
+
+### Fecho do backend v1: EAN, imagens, regiões, países, whisky e termos (implementado e validado ao vivo, 2026-09-20 e 21)
+
+Decisões tuas (2026-09-20), sobre as propostas de "antes do 1.º lote": **(1)** EAN: sim; **(2)** imagens = URL do
+retalhista/feed, coluna alargada; **(3)** avalias tu os termos da Awin; **(4)** termos servidos pela API pelo padrão dos
+avatares (o *ficheiro* é estático; na BD só ficará, se se fizer, a versão aceite por cada utilizador); **(5)** produtores na
+pesquisa: próxima versão; **(6)** Portugal no topo dos países; **(7)** grafias PT-PT; **(8)** mínimo por categoria;
+**(9)** FK composta das regiões mantida. Decisões tuas (2026-09-21): **(10)** `whisky_regiao` unificada em `regiao` (o país
+do whisky continua a ser o da bebida); **(11)** os termos guardam só a data em que cada utilizador aceitou, na tabela
+`utilizador` (o texto fica para ti); **(12)** a lista "Por fazer depois" mantém-se e trabalha-se quando a 1.ª versão da app
+estiver pronta.
+
+- **EAN e imagem (patch `08`, `01_tables.sql`, `Bebida.kt`):** `bebida_ean VARCHAR2(14)`, anulável, único (`uq_bebida_ean`) e
+  só dígitos, 8 a 14 (`ck_bebida_ean`); `bebida_path_image` de 255 para 1000. Só interno (não vai para a API). Testado na BD
+  (em transação revertida): duplicado recusado (`ORA-00001`), vários `NULL` aceites, letras e 7 dígitos recusados
+  (`ORA-02290`), EAN-8 e EAN-13 com zero à esquerda aceites, URL de 900 caracteres aceite e de 1001 recusado. O patch é
+  repetível (corrido 2 vezes). Ainda **não** há nada no Android para URLs absolutos (ecrãs por construir).
+- **Portugal no topo (`OrdemAlfabetica.kt`, `LookupController.kt`):** `/lookup/paises` traz Portugal primeiro e o resto
+  alfabético (218 itens); +3 testes.
+- **Grafias PT-PT (patch `09`, seed, patch `06`):** 13 países, só renome, ids intactos, `pais` e `produtor_pais` conferidas
+  depois: Botsuana, Koweit, Jibuti, Quirguizistão, Usbequistão, Zimbabué, Malávi, Seicheles, Sri Lanca, Trindade e Tobago
+  e, por decisão tua de 2026-09-21 (as duas formas circulam em PT-PT), Barém, Bangladeche e Quiribáti.
+- **Regiões, lista final (patch `10`, seed): 159 em 6 países** — Portugal 14, Espanha 20, Escócia 30, Irlanda 32, Canadá 13,
+  EUA 50. Tratamento da tua lista: maiúsculas e sem acentos → nome próprio com acentos; PT-PT no Canadá, nos EUA e nos nomes
+  portugueses/espanhóis onde há forma estabelecida (Quebeque, Ontário, Califórnia, Nova Iorque, Carolina do Norte, Astúrias,
+  ...); Escócia e Irlanda com os nomes locais dos rótulos. **Escolhas minhas, que podes reverter:** Irlanda só com os 32
+  condados (as 4 províncias são títulos de grupo; misturar os dois níveis dava "Cork" ou "Munster"?); `Vinho Verde` passou a
+  `Minho` e `Península de Setúbal` a `Setúbal` (renome: o produtor que já usava o Minho manteve-o); **acrescentei Islay,
+  Campbeltown e Islands** (regiões clássicas do Scotch que não estavam na tua lista) **e Castela-La Mancha** (a comunidade
+  autónoma que faltava); ignorei uma linha de lixo de copy/paste (um nome de utilizador e uma hora) que estava entre a Escócia
+  e a Irlanda; França, Itália e Inglaterra ficam sem regiões (fora dos países "para começar"; nenhum produtor as usava). Os 6
+  condados do Ulster na Irlanda do Norte ficam sob "Irlanda" (whiskey irlandês, como na tua lista): um produtor de lá tem de
+  ter o país "Irlanda" para a FK aceitar a região; com o país "Irlanda do Norte" não teria regiões. Verificado: patch aplicado
+  e repetido; os 13 produtores com região mantiveram-na (só o nome do Minho mudou); o **bloco de regiões do seed, corrido
+  sobre a tabela vazia, dá exatamente o mesmo conjunto** (159, mesmo hash).
+- **Validação:** 60 testes verdes; `bootRun` com `ddl-auto: validate` sem erros (a coluna nova mapeada); `curl`:
+  `/lookup/paises` (Portugal primeiro, 218, 10 nomes novos, 0 antigos), `/lookup/regioes?paisId=1` (Alentejo, Algarve,
+  Bairrada, Douro, Lisboa, Minho), países sem bebidas → lista vazia, filtro `regiaoIds=1` → 1 bebida, detalhe com
+  `regiao: Minho`, catálogo com 16; log sem erros.
+- **Região do whisky (patch `11`, `01_tables.sql`, `02_constraints.sql`, seed, patch `06`):** `whisky.whisky_regiao_id` aponta
+  agora para `regiao(regiao_id)` e a tabela `whisky_regiao` (16 valores planos: Speyside, Kentucky, Japão, Portugal, ...) foi
+  apagada (`PURGE`). Antes de a apagar: o conteúdo era exatamente o do seed, só a FK do `whisky` lhe apontava, a `whisky` tinha
+  0 linhas e nenhum objeto dependia dela; o patch pára sozinho se houver whiskies com região preenchida. Testado na BD (em
+  transação revertida): região válida aceite, id inexistente recusado (`ORA-02291`), `NULL` aceite. Como notaste, um whisky da
+  Índia, do Japão, ... fica sem região mas mostra o país (`bebida.bebida_pais_origem_id`, tabela `pais`). Sem endpoint nem DTO
+  (não há subtype `whisky` no backend).
+- **Termos e condições (patch `12`, `TermosRegras.kt`, `static/legal/termos.html`):** `utilizador_termos_aceites_em` (`NULL` =
+  nunca aceitou; só data, sem versão). O registo exige `aceitouTermos: true`; `GET /api/users/me` traz `termosAceitesEm` e
+  `precisaAceitarTermos`; `POST /api/users/me/termos/aceitar` regista a aceitação. `aquavitae.termos.em-vigor-desde` (data, ou
+  a variável `AQUAVITAE_TERMOS_EM_VIGOR_DESDE`) força nova aceitação a quem aceitou antes, sem perder o histórico. O texto é
+  `GET /legal/termos.html` (público), **hoje só um marcador provisório**: o texto final é teu. Contrato em "Termos e condições"
+  no `API_ENDPOINTS.md`. **Quebra o registo** (campo novo obrigatório): o Android ainda não o envia.
+- **Reconstrução do zero verificada:** num schema temporário (`aq_rebuild`, já apagado) corri os 5 scripts do `run-migrations`
+  e comparei com a dev — 57 tabelas, 239 colunas (tipo, nulidade, identity), 219 constraints (estrutura e nomes), o trigger, o
+  texto de todas as tabelas de lookup, 159 regiões por país, 15 produtores com região e `pais`/`produtor_pais` alinhadas:
+  **tudo idêntico**; só diferem os dados de utilizador que só existem na dev (contas, reviews, favoritos, ...). **Apanhou um erro
+  meu:** o `02_bebidas.sql` procurava a região `'Vinho Verde'` (renomeada para `Minho`) e, como a subconsulta não encontra nada,
+  a Quinta de Soalheiro ficava **sem região, em silêncio**, numa BD reconstruída; corrigido. **Lição:** ao renomear um valor de
+  lookup, procurar o nome antigo nos seeds. (O patch `11` também deixava a tabela apagada na reciclagem do Oracle — passou a
+  `DROP ... PURGE`.)
+- **Validação dos termos ao vivo (69 testes verdes, `bootRun` com `validate`):** `GET /legal/termos.html` dá 200 sem auth e um
+  ficheiro inexistente dá 404 (não 401); registo sem o campo ou com `false` → 400, com `true` → 201; `/me` de uma conta nova →
+  data preenchida e `precisaAceitarTermos: false`, de uma conta antiga → `null` e `true`; `POST .../aceitar` → 401 sem token e
+  200 com; com `AQUAVITAE_TERMOS_EM_VIGOR_DESDE=2099-01-01` a conta que aceitou hoje passa a `true`, mantém a data e ao voltar a
+  aceitar a data é substituída. Dados de teste apagados (conta criada; `demo2` reposta a `NULL`).
 
 ### Decisões de dados: catálogo curado vs. ofertas de afiliados (2026-09-18)
 
@@ -366,13 +442,18 @@ Decisão tua (opção B): `regiao` (país + nome) e `produtor.produtor_regiao_id
 
 ## Por fazer depois (fora de âmbito imediato)
 
-- Subtypes whisky/gin/licor/vodka/aguardente no `BebidaService` (replicar o padrão de `vinho/`).
-- Testes automatizados de services/controllers com BD (só há testes de regras puras, 57 no total, em `src/test`; os
+**Decidido em 2026-09-21: esta lista mantém-se como está e trabalha-se nela quando a 1.ª versão da app estiver pronta**
+(não antes; o desenvolvimento sequencial continua a ser BD → API → Android).
+
+- Subtypes whisky/gin/licor/vodka/aguardente no `BebidaService` (replicar o padrão de `vinho/`). Até lá, uma bebida dessas
+  categorias aparece no catálogo e no detalhe só com os campos gerais.
+- Testes automatizados de services/controllers com BD (só há testes de regras puras, 69 no total, em `src/test`; os
   endpoints validam-se ao vivo com `bootRun` + `curl.exe`, ver `CLAUDE.md`).
 - Script de verificação do catálogo depois de cada lote de seed (mínimo por categoria, subtype em falta) — passa a ser
-  útil já com os lotes da Awin.
-- Gin sem "estilo" (London Dry, Old Tom, ...) — lacuna de schema só a decidir se/quando for precisa. **`bebida` sem EAN**
-  passou a proposta para decidir antes do 1.º lote (ver "Retomar aqui", passo 2).
+  útil já com os lotes da Awin; **aprovado em 2026-09-20**, escreve-se com o 1.º lote (ver "Retomar aqui", passo 3).
+- Gin sem "estilo" (London Dry, Old Tom, ...) — lacuna de schema só a decidir no 1.º lote com gins. (`bebida_ean` já
+  existe desde 2026-09-20.)
+- Pesquisa de produtores como resultado à parte (`GET /api/produtores?search=`) — próxima versão.
 - CI/build pipeline, Dockerfile da API para deploy.
 - Trocar `Page<BebidaSummaryDto>` por um DTO de paginação próprio antes de produção.
 - Conceitos de escalabilidade/otimização — deliberadamente adiados até tudo funcionar ponta a ponta.

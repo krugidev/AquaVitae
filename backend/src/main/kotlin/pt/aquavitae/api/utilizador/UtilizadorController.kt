@@ -2,6 +2,7 @@ package pt.aquavitae.api.utilizador
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
@@ -22,4 +23,9 @@ class UtilizadorController(
         @AuthenticationPrincipal utilizador: Utilizador,
         @RequestBody request: UtilizadorUpdateRequest,
     ): UtilizadorMeDto = utilizadorService.updateProfile(utilizador.id, request)
+
+    // O popup dos termos e condições (no login, para quem nunca aceitou ou aceitou uma versão anterior).
+    @PostMapping("/api/users/me/termos/aceitar")
+    fun aceitarTermos(@AuthenticationPrincipal utilizador: Utilizador): UtilizadorMeDto =
+        utilizadorService.aceitarTermos(utilizador.id)
 }

@@ -116,8 +116,8 @@ DECLARE
     'Áustria',
     'Azerbaijão',
     'Bahamas',
-    'Bahrein',
-    'Bangladesh',
+    'Barém',
+    'Bangladeche',
     'Barbados',
     'Bélgica',
     'Belize',
@@ -126,7 +126,7 @@ DECLARE
     'Bielorrússia',
     'Bolívia',
     'Bósnia e Herzegovina',
-    'Botswana',
+    'Botsuana',
     'Brasil',
     'Brunei',
     'Bulgária',
@@ -154,7 +154,7 @@ DECLARE
     'Cuba',
     'Curaçau',
     'Dinamarca',
-    'Djibouti',
+    'Jibuti',
     'Dominica',
     'Egito',
     'El Salvador',
@@ -203,9 +203,9 @@ DECLARE
     'Jamaica',
     'Japão',
     'Jordânia',
-    'Kiribati',
+    'Quiribáti',
     'Kosovo',
-    'Kuwait',
+    'Koweit',
     'Laos',
     'Lesoto',
     'Letónia',
@@ -219,7 +219,7 @@ DECLARE
     'Macau',
     'Madagascar',
     'Malásia',
-    'Malawi',
+    'Malávi',
     'Maldivas',
     'Mali',
     'Malta',
@@ -258,7 +258,7 @@ DECLARE
     'Polinésia Francesa',
     'Porto Rico',
     'Quénia',
-    'Quirguistão',
+    'Quirguizistão',
     'República Árabe Saaraui Democrática',
     'República Centro-Africana',
     'República Democrática do Congo',
@@ -279,10 +279,10 @@ DECLARE
     'Senegal',
     'Serra Leoa',
     'Sérvia',
-    'Seychelles',
+    'Seicheles',
     'Síria',
     'Somália',
-    'Sri Lanka',
+    'Sri Lanca',
     'Sudão do Sul',
     'Sudão',
     'Suécia',
@@ -295,7 +295,7 @@ DECLARE
     'Timor-Leste',
     'Togo',
     'Tonga',
-    'Trinidad e Tobago',
+    'Trindade e Tobago',
     'Tunísia',
     'Turquemenistão',
     'Turquia',
@@ -303,13 +303,13 @@ DECLARE
     'Ucrânia',
     'Uganda',
     'Uruguai',
-    'Uzbequistão',
+    'Usbequistão',
     'Vanuatu',
     'Vaticano',
     'Venezuela',
     'Vietname',
     'Zâmbia',
-    'Zimbábue'
+    'Zimbabué'
 
   );
 BEGIN
@@ -320,10 +320,12 @@ BEGIN
 END;
 /
 
--- Regiões: só dos países mais populares; as restantes acrescentam-se à medida que entram produtos (basta um
--- INSERT em `regiao` e escolher o país). Nome PT-PT quando há forma estabelecida (Bordéus, Borgonha, Califórnia,
--- Nova Iorque, ...) e o nome local nos restantes (Rioja, Priorat, Speyside, ...). Douro e Porto são regiões
--- separadas. LISTA PROVISÓRIA, a rever pelo utilizador. Sem sub-regiões (Napa Valley, Cima Corgo, ...) por agora.
+-- Regiões: lista do utilizador (2026-09-20), só dos países para começar (Portugal, Espanha, Escócia, Irlanda, Canadá,
+-- EUA); as restantes acrescentam-se à medida que entram produtos (basta um INSERT em `regiao` e escolher o país).
+-- Nome PT-PT quando há forma estabelecida (Califórnia, Nova Iorque, Quebeque, Astúrias, ...) e o nome local nos
+-- restantes (Speyside, Highlands, Cork, ...). Douro e Porto são regiões separadas. Irlanda: só os 32 condados (as
+-- províncias eram títulos de grupo). Sem sub-regiões (Napa Valley, Cima Corgo, ...) por agora. Tem de ficar igual
+-- ao patch database/ddl/10_patch_regioes_lista_final.sql (que explica as escolhas).
 DECLARE
   TYPE t_lista IS TABLE OF VARCHAR2(100 CHAR);
 
@@ -336,19 +338,39 @@ DECLARE
     END LOOP;
   END regioes;
 BEGIN
-  regioes('Portugal', t_lista('Vinho Verde', 'Trás-os-Montes', 'Douro', 'Porto', 'Távora-Varosa', 'Dão', 'Bairrada',
-                              'Beira Interior', 'Lisboa', 'Tejo', 'Península de Setúbal', 'Alentejo', 'Algarve',
-                              'Madeira', 'Açores'));
-  regioes('Espanha', t_lista('Rioja', 'Ribera del Duero', 'Rías Baixas', 'Priorat', 'Rueda', 'Toro', 'Navarra',
-                             'Penedès', 'Jerez', 'Bierzo', 'La Mancha', 'Somontano', 'Jumilla', 'Montsant'));
-  regioes('França', t_lista('Bordéus', 'Borgonha', 'Champagne', 'Vale do Loire', 'Vale do Ródano', 'Alsácia',
-                            'Provença', 'Languedoc-Roussillon', 'Beaujolais', 'Cognac', 'Armagnac'));
-  regioes('Itália', t_lista('Toscana', 'Piemonte', 'Veneto', 'Sicília', 'Puglia', 'Lombardia',
-                            'Friuli-Venezia Giulia', 'Trentino-Alto Adige', 'Emilia-Romagna', 'Campania'));
-  regioes('Escócia', t_lista('Speyside', 'Highlands', 'Islay', 'Lowlands', 'Campbeltown', 'Islands'));
-  regioes('Inglaterra', t_lista('Londres', 'Kent', 'Sussex', 'Hampshire', 'Cornualha'));
-  regioes('Estados Unidos da América', t_lista('Califórnia', 'Oregon', 'Washington', 'Nova Iorque', 'Texas',
-                                               'Virgínia', 'Kentucky', 'Tennessee'));
+  regioes('Portugal', t_lista('Douro', 'Porto', 'Minho', 'Alentejo', 'Madeira', 'Açores', 'Dão', 'Bairrada',
+                              'Lourinhã', 'Setúbal', 'Lisboa', 'Tejo', 'Algarve', 'Trás-os-Montes'));
+
+  regioes('Espanha', t_lista('La Rioja', 'Ribera del Duero', 'Jerez', 'Galiza', 'Catalunha', 'País Basco', 'Navarra',
+                             'Valência', 'Alicante', 'Andaluzia', 'Aragão', 'Astúrias', 'Ilhas Baleares',
+                             'Ilhas Canárias', 'Cantábria', 'Castela e Leão', 'Castela-La Mancha', 'Extremadura',
+                             'Madrid', 'Múrcia'));
+
+  regioes('Escócia', t_lista('Aberdeen', 'Aberdeenshire', 'Angus', 'Dundee', 'Argyll e Ilhas', 'Ayrshire', 'Arran',
+                             'Dumfries', 'Galloway', 'Edinburgh', 'Lothians', 'Glasgow', 'Clyde Valley', 'Orkney',
+                             'Perthshire', 'Shetland', 'Highlands', 'Lowlands', 'Speyside', 'Reino de Fife',
+                             'Outer Hebrides', 'Scottish Borders', 'Loch Lomond', 'Forth Valley', 'Stirling',
+                             'Falkirk', 'Clackmannanshire', 'Islay', 'Campbeltown', 'Islands'));
+
+  regioes('Irlanda', t_lista('Galway', 'Leitrim', 'Mayo', 'Roscommon', 'Sligo',
+                             'Antrim', 'Armagh', 'Cavan', 'Donegal', 'Down', 'Fermanagh', 'Londonderry', 'Monaghan',
+                             'Tyrone',
+                             'Clare', 'Cork', 'Kerry', 'Limerick', 'Tipperary', 'Waterford',
+                             'Carlow', 'Dublin', 'Kildare', 'Kilkenny', 'Laois', 'Longford', 'Louth', 'Meath',
+                             'Offaly', 'Westmeath', 'Wexford', 'Wicklow'));
+
+  regioes('Canadá', t_lista('Terra Nova e Labrador', 'Ilha do Príncipe Eduardo', 'Nova Escócia', 'Novo Brunswick',
+                            'Quebeque', 'Ontário', 'Manitoba', 'Saskatchewan', 'Alberta', 'Colúmbia Britânica',
+                            'Nunavut', 'Territórios do Noroeste', 'Yukon'));
+
+  regioes('Estados Unidos da América',
+          t_lista('Alabama', 'Alasca', 'Arizona', 'Arkansas', 'Califórnia', 'Carolina do Norte', 'Carolina do Sul',
+                  'Colorado', 'Connecticut', 'Dakota do Norte', 'Dakota do Sul', 'Delaware', 'Flórida', 'Geórgia',
+                  'Havai', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Luisiana', 'Maine',
+                  'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi', 'Missouri', 'Montana',
+                  'Nebraska', 'Nevada', 'Nova Hampshire', 'Nova Jérsia', 'Novo México', 'Nova Iorque', 'Ohio',
+                  'Oklahoma', 'Oregon', 'Pensilvânia', 'Rhode Island', 'Tennessee', 'Texas', 'Utah', 'Vermont',
+                  'Virgínia', 'Virgínia Ocidental', 'Washington', 'Wisconsin', 'Wyoming'));
 END;
 /
 
@@ -716,22 +738,7 @@ INSERT INTO whisky_tipo (whisky_tipo_value) VALUES ('Bourbon');
 INSERT INTO whisky_tipo (whisky_tipo_value) VALUES ('Rye');
 INSERT INTO whisky_tipo (whisky_tipo_value) VALUES ('Tennessee');
 
-INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Speyside');
-INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Highlands');
-INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Islay');
-INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Lowlands');
-INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Campbeltown');
-INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Islands');
-INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Kentucky');
-INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Tennessee');
-INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Irlanda');
-INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Japão');
-INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Canadá');
-INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Índia');
-INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Taiwan');
-INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Austrália');
-INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Portugal');
-INSERT INTO whisky_regiao (whisky_regiao_nome) VALUES ('Espanha');
+-- (A região do whisky é a da tabela `regiao`, preenchida mais acima: Speyside, Islay, Kentucky, Cork, ...)
 
 INSERT INTO whisky_corpo (whisky_corpo_value) VALUES ('Leve');
 INSERT INTO whisky_corpo (whisky_corpo_value) VALUES ('Médio');

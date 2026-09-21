@@ -25,6 +25,26 @@ class OrdemAlfabeticaTest {
     }
 
     @Test
+    fun `o destaque fica no topo e o resto por ordem alfabetica`() {
+        assertEquals(
+            listOf("Portugal", "África do Sul", "Albânia", "Argélia", "Áustria", "Índia", "Óbidos", "Zimbábue"),
+            paises.ordenadoPorNomeComDestaque("Portugal") { it },
+        )
+    }
+
+    @Test
+    fun `sem o destaque na lista fica so a ordem alfabetica`() {
+        val semPortugal = paises - "Portugal"
+        assertEquals(semPortugal.ordenadoPorNome { it }, semPortugal.ordenadoPorNomeComDestaque("Portugal") { it })
+    }
+
+    @Test
+    fun `o destaque compara o nome exato e nao um prefixo`() {
+        val lista = listOf("Portugal Continental", "Espanha", "Portugal")
+        assertEquals(listOf("Portugal", "Espanha", "Portugal Continental"), lista.ordenadoPorNomeComDestaque("Portugal") { it })
+    }
+
+    @Test
     fun `nomes nulos ficam primeiro sem rebentar`() {
         val itens = listOf<String?>("Douro", null, "Alentejo")
         assertEquals(listOf(null, "Alentejo", "Douro"), itens.ordenadoPorNome { it })

@@ -27,7 +27,7 @@ INSERT INTO produtor (produtor_nome, produtor_pais_id, produtor_regiao_id, produ
 VALUES ('Herdade do Esporão', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'), (SELECT regiao_id FROM regiao WHERE regiao_nome = 'Alentejo'), 1973, 'https://www.esporao.com', 1);
 
 INSERT INTO produtor (produtor_nome, produtor_pais_id, produtor_regiao_id, produtor_ano_fundacao, produtor_website, produtor_permite_visitas)
-VALUES ('Quinta de Soalheiro', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'), (SELECT regiao_id FROM regiao WHERE regiao_nome = 'Vinho Verde'), 1974, 'https://www.soalheiro.com', 1);
+VALUES ('Quinta de Soalheiro', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'), (SELECT regiao_id FROM regiao WHERE regiao_nome = 'Minho'), 1974, 'https://www.soalheiro.com', 1);
 
 INSERT INTO produtor (produtor_nome, produtor_pais_id, produtor_regiao_id, produtor_website, produtor_permite_visitas)
 VALUES ('Luís Pato', (SELECT produtor_pais_id FROM produtor_pais WHERE produtor_pais_value = 'Portugal'), (SELECT regiao_id FROM regiao WHERE regiao_nome = 'Bairrada'), 'https://www.luispato.com', 0);
