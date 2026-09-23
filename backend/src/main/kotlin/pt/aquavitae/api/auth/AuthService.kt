@@ -12,6 +12,7 @@ import pt.aquavitae.api.lookup.UtilizadorRoleRepository
 import pt.aquavitae.api.security.JwtService
 import pt.aquavitae.api.utilizador.Utilizador
 import pt.aquavitae.api.utilizador.UtilizadorRepository
+import pt.aquavitae.api.utilizador.findByIdentificador
 import java.time.Instant
 
 private const val DEFAULT_ROLE = "Utilizador"
@@ -26,19 +27,22 @@ class AuthService(
 
     @Transactional
     fun register(request: RegisterRequest): AuthResponse {
-        if (utilizadorRepository.existsByEmail(request.email)) {
-            throw ConflictException("Já existe uma conta com o email ${request.email}")
+        // O teclado do telemóvel deixa espaços no fim: guarda-se sempre sem eles.
+        val username = request.username.trim()
+        val email = request.email.trim()
+        if (utilizadorRepository.existsByEmailIgnoreCase(email)) {
+            throw ConflictException("Já existe uma conta com o email $email")
         }
-        if (utilizadorRepository.existsByUsername(request.username)) {
-            throw ConflictException("O username ${request.username} já está em uso")
+        if (utilizadorRepository.existsByUsernameIgnoreCase(username)) {
+            throw ConflictException("O username $username já está em uso")
         }
 
         val defaultRole = utilizadorRoleRepository.findByValue(DEFAULT_ROLE).orElse(null)
 
         val agora = Instant.now()
         val utilizador = Utilizador(
-            username = request.username,
-            email = request.email,
+            username = username,
+            email = email,
             password = passwordEncoder.encode(request.password),
             firstName = request.firstName,
             lastName = request.lastName,
@@ -54,14 +58,14 @@ class AuthService(
     }
 
     fun login(request: LoginRequest): AuthResponse {
-        val utilizador = utilizadorRepository.findByEmail(request.email)
-            .orElseThrow { InvalidCredentialsException("Email ou password inválidos") }
+        val utilizador = utilizadorRepository.findByIdentificador(request.identificador)
+            ?: throw InvalidCredentialsException("Username/email ou password inválidos")
 
         val passwordHash = utilizador.password
-            ?: throw InvalidCredentialsException("Email ou password inválidos")
+            ?: throw InvalidCredentialsException("Username/email ou password inválidos")
 
         if (!passwordEncoder.matches(request.password, passwordHash)) {
-            throw InvalidCredentialsException("Email ou password inválidos")
+            throw InvalidCredentialsException("Username/email ou password inválidos")
         }
 
         val token = jwtService.generateToken(utilizador.id, utilizador.email)

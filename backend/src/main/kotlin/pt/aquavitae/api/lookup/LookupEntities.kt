@@ -36,6 +36,10 @@ class UtilizadorNationality(
 
     @Column(name = "nationality_value")
     var value: String? = null,
+
+    // ISO 3166-1 alfa-2 (PT, ES, ...): a app desenha a bandeira a partir dele. Null = sem bandeira.
+    @Column(name = "nationality_codigo_pais")
+    var codigoPais: String? = null,
 )
 
 @Entity

@@ -40,10 +40,12 @@ class SecurityConfig(
                     // utilizador), senão cairia no permitAll genérico de /api/bebidas/** abaixo.
                     .requestMatchers(HttpMethod.GET, "/api/bebidas/sugeridas").authenticated()
                     .requestMatchers(HttpMethod.GET, "/api/bebidas/**", "/api/produtores/**", "/api/lookup/**").permitAll()
+                    // Os termos e condições têm de se poder ler antes de haver conta (popup do registo e do login): o
+                    // texto em JSON para a app (/api/legal) e a página pública (/legal/termos.html).
+                    .requestMatchers(HttpMethod.GET, "/api/legal/**", "/legal/**").permitAll()
                     // Recursos estáticos (avatares, e futuramente fotos de bebidas/produtores) — sem
-                    // auth, servidos diretamente pelo Spring de src/main/resources/static/. /legal: os termos e
-                    // condições (têm de se poder ler antes de haver conta, no popup do registo).
-                    .requestMatchers(HttpMethod.GET, "/icones/**", "/legal/**").permitAll()
+                    // auth, servidos diretamente pelo Spring de src/main/resources/static/.
+                    .requestMatchers(HttpMethod.GET, "/icones/**").permitAll()
                     // Manutenção (ex.: disparar a verificação de links de compra) — só admins.
                     .requestMatchers("/api/admin/**").hasRole("ADMIN")
                     .anyRequest().authenticated()

@@ -1,5 +1,6 @@
 package pt.aquavitae.api.utilizador
 
+import jakarta.validation.Valid
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -21,7 +22,7 @@ class UtilizadorController(
     @PutMapping("/api/users/me")
     fun update(
         @AuthenticationPrincipal utilizador: Utilizador,
-        @RequestBody request: UtilizadorUpdateRequest,
+        @Valid @RequestBody request: UtilizadorUpdateRequest,
     ): UtilizadorMeDto = utilizadorService.updateProfile(utilizador.id, request)
 
     // O popup dos termos e condições (no login, para quem nunca aceitou ou aceitou uma versão anterior).

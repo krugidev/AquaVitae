@@ -1,0 +1,13 @@
+# Perfil de desenvolvimento para ver os emails SEM os enviar: liga ao Mailpit local (backend/docker-compose.mail-dev.yml),
+# um servidor de email de mentira que guarda tudo e mostra numa página em http://localhost:8025.
+# Uso:  $env:SPRING_PROFILES_ACTIVE = "dev,mailpit"   e depois   .\gradlew.bat bootRun
+spring:
+  mail:
+    host: localhost
+    port: 1025
+    properties:
+      mail:
+        smtp:
+          auth: false           # o Mailpit não pede login
+          starttls:
+            enable: false       # nem TLS

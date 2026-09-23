@@ -52,7 +52,10 @@ class UtilizadorService(
         val utilizador = findWithProfile(utilizadorId)
 
         request.username?.let { novoUsername ->
-            if (novoUsername != utilizador.username && utilizadorRepository.existsByUsername(novoUsername)) {
+            // Só muda a capitalização do próprio username (ana -> Ana): não é conflito.
+            if (!novoUsername.equals(utilizador.username, ignoreCase = true) &&
+                utilizadorRepository.existsByUsernameIgnoreCase(novoUsername)
+            ) {
                 throw ConflictException("O username $novoUsername já está em uso")
             }
             utilizador.username = novoUsername

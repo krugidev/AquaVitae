@@ -28,13 +28,17 @@ class CaveService(
     private val clock: Clock,
 ) {
 
+    // `bebidaId`: para o popup "Adicionar à cave" destacar em que caves aquela bebida já está (`temBebida`) — a
+    // mesma query em lote de sempre, só a verificar se alguma linha ativa da cave é dessa bebida.
     @Transactional(readOnly = true)
-    fun listByUtilizador(utilizador: Utilizador): List<CaveResponse> {
+    fun listByUtilizador(utilizador: Utilizador, bebidaId: Long? = null): List<CaveResponse> {
         val hoje = LocalDate.now(clock)
         val ativasPorCave = caveBebidaRepository.findAtivasByUtilizadorId(utilizador.id)
             .groupBy { it.cave?.id }
         return caveRepository.findByUtilizador_IdOrderByDataCriacaoAscIdAsc(utilizador.id).map { cave ->
-            CaveResponse.from(cave, CaveRegras.resumir(ativasPorCave[cave.id].orEmpty(), hoje))
+            val linhas = ativasPorCave[cave.id].orEmpty()
+            val temBebida = bebidaId != null && linhas.any { it.bebida?.id == bebidaId }
+            CaveResponse.from(cave, CaveRegras.resumir(linhas, hoje), temBebida)
         }
     }
 

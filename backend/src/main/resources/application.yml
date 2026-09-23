@@ -3,6 +3,21 @@ spring:
     name: aquavitae-api
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
+  mail:
+    # O servidor de email (SMTP) NUNCA vai para o repositório: define-se por variáveis de ambiente, com os nomes padrão do
+    # Spring — SPRING_MAIL_HOST, SPRING_MAIL_PORT, SPRING_MAIL_USERNAME e SPRING_MAIL_PASSWORD (e, se o fornecedor pedir SSL
+    # direto na porta 465, SPRING_MAIL_PROPERTIES_MAIL_SMTP_SSL_ENABLE=true). Sem SPRING_MAIL_HOST não há envio: em dev o
+    # código de recuperação de password aparece no log da API. Para ver os emails localmente, sem enviar nenhum: perfil
+    # `mailpit` (ver backend/docker-compose.mail-dev.yml).
+    properties:
+      mail:
+        smtp:
+          auth: true            # os fornecedores pedem utilizador e password
+          starttls:
+            enable: true        # porta 587 (STARTTLS)
+          connectiontimeout: 5000
+          timeout: 10000
+          writetimeout: 10000
 
 server:
   port: 8080
@@ -16,6 +31,18 @@ aquavitae:
       cron: "0 0 4 * * *"   # todos os dias às 04:00 (Europe/Lisbon)
       falhas-para-desativar: 2   # noites seguidas com link inválido antes de o desativar
       intervalo-ms: 1000   # espaçamento mínimo entre pedidos ao mesmo retalhista
+
+  mail:
+    # Quem aparece como remetente dos emails. O endereço tem de ser um que o servidor SMTP deixe usar (em geral, o do
+    # domínio/conta que se criou). Em produção: AQUAVITAE_MAIL_FROM_ADDRESS e AQUAVITAE_MAIL_FROM_NAME.
+    from-address: ${AQUAVITAE_MAIL_FROM_ADDRESS:no-reply@aquavitae.pt}
+    from-name: ${AQUAVITAE_MAIL_FROM_NAME:AquaVitae}
+
+  recuperacao:
+    # Anti-abuso da recuperação de password: entre dois pedidos para a mesma conta têm de passar pelo menos estes segundos
+    # (um pedido antes disso não gera outro código nem outro email, mas a resposta é a mesma). Sem isto, qualquer pessoa
+    # podia encher a caixa de email de outra a partir do username. Um pedido novo invalida os códigos anteriores.
+    intervalo-minimo-segundos: 60
 
   termos:
     # "AAAA-MM-DD" (hora de Portugal) em que os termos e condições em vigor foram publicados. Quem aceitou antes desta

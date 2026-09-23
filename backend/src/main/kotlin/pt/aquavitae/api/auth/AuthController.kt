@@ -31,19 +31,19 @@ class AuthController(
 
     @PostMapping("/recuperar-password")
     fun recuperarPassword(@Valid @RequestBody request: RecuperarPasswordRequest): ResponseEntity<Void> {
-        passwordResetService.recuperarPassword(request.email)
+        passwordResetService.recuperarPassword(request.identificador)
         return ResponseEntity.accepted().build()
     }
 
     @PostMapping("/verificar-codigo")
     fun verificarCodigo(@Valid @RequestBody request: VerificarCodigoRequest): ResponseEntity<Void> {
-        passwordResetService.verificarCodigo(request.email, request.codigo)
+        passwordResetService.verificarCodigo(request.identificador, request.codigo)
         return ResponseEntity.ok().build()
     }
 
     @PostMapping("/redefinir-password")
     fun redefinirPassword(@Valid @RequestBody request: RedefinirPasswordRequest): ResponseEntity<Void> {
-        passwordResetService.redefinirPassword(request.email, request.codigo, request.novaPassword)
+        passwordResetService.redefinirPassword(request.identificador, request.codigo, request.novaPassword)
         return ResponseEntity.ok().build()
     }
 }

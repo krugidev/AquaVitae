@@ -4,11 +4,27 @@ import pt.aquavitae.api.lookup.AvatarCategoria
 import pt.aquavitae.api.lookup.Casta
 import pt.aquavitae.api.lookup.CastaTipo
 import pt.aquavitae.api.lookup.UtilizadorAvatar
+import pt.aquavitae.api.lookup.UtilizadorNationality
 
 data class LookupItemDto(
     val id: Long,
     val nome: String?,
 )
+
+// `codigoPais`: código ISO do país (PT, ES, ...) para a app desenhar a bandeira; null se a nacionalidade não tem código.
+data class NacionalidadeDto(
+    val id: Long,
+    val nome: String?,
+    val codigoPais: String?,
+) {
+    companion object {
+        fun from(nacionalidade: UtilizadorNationality) = NacionalidadeDto(
+            id = nacionalidade.id,
+            nome = nacionalidade.value,
+            codigoPais = nacionalidade.codigoPais,
+        )
+    }
+}
 
 data class CastaDto(
     val id: Long,

@@ -27,9 +27,12 @@ class CaveController(
     private val caveService: CaveService,
 ) {
 
+    // ?bebidaId= (opcional): marca temBebida=true nas caves onde essa bebida já está (popup "Adicionar à cave").
     @GetMapping("/api/users/me/caves")
-    fun list(@AuthenticationPrincipal utilizador: Utilizador): List<CaveResponse> =
-        caveService.listByUtilizador(utilizador)
+    fun list(
+        @AuthenticationPrincipal utilizador: Utilizador,
+        @RequestParam(required = false) bebidaId: Long?,
+    ): List<CaveResponse> = caveService.listByUtilizador(utilizador, bebidaId)
 
     @PostMapping("/api/users/me/caves")
     fun create(

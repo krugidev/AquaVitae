@@ -45,6 +45,25 @@ class OrdemAlfabeticaTest {
     }
 
     @Test
+    fun `os destaques vao primeiro pela ordem dada e o resto por ordem alfabetica`() {
+        val castas = listOf("Baga", "Alvarinho", "Aragonez (Tinta Roriz)", "Touriga Nacional", "Alcoa", "Arinto", "Touriga Franca")
+        assertEquals(
+            listOf("Touriga Nacional", "Touriga Franca", "Aragonez (Tinta Roriz)", "Alvarinho", "Baga", "Arinto", "Alcoa"),
+            castas.ordenadoPorNomeComDestaques(CASTAS_EM_DESTAQUE) { it },
+        )
+    }
+
+    // Filtrar por tipo (só tintas) tira algumas castas da lista: os destaques em falta não aparecem nem rebentam.
+    @Test
+    fun `destaques que nao estao na lista sao ignorados e os nomes comparam-se por inteiro`() {
+        val castas = listOf("Arinto do Interior", "Baga", "Alcoa", "Touriga Nacional")
+        assertEquals(
+            listOf("Touriga Nacional", "Baga", "Alcoa", "Arinto do Interior"),
+            castas.ordenadoPorNomeComDestaques(CASTAS_EM_DESTAQUE) { it },
+        )
+    }
+
+    @Test
     fun `nomes nulos ficam primeiro sem rebentar`() {
         val itens = listOf<String?>("Douro", null, "Alentejo")
         assertEquals(listOf(null, "Alentejo", "Douro"), itens.ordenadoPorNome { it })

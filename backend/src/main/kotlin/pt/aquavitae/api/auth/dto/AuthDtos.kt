@@ -27,8 +27,9 @@ data class RegisterRequest(
 )
 
 data class LoginRequest(
-    @field:NotBlank @field:Email
-    val email: String,
+    // "Username ou Email" (o campo único do ecrã de login): tenta primeiro o email, depois o username.
+    @field:NotBlank
+    val identificador: String,
 
     @field:NotBlank
     val password: String,
@@ -40,22 +41,23 @@ data class AuthResponse(
     val username: String?,
 )
 
+// Os 3 passos da recuperação identificam a conta como o login: "Username ou Email" (`identificador`).
 data class RecuperarPasswordRequest(
-    @field:NotBlank @field:Email
-    val email: String,
+    @field:NotBlank
+    val identificador: String,
 )
 
 data class VerificarCodigoRequest(
-    @field:NotBlank @field:Email
-    val email: String,
+    @field:NotBlank
+    val identificador: String,
 
     @field:NotBlank
     val codigo: String,
 )
 
 data class RedefinirPasswordRequest(
-    @field:NotBlank @field:Email
-    val email: String,
+    @field:NotBlank
+    val identificador: String,
 
     @field:NotBlank
     val codigo: String,

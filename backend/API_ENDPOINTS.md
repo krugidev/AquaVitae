@@ -59,17 +59,17 @@ brancas) — texto já capturado, falta só o `UPDATE` em massa no seed.
 | Método | Path | Auth | Estado |
 |---|---|---|---|
 | POST | `/register` `{ username, email, password, firstName?, lastName?, aceitouTermos }` | — | ✅ — **`aceitouTermos` é obrigatório e tem de ser `true`** (o popup dos termos; sem ele, 400 `aceitouTermos: É preciso aceitar os termos e condições`). A conta nasce com os termos aceites (`utilizador_termos_aceites_em` = agora). **Mudou em 2026-09-21** |
-| POST | `/login` | — | ✅ |
-| POST | `/recuperar-password` `{ email }` | — | ✅ **implementado** — código de 6 dígitos em `utilizador_password_reset` (15 min de validade), 202 sempre (não revela se o email existe). Envio real por email ainda por fazer — por agora só regista em log (`PasswordResetService`, combinado adiar o email) |
-| POST | `/verificar-codigo` `{ email, codigo }` | — | ✅ **implementado** — 200 se válido/não expirado/não usado, 401 "Código inválido"/"Código expirado" |
-| POST | `/redefinir-password` `{ email, codigo, novaPassword }` | — | ✅ **implementado** — valida de novo, atualiza password, marca código usado (testado: reutilizar o código dá 401) |
+| POST | `/login` `{ identificador, password }` | — | ✅ — **`identificador` = username OU email** (o campo único "Username ou Email" do ecrã), sem distinguir maiúsculas e com `trim`; tenta o email e depois o username. Antes o campo era `email` (**mudou em 2026-09-21**). 401 `Username/email ou password inválidos`. O registo também passou a ignorar maiúsculas e a fazer `trim` na verificação de unicidade (senão "Ana" e "ana" seriam duas contas e o login ficaria ambíguo) |
+| POST | `/recuperar-password` `{ identificador }` | — | ✅ **implementado** — código de 6 dígitos em `utilizador_password_reset` (15 min de validade), 202 sempre (não revela se a conta existe). Envio real por email ainda por fazer — por agora só regista em log (`PasswordResetService`, combinado adiar o email). **`identificador` = username OU email, como no login** (sem distinguir maiúsculas, com `trim`; **mudou em 2026-09-22**, antes era `email`; o corpo antigo com `email` dá 400) |
+| POST | `/verificar-codigo` `{ identificador, codigo }` | — | ✅ **implementado** — 200 se válido/não expirado/não usado, 401 "Código inválido"/"Código expirado". `identificador` como acima |
+| POST | `/redefinir-password` `{ identificador, codigo, novaPassword }` | — | ✅ **implementado** — valida de novo, atualiza password, marca código usado (testado: reutilizar o código dá 401). `novaPassword` 8 a 72 caracteres. `identificador` como acima. Não inicia sessão |
 
 ## Utilizador / Perfil (`/api/users/me`)
 
 | Método | Path | Estado |
 |---|---|---|
 | GET | `/api/users/me` | ✅ **implementado** (2026-09-17) — `nationality`, `bioDesc`, `avatar`, `accountCreatedAt`, contadores; **desde 2026-09-21 também `termosAceitesEm` (null = nunca aceitou) e `precisaAceitarTermos`** (ver "Termos e condições") |
-| PUT | `/api/users/me` | ✅ **implementado** (2026-09-17) |
+| PUT | `/api/users/me` | ✅ **implementado** (2026-09-17) — `{ firstName?, lastName?, username?, nationalityId?, bioDesc?, avatarId? }`: só se altera o que vai preenchido. **Desde 2026-09-22 valida os tamanhos** (400 em vez de um erro 500 da BD): `firstName` ≤ 25, `lastName` ≤ 40, `username` 3 a 30, `bioDesc` ≤ 1000 |
 | POST | `/api/users/me/termos/aceitar` | ✅ **implementado** (2026-09-21, validado ao vivo) — sem body; regista a aceitação agora (substitui a data anterior) e devolve o `UtilizadorMeDto` atualizado. 401 sem token |
 | GET | `/api/users/me/preferencias` | ✅ **implementado** (2026-09-17) |
 | PUT | `/api/users/me/preferencias` | ✅ já existia |
@@ -86,10 +86,19 @@ bebida** (as pílulas de "Origem" do popup de filtros nunca dão 0 resultados; a
 não a mostra até haver um produto dela). O `id` é o que se envia em `GET /api/bebidas?regiaoIds=`. `paisId` é o id do
 país, o **mesmo** em `pais` e `produtor_pais` (ver `database/README.md`). Antes devolvia `List<String>` (texto livre).
 
+**`/nacionalidades` (mudou em 2026-09-22):** devolve `[{ id, nome, codigoPais }]`. `codigoPais` é o código ISO 3166-1
+alfa-2 do país (`PT`, `ES`, `FR`, `GB`, `BR`, `DE`, `IT`, `US`), de onde a app desenha a bandeira (emoji); é `null` numa
+nacionalidade sem código (fica sem bandeira). Coluna `utilizador_nationality.nationality_codigo_pais` (patch `13`). Uma
+nacionalidade nova é uma linha de SQL, com o código, sem mexer na app.
+
 **Ordem:** `/paises` (218), `/castas` (277) e `/regioes` vêm por **ordem alfabética** (collator pt-PT; o Oracle
 ordena por código de carácter e poria "África" depois de "Zimbabué"). **`/paises` traz Portugal sempre em primeiro**
 (decisão de produto, 2026-09-20; o resto continua alfabético) — vale para o filtro de origem e para qualquer seletor de
-país. Os restantes vêm por id, que é a ordem pretendida (Leve, Médio, Encorpado; Tinto, Branco, ...).
+país. **`/castas` traz 6 castas em destaque primeiro, pela ordem do desenho do onboarding** — Touriga Nacional, Touriga
+Franca, Aragonez (Tinta Roriz), Alvarinho, Baga, Arinto — e as restantes por ordem alfabética (decisão de produto,
+2026-09-22: sem isto a Touriga Nacional caía na posição 253 de 277; a lista `CASTAS_EM_DESTAQUE` está em
+`OrdemAlfabetica.kt`; com `?tipoId=` os destaques que não são desse tipo ficam de fora). Os restantes vêm por id, que é a
+ordem pretendida (Leve, Médio, Encorpado; Tinto, Branco, ...).
 
 **Grafias PT-PT dos países (2026-09-20 e 21):** 13 nomes passaram à forma portuguesa (Botsuana, Koweit, Jibuti,
 Quirguizistão, Usbequistão, Zimbabué, Malávi, Seicheles, Sri Lanca, Trindade e Tobago, Barém, Bangladeche, Quiribáti); os
@@ -102,12 +111,16 @@ Quirguizistão, Usbequistão, Zimbabué, Malávi, Seicheles, Sri Lanca, Trindade
 `whisky_regiao` deixou de existir (patch `11`). Ainda sem endpoint nem DTO (não há subtype `whisky` no backend). O país do
 whisky é o de origem da bebida; um whisky de um país sem regiões na lista fica sem região (`NULL` = "não disponível").
 
-## Termos e condições (decidido e feito em 2026-09-21)
+## Termos e condições (decidido em 2026-09-21; texto servido em JSON desde 2026-09-22)
 
-- **O texto** é uma página estática servida pela API, o mesmo padrão dos avatares: `GET /legal/termos.html` (sem auth;
-  `backend/src/main/resources/static/legal/termos.html`). **Hoje é só um marcador "versão provisória"** — o texto final é do
-  utilizador (a preparar; convém revisão jurídica; deve incluir a maioridade 18+ e o aviso de afiliação/comissões). Para o
-  publicar basta substituir esse ficheiro. A app mostra o URL num ecrã/WebView; a BD **não** guarda o texto.
+- **O texto** vive num ficheiro simples, `backend/src/main/resources/legal/termos.txt` (formato: `# ` no início da linha =
+  título de secção; parágrafos separados por linha em branco; sem HTML). É a única fonte: `GET /api/legal/termos` (sem
+  auth) devolve `{ titulo, blocos: [{ tipo: "titulo"|"paragrafo", texto }] }` para a app desenhar (`LegalController` +
+  `TermosTexto.kt`, 8 testes), e `GET /legal/termos.html` gera a mesma página pública a partir do mesmo ficheiro (para
+  abrir num browser ou ligar de fora). **Hoje é um texto de exemplo (Lorem ipsum)** — o texto final é do utilizador (a
+  preparar; convém revisão jurídica; deve incluir a maioridade 18+ e o aviso de afiliação/comissões). Para o publicar
+  basta substituir `termos.txt` (mesmo formato) — não pede alterações no backend nem na app. A BD **não** guarda o texto.
+  A app mostra-o num popup próprio que sobe de baixo (`TermsSheet`, a rolar), não numa WebView.
 - **A aceitação** guarda-se na própria tabela do utilizador: `utilizador_termos_aceites_em` (TIMESTAMP, `NULL` = nunca
   aceitou). Só a data — sem número de versão.
   - **Registo:** `POST /api/auth/register` exige `aceitouTermos: true` (o popup); a conta nasce com a data preenchida.
@@ -120,8 +133,24 @@ whisky é o de origem da bebida; um whisky de um país sem regiões na lista fic
     os termos ainda não mudaram. Uma data mal escrita impede a API de arrancar (de propósito).
   - Se um dia for preciso saber **qual** texto cada um aceitou (e não só quando), acrescenta-se uma coluna de versão; com
     a data e o histórico dos ficheiros já se reconstrói.
-- Regra pura em `TermosRegras.kt` (9 testes). **Quebra o contrato do registo** (campo novo obrigatório): o Android ainda
-  não o envia (ver "Sincronização pendente com o Android").
+- Regra pura em `TermosRegras.kt` (9 testes).
+
+## Recuperação de password por email (implementado em 2026-09-22)
+
+- **O código vai por email** (`EmailService` + `RecuperacaoPasswordEmail.kt`, texto e HTML, sem ligações — só o código —
+  e o nome do destinatário escapado no HTML; 6 testes). Servidor SMTP por `spring.mail.*` (variáveis de ambiente
+  `SPRING_MAIL_HOST/PORT/USERNAME/PASSWORD`; `AQUAVITAE_MAIL_FROM_ADDRESS/NAME` para o remetente) — **nunca no
+  repositório**. **Sem `SPRING_MAIL_HOST` configurado, em dev o código fica só no log da API** (`PasswordResetService`);
+  fora de dev, sem servidor, só um aviso (nunca o código em log fora de dev). Envio em `@Async` (`SchedulingConfig` tem
+  `@EnableAsync`): o pedido HTTP não espera pelo SMTP, e o tempo de resposta não denuncia se a conta existe.
+- **Perfil de teste local (`mailpit`)**, sem enviar nada para fora: `docker compose -f backend/docker-compose.mail-dev.yml
+  up -d` sobe um Mailpit (SMTP em `localhost:1025`, caixa em `http://localhost:8025`); correr a API com
+  `$env:SPRING_PROFILES_ACTIVE = "dev,mailpit"`. Validado ao vivo: email chega, HTML e texto corretos, PT-PT com acentos.
+- **Anti-abuso:** um pedido novo **invalida os códigos anteriores** ainda por usar (`invalidarPendentes`) e só se gera
+  código novo passado `aquavitae.recuperacao.intervalo-minimo-segundos` (60s por omissão) desde o último pedido da
+  mesma conta — dentro do intervalo, a API responde 202 na mesma (não denuncia nada) mas não envia email. Regra pura em
+  `PasswordResetRegras.kt` (3 testes). Validado ao vivo: 2.º pedido imediato não gera 2.º email; passado o intervalo,
+  gera um código novo e o antigo passa a dar 401 "Código inválido".
 
 ## Compra / afiliados (`/api/bebidas/{id}/links-compra`) — novo módulo `compra`
 
@@ -172,7 +201,7 @@ botão de compra) mas **a linha fica como histórico**, e volta a ativo sozinho 
 | GET | `/api/bebidas?search=&categoriaIds=&paisId=&regiaoIds=&precoMin=&precoMax=&ratingMin=&acidezMin=&acidezMax=&docuraMin=&docuraMax=&corpoId=&taninoId=&tipoId=&castaIds=&page=&size=` | ✅ **implementado** (2026-09-18) — testado com `categoriaIds`, `precoMax`. 🆕 (2026-09-19, **validado ao vivo**) `regiaoIds` (repetir o parâmetro: `regiaoIds=3&regiaoIds=7`; os ids de `/lookup/regioes?paisId=`; era `regioes` em texto, substituído no mesmo dia pela tabela `regiao`) e `search` que passa a casar também o **nome do produtor** e o **nome de uma casta** (tudo em AND com os filtros aplicados; "limpar" um filtro é o cliente deixar de o enviar) |
 | GET | `/api/bebidas/sugeridas` (auth) | ✅ **implementado** — sem preferências, cai para o catálogo todo (nunca vazio); com preferências, filtra por categorias/acidez/doçura preferidas. **Algoritmo ainda simples** (sem ordenação por rating dedicada) — afinar mais tarde se necessário |
 | GET | `/api/bebidas/{id}` | ✅ **implementado** — `produtorResumo`, `linkCompra` (mais barato), flags do utilizador |
-| GET | `/api/bebidas/{id}/reviews` | ✅ **implementado** — `{ distribuicao: {1..5: n}, reviews: [...] }`. **Quebra o contrato Android atual** (`AquaVitaeApi.getReviews` ainda declara `List<ReviewResponse>`) — sincronizar quando chegar a vez do Android |
+| GET | `/api/bebidas/{id}/reviews` | ✅ **implementado** — `{ distribuicao: {1..5: n}, reviews: [...] }`. **Sincronizado no Android em 2026-09-23** (fatia 3a, `ReviewsResponse`, validado ao vivo) |
 | POST | `/api/bebidas/{bebidaId}/reviews` (auth) | ✅ **implementado** — agora exige `bebida_provada` para este utilizador+bebida (409 caso contrário), testado |
 | PUT/DELETE | `/api/reviews/{id}` (auth, dono) | ✅ já existia |
 | GET | `/api/users/me/reviews` (auth) | 🆕 **implementado** (2026-09-19, validado ao vivo) — histórico de reviews do perfil: `[{ id, rating, comment, createdAt, bebida: BebidaSummaryDto }]`, mais recentes primeiro, sem paginação (como favoritos/wishlist/provadas) |
@@ -181,7 +210,11 @@ botão de compra) mas **a linha fica como histórico**, e volta a ativo sozinho 
 
 `BebidaSummaryDto` ✅ enriquecido e testado (precoDesde/retalhistaNome/corpo/acidez/doçura/flags) via
 `BebidaSummaryAssembler` novo (`bebida` package) — usado por catálogo, sugeridas, favoritos, wishlist e
-provadas, sempre com queries em lote (nunca 1 por bebida).
+provadas, sempre com queries em lote (nunca 1 por bebida). **2026-09-23 (validado ao vivo):** ganhou `tipo` e `tanino` (só
+vinho, os campos já existiam em `Vinho`, só não estavam expostos — necessários para o cartão do ecrã "Catálogo" do mockup,
+ex. "VINHO TINTO • CORPO ENCORPADO • TANINO FIRME") e `produtorRegiao` (nome da região do produtor, para a linha
+"Produtor • Região" do cartão) — `bebida.produtor?.regiao?.nome`, LAZY sob o Open-Session-In-View do pedido HTTP, o mesmo
+padrão já usado para `produtorNome`.
 
 ## Produtores (`/api/produtores`)
 
@@ -218,7 +251,7 @@ com o Android.
 
 | Método | Path | Estado |
 |---|---|---|
-| GET/POST | `/api/users/me/caves` | ✅ **implementado** (2026-09-19, validado ao vivo) — `CaveResponse` ganha `totalGarrafas`, `valorTotal`, `totalProntasAAbrir`; caves por ordem de criação |
+| GET/POST | `/api/users/me/caves` | ✅ **implementado** (2026-09-19, validado ao vivo) — `CaveResponse` ganha `totalGarrafas`, `valorTotal`, `totalProntasAAbrir`; caves por ordem de criação. 🆕 (2026-09-23, validado ao vivo) `?bebidaId=` opcional acrescenta `temBebida: Boolean` a cada cave (a mesma query em lote, sem pedidos extra) — o popup "Adicionar à cave" do Android destaca onde a bebida já está |
 | GET | `/api/caves/{id}` (auth, dono) | ✅ **implementado** (validado ao vivo) — `CaveDetailResponse` separa `prontasAAbrir[]` / `emGuarda[]` (+ os mesmos 3 totais), aceita `?sort=preco\|dataConsumo` (400 se outro valor) |
 | POST | `/api/caves/{id}/bebidas` (auth, dono) | ✅ **implementado** (validado ao vivo) — `CaveBebidaRequest` ganha `janelaInicio`, `janelaFim`, `notas` (400 se a janela acabar antes de começar) |
 | PATCH | `/api/caves/{id}/bebidas/{caveBebidaId}` (auth, dono) | 🔧 **mudou** (validado ao vivo) — edita `quantidade`, `precoPago`, `dataAquisicao`, `janelaInicio`, `janelaFim`, `notas` (null = fica como está, logo não há forma de limpar uma janela). **Deixou de aceitar `isConsumida`/`dataConsumo`** (ver `/consumir`); 409 numa garrafa já consumida |
@@ -290,11 +323,14 @@ totalCaves: Int
 totalGarrafas: Int
 
 // BebidaSummaryDto (GET /api/bebidas, /sugeridas, /favoritos, /wishlist, /provadas) — adicionar:
+produtorRegiao: String?         // (2026-09-23) nome da região do produtor, para "Produtor • Região" no cartão
 precoDesde: BigDecimal?         // MIN(bebida_link_compra_preco_atual) ativo
 retalhistaNome: String?         // do link mais barato
 corpo: String?                  // resumo do subtype (vinho, por agora)
 nivelAcidez: Int?
 nivelDocura: Int?
+tipo: String?                   // (2026-09-23) Tinto/Branco/Rosé/Fortificado — só vinho
+tanino: String?                 // (2026-09-23) só vinho
 isFavorito: Boolean?            // null se não autenticado
 isWishlist: Boolean?
 isProvada: Boolean?
@@ -381,22 +417,89 @@ Já corrigido no fim do dia: a pesquisa do catálogo não tinha `ORDER BY` (pagi
 
 ## Sincronização pendente com o Android (`AquaVitaeApi.kt`)
 
-Estes endpoints mudaram de forma desde a última vez que o contrato Retrofit foi escrito — por resolver
-quando chegar a vez de construir os ecrãs correspondentes (não bloqueia o backend):
-- `getReviews`: `List<ReviewResponse>` → `ReviewsResponse { distribuicao, reviews }`
-- `getFavoritos`/`getWishlist`/`getProvadas`: `List<BebidaSummary>` → `List<BebidaRelacaoDto>`
-- `getReviews`/`ReviewResponse`: ganhou `utilizadorNome` e `utilizadorAvatar`; novo `GET /api/users/me/reviews`
-- Caves: `CaveResponse`/`CaveDetailResponse`/`CaveBebidaResponse` mudaram (totais, `prontasAAbrir`/`emGuarda`, `estado`,
-  janelas); o `PATCH .../bebidas/{id}` **deixou de aceitar `isConsumida`/`dataConsumo`** — usar `POST .../consumir`
-- **Termos (2026-09-21):** `RegisterRequest` ganhou `aceitouTermos` (**obrigatório, tem de ser `true`**: o registo que hoje
-  o Android faz **dá 400** até o popup existir); `UtilizadorMeDto` ganhou `termosAceitesEm` e `precisaAceitarTermos`; novo
-  `POST /api/users/me/termos/aceitar`. Fluxo: registo com o popup; no login, `getMe()` e, se `precisaAceitarTermos`, popup.
+- ✅ **Feito na app em 2026-09-21 (fatia 1a: loading, login e registo)** — `AuthModels.kt`, `UserModels.kt`, `AquaVitaeApi.kt`:
+  - **Termos:** `RegisterRequest` ganhou `aceitouTermos` (**obrigatório, tem de ser `true`**); `UtilizadorMeDto` ganhou
+    `termosAceitesEm` e `precisaAceitarTermos`; novo `POST /api/users/me/termos/aceitar`. Fluxo: no registo o popup aparece
+    antes de enviar; no login, `getMe()` e, se `precisaAceitarTermos`, popup.
+  - **Login:** o corpo é `{ identificador, password }` (username OU email; antes `email`).
+- ✅ **Feito na app em 2026-09-22 (fatia 1b: recuperar password e onboarding)** — `AuthModels.kt`, `UserModels.kt`,
+  `LookupModels.kt`, `PreferenciaModels.kt`, `AquaVitaeApi.kt`:
+  - **Recuperação de password:** os 3 endpoints com `{ identificador }` (username OU email; **antes `email`**).
+  - **Perfil:** `PUT /api/users/me` (`UtilizadorUpdateRequest`: nome, apelido, nacionalidade, descrição, avatar).
+  - **Preferências:** `PUT /api/users/me/preferencias` (`PreferenciaRequest`; doçura e acidez do onboarding vão como `min = max`).
+    Ainda por usar na app: `GET /api/users/me/preferencias`.
+  - **Lookups:** `nacionalidades` (com `codigoPais`), `avatar-categorias`, `avatares`, `categorias-bebida`, `castas` (destaques primeiro).
+- ✅ **Feito na app em 2026-09-23 (fatia 2a: homepage)** — `BebidaModels.kt`, `CaveModels.kt`, `ProdutorModels.kt`,
+  `UserModels.kt`, `AquaVitaeApi.kt`:
+  - **`UtilizadorMeDto`:** ganhou `nationality`, `bioDesc`, `avatar`, `accountCreatedAt` e as 6 estatísticas (`totalProvadas`,
+    `totalReviews`, `totalFavoritos`, `totalWishlist`, `totalCaves`, `totalGarrafas`).
+  - **`searchBebidas`:** `categoriaId` singular → `categoriaIds` (lista, repete o parâmetro); ganhou `sort`. `BebidaSummary`
+    ganhou `precoDesde`, `retalhistaNome`, `corpo`, `nivelAcidez`, `nivelDocura`, `isFavorito`/`isWishlist`/`isProvada`,
+    `notaPropria`. `BebidaDetail` ganhou `produtorResumo`, `linkCompra`, as mesmas flags.
+  - **Novo `GET /bebidas/sugeridas`** (`getBebidasSugeridas`) e **`GET /produtores/destaque`** (`getProdutorDestaque`) — por
+    agora a homepage usa `searchBebidas(categoriaIds=...)` para "Escolhido para ti", não `/sugeridas` (esse endpoint não
+    filtra por categoria; ver `android/design/README.md`, "Homepage", "Diferenças conscientes").
+  - **`ProdutorDetail`:** ganhou `totalProdutos`.
+  - **Caves:** `CaveResponse` ganhou `totalGarrafas`/`valorTotal`/`totalProntasAAbrir`; `CaveDetailResponse` troca `bebidas`
+    por `prontasAAbrir`/`emGuarda`; `CaveBebidaResponse` ganha `categoriaNome`, `imagePath`, `janelaInicio`/`janelaFim`,
+    `estado` (enum `EstadoCaveBebida`), `notas`; `CaveBebidaUpdateRequest` **perdeu** `isConsumida`/`dataConsumo` (o `PATCH`
+    já não os aceita — falta ainda `POST .../consumir` no lado do Android, sem ecrã que o use).
+  - Ainda por sincronizar: tudo o resto abaixo.
+- ✅ **Feito na app em 2026-09-23 (fatia 2b: catálogo/filtros)** — `BebidaModels.kt`, `CatalogFiltro.kt` (novo), `AquaVitaeApi.kt`:
+  - **`searchBebidas`:** ganhou todos os parâmetros que faltavam — `paisId`, `regiaoIds`, `ratingMin`, `acidezMin/Max`,
+    `docuraMin/Max`, `corpoId`, `taninoId`, `tipoId`, `castaIds`, `precoMin/Max` (já existiam na API desde a fatia 4, só não
+    estavam no lado do Android). `BebidaSummary` ganhou `tipo`, `tanino` e `produtorRegiao` (acrescentados ao
+    `BebidaSummaryDto` no mesmo dia, ver acima).
+  - **Novos lookups:** `getPaisesBebida` (`/lookup/paises`), `getRegioes(paisId)` (`/lookup/regioes?paisId=`),
+    `getVinhoCorpos`/`getVinhoTaninos`/`getVinhoTipos` (`/lookup/vinho/{corpos,taninos,tipos}`) — todos já existiam na API,
+    só não estavam na app.
+  - Ainda por sincronizar: tudo o resto abaixo.
+- ✅ **Feito na app em 2026-09-23 (fatia 3a: popup de detalhe da bebida)** — `ReviewModels.kt`, `AquaVitaeApi.kt`,
+  `ProvadaRepository.kt` (novo):
+  - **`getReviews`:** `List<ReviewResponse>` → `ReviewsResponse { distribuicao, reviews }`; `ReviewResponse` ganhou
+    `utilizadorNome`/`utilizadorAvatar`. `distribuicao` chega com chaves de texto (`{"1":0,...,"5":1}`, o JSON não tem
+    chaves inteiras) — modelado como `Map<String, Int>` no Android.
+  - **Novo:** `addProvada`/`removeProvada` (`POST`/`DELETE /api/bebidas/{id}/provada`) — o popup marca a bebida como
+    provada antes de publicar uma review (o pré-requisito do 409, ver acima), sem o utilizador ver esse passo.
+  - `GET /api/users/me/reviews` ainda por usar na app (fica para um ecrã de perfil/histórico).
+  - Ainda por sincronizar: `getFavoritos`/`getWishlist` (ver abaixo) e tudo o resto.
+- ✅ **Feito na app em 2026-09-23 (fatia 3b: cave)** — `CaveModels.kt`, `AquaVitaeApi.kt`:
+  - **`getCaves`:** ganhou `?bebidaId=` opcional (→ `temBebida` por cave, ver acima) e o campo `temBebida` no modelo.
+  - **`getCaveDetail`:** ganhou `?sort=` (já existia na API desde a fatia 4, só não estava no Android).
+  - **Novo:** `consumirBebida` (`POST /api/caves/{id}/bebidas/{caveBebidaId}/consumir`) — já existia na API desde a fatia
+    4, só não estava ligado; `CaveConsumirRequest`/`CaveConsumoResponse` já estavam modelados no Android, sem uso.
+  - Ainda por sincronizar: `updateCaveBebida` (o `PATCH`) tem repositório mas nenhum ecrã o usa ainda (editar uma
+    garrafa já na cave); tudo o resto abaixo.
+- ✅ **Feito na app em 2026-09-23 (fatia 3c: ajustes de feedback + "Já provadas")** — `AquaVitaeApi.kt`,
+  `ProvadaRepository.kt`, `CaveViewModel.kt`, `BebidaDetalheViewModel.kt`:
+  - **Novo `getProvadas`** (`GET /users/me/provadas?categoriaId=&ano=`) — `List<BebidaRelacao>`, já modelado corretamente
+    (ao contrário de `getFavoritos`/`getWishlist`, ver abaixo). Alimenta o resumo de 5 na Cave e o ecrã `feature/provadas/`.
+  - **Publicar review deixou de marcar "provada" sozinho:** agora só publica se `bebida.isProvada == true`, mostrando um
+    aviso a bloquear o formulário caso contrário (pedido do utilizador — a review passa a exigir que o utilizador já tenha
+    marcado a bebida como consumida por um dos dois caminhos: "Consumir" numa cave, ou adicioná-la diretamente à lista de
+    já provadas). `POST .../provada` deixou de ser chamado por `BebidaDetalheViewModel`.
+  - **`CaveViewModel.consumir` passou a chamar `addProvada`** depois de `POST .../consumir` (idempotente) — "Consumir" é
+    agora um dos dois caminhos para a lista de já provadas, cumprindo a regra acima.
+- ✅ **Feito na app em 2026-09-23 (correção pós-3c: favoritos/wishlist e totais da cave)** — `AquaVitaeApi.kt`,
+  `FavoritoRepository.kt`, `WishlistRepository.kt`, `CaveViewModel.kt`, `HomeViewModel.kt`:
+  - **`getFavoritos`/`getWishlist` corrigidos** (mesmo bug do `getProvadas`, agora resolvido também aqui): eram
+    `List<BebidaSummary>`, mas o backend sempre devolveu `List<BebidaRelacaoDto>` (`{ bebida, data, hasReview? }`) — isto
+    **partia** os ecrãs de Favoritos/Wishlist (Moshi falhava com "Required value 'id' missing at $[1]", pois tentava ler
+    `id` no wrapper, não em `bebida.id`), apanhado ao vivo pelo utilizador. Agora `List<BebidaRelacao>`, como o
+    `getProvadas`; `getWishlist` ganhou também o `?sort=` (`recente`/`ratingAsc`/`ratingDesc`) que a API já aceitava.
+  - **Totais da cave desatualizados após adicionar uma garrafa:** `GET /users/me/caves` (as pílulas + "GARRAFAS"/
+    "INVESTIDOS"/"A ABRIR JÁ" da Cave e as garrafas da homepage) só era pedido de novo em `carregar()`/`criarCave()`/
+    `consumir()` — guardar uma garrafa pelo popup "Adicionar à cave" (aberto de dentro da própria Cave ou da homepage)
+    não disparava nenhum desses, por isso os totais ficavam com o valor de antes de adicionar (só a lista de garrafas,
+    sempre pedida de novo ao escolher uma cave, é que já estava certa) — apanhado ao vivo pelo utilizador
+    ("dinheiro investido" não atualizava). Não era bug do cálculo em si (`CaveRegras.resumir`, backend, já somava
+    `precoPago × quantidade` de cada linha ativa corretamente) — só a app não voltava a pedir a lista de caves depois de
+    guardar. Corrigido com `CaveViewModel.atualizarAposGuardar()`/`HomeViewModel.atualizarAposGuardar()` (pedem `getCaves()`
+    de novo e, se aplicável, o detalhe/garrafas da cave atual — sem repor a seleção nem mostrar o ecrã de carregamento
+    inteiro, ao contrário de `carregar()`), chamados no `onGuardado` do `AdicionarACaveSheet` nesses dois ecrãs.
 - Imagens: `imagePath` pode ser um URL absoluto (`https://...`) além de um caminho relativo — resolver conforme a regra da
-  secção "Imagens".
-- Produtores: `ProdutorDetailDto.totalProdutos`, `GET /api/produtores/{id}/bebidas`, `GET /api/produtores/destaque`
-- Regiões: `GET /api/lookup/regioes?paisId=` passou de `List<String>` a `[{ id, nome }]` (só regiões com bebidas), o filtro
-  do catálogo é `regiaoIds` (ids, não texto), e `ProdutorDetailDto`/`ProdutorResumoDto` ganharam `regiaoId` (`regiao`
-  continua a ser o nome)
-- `searchBebidas`: só tinha `categoriaId` singular — agora aceita o conjunto completo de filtros do popup (+ `regiaoIds`)
-- `BebidaSummary`/`BebidaDetail` (modelo Android): faltam os campos novos (preço, corpo/acidez/doçura,
-  flags do utilizador, produtorResumo, linkCompra)
+  secção "Imagens" (já resolvido pela app, `resolveImageUrl`, para os campos que já sincronizou)
+- Produtores: `GET /api/produtores/{id}/bebidas` ainda por usar na app (a página de um produtor é um ecrã por construir)
+- `ProdutorDetailDto`/`ProdutorResumoDto` ganharam `regiaoId` (`regiao` continua a ser o nome) — ainda não usado na app (a
+  página de um produtor é o mesmo ecrã por construir referido acima). `GET /api/lookup/regioes?paisId=` já está sincronizado
+  desde a fatia 2b (usado no popup de filtros do catálogo).

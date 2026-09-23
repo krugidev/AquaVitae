@@ -54,6 +54,8 @@ class BebidaSummaryAssembler(
                 corpo = vinho?.corpo?.value,
                 nivelAcidez = vinho?.nivelAcidez,
                 nivelDocura = vinho?.nivelDocura,
+                tipo = vinho?.tipo?.value,
+                tanino = vinho?.tanino?.value,
                 isFavorito = favoritoIds?.let { bebida.id in it },
                 isWishlist = wishlistIds?.let { bebida.id in it },
                 isProvada = provadaIds?.let { bebida.id in it },

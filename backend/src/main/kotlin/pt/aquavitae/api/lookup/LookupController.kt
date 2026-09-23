@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RestController
 import pt.aquavitae.api.lookup.dto.AvatarDto
 import pt.aquavitae.api.lookup.dto.CastaDto
 import pt.aquavitae.api.lookup.dto.LookupItemDto
+import pt.aquavitae.api.lookup.dto.NacionalidadeDto
 import pt.aquavitae.api.lookup.dto.toLookupItemDto
 
 // Endpoints de leitura para as tabelas de lookup geridas pelo admin (ver
@@ -29,8 +30,8 @@ class LookupController(
 ) {
 
     @GetMapping("/nacionalidades")
-    fun nacionalidades(): List<LookupItemDto> =
-        nationalityRepository.findAll().map { LookupItemDto(it.id, it.value) }
+    fun nacionalidades(): List<NacionalidadeDto> =
+        nationalityRepository.findAll().map { NacionalidadeDto.from(it) }
 
     @GetMapping("/avatar-categorias")
     fun avatarCategorias(): List<LookupItemDto> =
@@ -50,11 +51,12 @@ class LookupController(
     fun categoriasBebida(): List<LookupItemDto> =
         bebidaCategoriaRepository.findAll().map { LookupItemDto(it.id, it.value) }
 
-    // ~280 castas: por ordem alfabética (o Oracle ordenaria por código de carácter, ver OrdemAlfabetica.kt).
+    // ~280 castas: as CASTAS_EM_DESTAQUE primeiro e o resto por ordem alfabética (o Oracle ordenaria por código de
+    // carácter, ver OrdemAlfabetica.kt).
     @GetMapping("/castas")
     fun castas(@RequestParam tipoId: Long?): List<CastaDto> {
         val castas = if (tipoId != null) castaRepository.findByTipo_Id(tipoId) else castaRepository.findAll()
-        return castas.map { CastaDto.from(it) }.ordenadoPorNome { it.nome }
+        return castas.map { CastaDto.from(it) }.ordenadoPorNomeComDestaques(CASTAS_EM_DESTAQUE) { it.nome }
     }
 
     @GetMapping("/casta-tipos")

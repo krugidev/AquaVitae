@@ -30,6 +30,10 @@ data class BebidaSummaryDto(
     val nome: String?,
     val categoriaNome: String?,
     val produtorNome: String?,
+    // LAZY (produtor.regiao) sob o Open-Session-In-View do pedido HTTP — o mesmo padrão já usado para
+    // produtorNome (bebida.produtor), sem JOIN FETCH dedicado (ver o comentário do BebidaRepository.search
+    // sobre não navegar produtor.regiao no WHERE). Cartão do catálogo: "Produtor • Região".
+    val produtorRegiao: String? = null,
     val ratingMedio: BigDecimal,
     val totalReviews: Int,
     val imagePath: String?,
@@ -40,6 +44,9 @@ data class BebidaSummaryDto(
     val corpo: String? = null,
     val nivelAcidez: Int? = null,
     val nivelDocura: Int? = null,
+    // Só vinho, tal como corpo/nivelAcidez/nivelDocura (ver comentário em BebidaService.buildVinhoDetalhe).
+    val tipo: String? = null,
+    val tanino: String? = null,
     // null = utilizador não autenticado; true/false = autenticado, com/sem a marcação.
     val isFavorito: Boolean? = null,
     val isWishlist: Boolean? = null,
@@ -52,6 +59,7 @@ data class BebidaSummaryDto(
             nome = bebida.nome,
             categoriaNome = bebida.categoria?.value,
             produtorNome = bebida.produtor?.nome,
+            produtorRegiao = bebida.produtor?.regiao?.nome,
             ratingMedio = bebida.ratingMedio,
             totalReviews = bebida.totalReviews,
             imagePath = bebida.pathImage,

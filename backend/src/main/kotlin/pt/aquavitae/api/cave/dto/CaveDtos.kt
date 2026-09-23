@@ -18,6 +18,8 @@ data class CaveRequest(
 
 // Lista "As minhas caves": os totais são só de garrafas por consumir. `valorTotal` é o preço que o utilizador
 // registou ter pago (por unidade) x quantidade. `totalProntasAAbrir` são garrafas (não linhas) prontas ou em atraso.
+// `temBebida` só vem preenchido com `?bebidaId=` no pedido (o popup "Adicionar à cave" do mockup: destacar as caves
+// onde aquela bebida já está) — sem esse parâmetro fica sempre `false`, não "não sei".
 data class CaveResponse(
     val id: Long,
     val nome: String?,
@@ -25,15 +27,17 @@ data class CaveResponse(
     val totalGarrafas: Int,
     val valorTotal: BigDecimal,
     val totalProntasAAbrir: Int,
+    val temBebida: Boolean = false,
 ) {
     companion object {
-        fun from(cave: Cave, resumo: CaveResumo) = CaveResponse(
+        fun from(cave: Cave, resumo: CaveResumo, temBebida: Boolean = false) = CaveResponse(
             id = cave.id,
             nome = cave.nome,
             descricao = cave.descricao,
             totalGarrafas = resumo.totalGarrafas,
             valorTotal = resumo.valorTotal,
             totalProntasAAbrir = resumo.totalProntasAAbrir,
+            temBebida = temBebida,
         )
     }
 }
