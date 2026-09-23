@@ -13,6 +13,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -25,6 +26,8 @@ import pt.aquavitae.android.data.model.BebidaRelacao
 @Composable
 fun WishlistScreen(viewModel: WishlistViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsState()
+    // Ver o comentário equivalente em FavoritosScreen: sem isto, o ecrã ficava preso ao resultado da 1.ª visita.
+    LaunchedEffect(Unit) { viewModel.loadWishlist() }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text(text = "Wishlist", style = MaterialTheme.typography.headlineMedium)

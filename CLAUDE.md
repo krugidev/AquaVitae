@@ -277,7 +277,14 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
   popup que **muda** dados partilhados por vários ecrãs (aqui, os totais de uma cave) é aberto de dentro de outro ecrã, esse
   ecrã dá ao popup um `onGuardado` que pede os dados relevantes de novo (`CaveViewModel.atualizarAposGuardar()`/
   `HomeViewModel.atualizarAposGuardar()`: só `getCaves()` + o detalhe atual, sem repor a seleção nem mostrar o ecrã de
-  carregamento inteiro) — nunca assumir que o popup "avisa" sozinho quem o abriu.
+  carregamento inteiro) — nunca assumir que o popup "avisa" sozinho quem o abriu. **Quando não há nenhum popup a que
+  ligar um `onGuardado`** (apanhado logo a seguir, 2026-09-24, em `FavoritosScreen`/`WishlistScreen` — marca-se um
+  favorito a partir de qualquer ecrã, não só de um popup conhecido): a `ViewModel` só pedia os dados no `init {}`, por
+  isso a aba ficava presa ao resultado da 1.ª vez que tinha sido aberta (às vezes "vazio"), sem erro nenhum. Aqui o
+  padrão é outro: `LaunchedEffect(Unit) { viewModel.carregar() }` no topo do `@Composable` do ecrã — o Navigation
+  Compose desmonta e volta a montar o conteúdo de uma rota a cada troca de aba (mesmo mantendo a mesma instância da
+  ViewModel por trás, ver acima), por isso o `LaunchedEffect(Unit)` volta a correr, e portanto a pedir dados frescos,
+  de cada vez que a aba é reaberta.
 - **Android Studio (AI-261):** abre `android/` e o sync corre; usa como Gradle JDK um JBR 21 que ele próprio descarregou
   (`~/.jdks/jbr-21.0.11`, guardado em `android/.gradle/config.properties`, ignorado pelo git). Acrescentou uma linha
   (`org.gradle.tooling.parallel=true`) ao `android/gradle.properties` — não vale a pena commitá-la. Recusar o *AGP Upgrade

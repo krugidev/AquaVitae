@@ -167,10 +167,11 @@ domain" nas definições do Pages** (aconteceu por engano uma vez e desviou o si
 - **Fatia 3c (2026-09-23): ajustes de feedback + "Já provadas"** — popup de confirmação ao duplicar numa cave, review a exigir
   "provada" em vez de a marcar sozinha, "Consumir" a marcar "provada", resumo de 5 na Cave + ecrã inteiro "Já provadas" (com busca
   para adicionar uma bebida fora de qualquer cave); validada no emulador. Ver "Android — fatia 3c", em "Em curso".
-- **Correção pós-3c (2026-09-23):** 2 bugs apanhados pelo utilizador a testar por conta própria — Favoritos/Wishlist vazios/em erro
-  (`getFavoritos`/`getWishlist` com o modelo errado) e "INVESTIDOS"/"GARRAFAS" da Cave sem atualizar depois de guardar uma garrafa
-  pelo popup "Adicionar à cave"; ambos corrigidos e validados ao vivo. Ver `backend/API_ENDPOINTS.md`, "Sincronização pendente com
-  o Android".
+- **Correção pós-3c (2026-09-23/24):** 3 bugs apanhados pelo utilizador a testar por conta própria — Favoritos/Wishlist vazios/em
+  erro (`getFavoritos`/`getWishlist` com o modelo errado), "INVESTIDOS"/"GARRAFAS" da Cave sem atualizar depois de guardar uma
+  garrafa pelo popup "Adicionar à cave", e, logo a seguir, Favoritos/Wishlist **ainda** presos ao resultado da 1.ª visita à aba
+  mesmo depois de corrigido o modelo (marcar um favorito noutro ecrã e voltar à aba não mostrava a mudança); todos corrigidos e
+  validados ao vivo. Ver `backend/API_ENDPOINTS.md`, "Sincronização pendente com o Android".
 - Os restantes ecrãs (`detail`, `reviews`) são ainda os placeholders do esqueleto (esqueleto morto, por limpar); `wishlist` e
   `favoritos` já leem dados a sério (corrigidos acima) mas continuam com a UI simples do esqueleto, por desenhar a partir de um
   mockup numa fatia futura.
@@ -572,10 +573,11 @@ duplicado no "Esporão Reserva Tinto 2018" (já em "Adega Principal"); bloqueio 
 de contexto desta sessão, sem ficheiro em disco); Favoritos/Wishlist continuam por construir (não pedidos nesta fatia); os
 antigos `DetailScreen`/`ReviewsScreen`/rotas continuam como código morto.
 
-### Correção pós-3c: favoritos/wishlist e totais da cave (feita e validada ao vivo, 2026-09-23)
+### Correção pós-3c: favoritos/wishlist e totais da cave (feita e validada ao vivo, 2026-09-23/24)
 
-O utilizador testou a fatia 3c por conta própria, na sua conta pessoal (não a `demo_user2`), e devolveu 2 bugs — resumo aqui,
-detalhe técnico em `backend/API_ENDPOINTS.md`, "Sincronização pendente com o Android" ("correção pós-3c").
+O utilizador testou a fatia 3c por conta própria, na sua conta pessoal (não a `demo_user2`), e devolveu 3 bugs (o 3.º só depois
+de corrigido o 1.º) — resumo aqui, detalhe técnico em `backend/API_ENDPOINTS.md`, "Sincronização pendente com o Android"
+("correção pós-3c").
 
 **Bug 1 — "Favoritos"/"Wishlist" vazios ou em erro:** `AquaVitaeApi.getFavoritos`/`getWishlist` declaravam
 `List<BebidaSummary>`, mas a API sempre devolveu `List<BebidaRelacaoDto>` (`{ bebida, data, hasReview? }`) — o Moshi falhava
@@ -597,14 +599,24 @@ correta e confirmada ao vivo). Era só a app: `GET /users/me/caves` só era pedi
 da cave atual, sem repor a seleção nem mostrar o ecrã de carregamento inteiro), chamados no `onGuardado` do
 `AdicionarACaveSheet` nesses dois ecrãs.
 
+**Bug 3 — Favoritos/Wishlist ainda presos à 1.ª visita, mesmo depois do bug 1:** com o modelo corrigido, o utilizador voltou a
+testar e reparou que marcar um favorito noutro ecrã e voltar à aba "Favoritos" continuava a não mostrar a mudança (sem erro,
+só "Ainda não tens favoritos"). Causa: `FavoritosViewModel`/`WishlistViewModel` só pediam os dados no `init {}`; como
+`home`/`catalog`/`cave`/`wishlist`/`favoritos` usam `saveState`/`restoreState` (`AppNavHost.kt`), trocar de aba não recria a
+ViewModel. Ao contrário do bug 2 (que tinha o `onGuardado` do `AdicionarACaveSheet` a que se ligar), aqui não há popup
+nenhum — marca-se um favorito a partir de **qualquer** ecrã. Corrigido com `LaunchedEffect(Unit) { viewModel.load...() }` no
+topo de `FavoritosScreen`/`WishlistScreen`: o Navigation Compose desmonta e remonta o conteúdo da rota a cada troca de aba, por
+isso isto volta a pedir dados frescos de cada vez que a aba é reaberta (mesmo mantendo a mesma instância da ViewModel).
+
 **Testes:** sem testes novos. `assembleDebug testDebugUnitTest` continua com 53, todos a passar.
 
 **Validado ao vivo** (emulador `Pixel_8` + API real, **conta pessoal do utilizador**): criou "Gins 2026" (vazia), adicionou
 "Esporão Reserva Tinto 2018" a 50,00€ pelo popup aberto de dentro da própria Cave — as pílulas "GARRAFAS"/"INVESTIDOS" da cave
 atualizaram de imediato (1/50,00€), sem sair do ecrã; marcou favorito + wishlist na mesma bebida e os ecrãs "Favoritos"/
-"Wishlist" passaram a mostrá-la corretamente. Dados de teste revertidos no fim (token extraído do `DataStore` via
-`adb run-as` só para chamar `DELETE .../bebidas/{id}` na cave, `.../favorito` e `.../wishlist` — a conta do utilizador ficou
-tal como estava antes destes testes).
+"Wishlist" passaram a mostrá-la (bug 1); depois, a partir da Cave, marcou/desmarcou o favorito da "Barca Velha 2015" e
+confirmou que a aba "Favoritos" refletia a mudança ao reabri-la, nos dois sentidos (bug 3). Dados de teste revertidos no fim
+(token extraído do `DataStore` via `adb run-as` só para chamar `DELETE .../bebidas/{id}` na cave, `.../favorito` e
+`.../wishlist` — a conta do utilizador ficou tal como estava antes destes testes).
 
 ### Desenho dos endpoints (concluído, 2026-09-17)
 

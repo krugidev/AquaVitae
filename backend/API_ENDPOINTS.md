@@ -497,6 +497,16 @@ Já corrigido no fim do dia: a pesquisa do catálogo não tinha `ORDER BY` (pagi
     guardar. Corrigido com `CaveViewModel.atualizarAposGuardar()`/`HomeViewModel.atualizarAposGuardar()` (pedem `getCaves()`
     de novo e, se aplicável, o detalhe/garrafas da cave atual — sem repor a seleção nem mostrar o ecrã de carregamento
     inteiro, ao contrário de `carregar()`), chamados no `onGuardado` do `AdicionarACaveSheet` nesses dois ecrãs.
+  - **Favoritos/Wishlist presos ao resultado da 1.ª visita** (mesma causa raiz do bug anterior, apanhado logo a seguir
+    pelo utilizador ao vivo): `FavoritosViewModel`/`WishlistViewModel` só chamavam `loadFavoritos()`/`loadWishlist()` no
+    `init {}`; como `home`/`catalog`/`cave`/`wishlist`/`favoritos` usam `saveState`/`restoreState` na navegação por abas
+    (`AppNavHost.kt`), trocar de aba **não recria a ViewModel** — marcar um favorito noutro ecrã e voltar à aba
+    "Favoritos" continuava a mostrar o resultado (às vezes vazio) da 1.ª vez que a aba tinha sido aberta, sem erro
+    nenhum. Ao contrário do bug da cave, aqui não há nenhum popup/`onGuardado` a que ligar um refresh (marca-se o
+    favorito a partir de qualquer ecrã, não só destes dois). Corrigido com `LaunchedEffect(Unit) { viewModel.load...() }`
+    no topo de `FavoritosScreen`/`WishlistScreen` — o Navigation Compose desmonta e remonta o conteúdo da rota a cada
+    troca de aba, por isso o `LaunchedEffect(Unit)` volta a correr (e a pedir dados frescos) de cada vez que a aba é
+    reaberta, mesmo com a mesma instância da ViewModel por trás.
 - Imagens: `imagePath` pode ser um URL absoluto (`https://...`) além de um caminho relativo — resolver conforme a regra da
   secção "Imagens" (já resolvido pela app, `resolveImageUrl`, para os campos que já sincronizou)
 - Produtores: `GET /api/produtores/{id}/bebidas` ainda por usar na app (a página de um produtor é um ecrã por construir)

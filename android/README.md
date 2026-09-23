@@ -18,7 +18,7 @@ O frontend constrói-se em **fatias verticais**, cada uma um fluxo de ecrãs des
 | 3a | popup de detalhe da bebida (partilhado por toda a app): tabs Detalhes/Reviews, favorito/wishlist, publicar review | ✅ feita (2026-09-23) |
 | 3b | cave: lista ("As minhas Caves"), popup "Nova cave", popup "Adicionar à cave" (com destaque das caves onde a bebida já está) | ✅ feita (2026-09-23) |
 | 3c | ajustes de feedback: popup de confirmação ao duplicar numa cave, review a exigir "provada", "Consumir" a marcar provada, ecrã "Já provadas" | ✅ feita (2026-09-23) |
-| — | correção pós-3c: `getFavoritos`/`getWishlist` com o modelo errado (ecrãs vazios/em erro) e totais da cave sem atualizar após "Adicionar à cave" | ✅ feita (2026-09-23) |
+| — | correção pós-3c: `getFavoritos`/`getWishlist` com o modelo errado, totais da cave sem atualizar após "Adicionar à cave", e as duas telas presas ao resultado da 1.ª visita à aba | ✅ feita (2026-09-23/24) |
 | 4 | desenhar Favoritos e Wishlist a partir de um mockup (já leem dados a sério, só falta a UI) | ⏳ |
 | 6 | página do produtor | ⏳ |
 
@@ -201,8 +201,12 @@ emulador (compilar → instalar → `adb shell input tap/text` → screenshot), 
   (`addProvada`/`removeProvada`/`getProvadas`) e, desde a correção pós-3c, **`getFavoritos()`/`getWishlist()` também**
   (`List<BebidaRelacao>`, como o `getProvadas` — antes declaravam `List<BebidaSummary>` e o backend sempre devolveu
   `List<BebidaRelacaoDto>` `{ bebida, data, hasReview }`, o que **partia** os dois ecrãs com "Required value 'id' missing";
-  apanhado pelo utilizador a testar por conta própria, corrigido e validado ao vivo). Resto da lista em
-  `../backend/API_ENDPOINTS.md`, "Sincronização pendente com o Android". Sincroniza-se por fatia.
+  apanhado pelo utilizador a testar por conta própria, corrigido e validado ao vivo). Com o modelo certo, sobrou um 2.º
+  problema: as duas telas só pediam os dados no `init {}` da ViewModel, por isso ficavam presas ao resultado da 1.ª visita à
+  aba (a navegação por abas preserva a instância da ViewModel — ver `../CLAUDE.md`); corrigido com
+  `LaunchedEffect(Unit) { viewModel.carregar...() }` no topo de `FavoritosScreen`/`WishlistScreen`, que volta a correr (e a
+  pedir dados frescos) sempre que a aba é reaberta. Resto da lista em `../backend/API_ENDPOINTS.md`, "Sincronização pendente
+  com o Android". Sincroniza-se por fatia.
 - **Homepage (fatia 2a), Catálogo (fatia 2b), popup de detalhe da bebida (fatia 3a), Cave (fatia 3b) e ajustes + "Já provadas"
   (fatia 3c), feitos:** ver a lista completa do que falta em `design/README.md`, secções "14.", "15." e "16." — em resumo: "VER
   PRODUTOR" continua sem destino (depende da página do produtor, ecrã por construir); "Ver as N garrafas" da cave é só

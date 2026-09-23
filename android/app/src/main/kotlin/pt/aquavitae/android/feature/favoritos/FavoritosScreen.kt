@@ -13,6 +13,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -25,6 +26,12 @@ import pt.aquavitae.android.data.model.BebidaRelacao
 @Composable
 fun FavoritosScreen(viewModel: FavoritosViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsState()
+    // A barra de navegação usa saveState/restoreState (ver AppNavHost): trocar de aba e voltar não recria a
+    // ViewModel, por isso o `init {}` (que só corre uma vez) não chega — sem isto, marcar um favorito noutro
+    // ecrã e voltar aqui mostrava sempre o resultado da 1.ª visita (às vezes "vazio"), sem erro nenhum. Apanhado
+    // pelo utilizador ao testar ao vivo (2026-09-24) — mesma classe de bug do `CaveViewModel.atualizarAposGuardar`,
+    // ver CLAUDE.md.
+    LaunchedEffect(Unit) { viewModel.loadFavoritos() }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text(text = "Favoritos", style = MaterialTheme.typography.headlineMedium)
