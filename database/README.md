@@ -24,9 +24,14 @@ ddl/
                                   tabela `whisky_regiao` desaparece; repetível
   12_patch_termos_aceites.sql     patch p/ BD de dev JÁ existente: `utilizador_termos_aceites_em` (data em que aceitou os
                                   termos); repetível
+  13_patch_nacionalidade_codigo.sql  patch p/ BD de dev JÁ existente: `nationality_codigo_pais` (ISO alfa-2, para a bandeira
+                                  da nacionalidade) + os 8 códigos; repetível
 seed/
   01_lookups.sql         tabelas de lookup preenchidas (corpo, taninos, 277 castas, 218 países, casks, ...)
   02_bebidas.sql          produtores, retalhistas e ~16 bebidas de exemplo (maioritariamente portuguesas)
+verify/
+  rebuild-check.sh       reconstrói a BD do zero num schema temporário e compara-a com a de dev (Git Bash)
+  extrair.sql            o que o script extrai de cada schema para os comparar
 docker-compose.yml       Oracle XE 21c (imagem gvenzl/oracle-xe) para desenvolvimento local
 .env.example             copiar para .env antes do primeiro arranque
 run-migrations.ps1 / .sh  corre os scripts acima, por ordem, dentro do container
@@ -60,6 +65,16 @@ Os ficheiros `04_*` a `12_*` **não** fazem parte desta sequência: as alteraç�
 `01_tables.sql`/`02_constraints.sql` (e o `06`, `07`, `09`, `10` e `11` também em `seed/`), por isso só servem para pôr ao dia
 uma BD que já existia antes delas (cada um explica no topo como se corre). Ao mexer no schema: atualizar
 `01_tables.sql` **e** criar um patch novo.
+
+## Verificar a reconstrução do zero
+
+Depois de mexer em `01_tables.sql`, `02_constraints.sql` ou nos seeds, **corre `database/verify/rebuild-check.sh`** (Git Bash, com
+o contentor a correr): cria um schema temporário (`aq_rebuild`), corre lá os 5 scripts do `run-migrations` e compara-o com a BD
+de dev — estrutura (tabelas, colunas, constraints, trigger), regiões, produtor→região, `pais`/`produtor_pais` e o texto de cada
+tabela. Sai com 0 se está tudo igual e com 1 se houver diferenças que importam (as regras estão no cabeçalho do script; dados
+que só existem na dev, como contas ou lotes de bebidas, não contam). Demora ~15 s e apaga sempre o schema temporário. Foi assim
+que se apanhou a "Quinta de Soalheiro" sem região depois de "Vinho Verde" passar a "Minho"; testado com dois erros de propósito
+(esse e um nome de país diferente no seed), que detetou. O `.gitattributes` mantém os `.sh` em LF (com CRLF o Git Bash não os corre).
 
 ## Encoding (mojibake)
 

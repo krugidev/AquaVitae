@@ -8,14 +8,15 @@ INSERT INTO utilizador_role (utilizador_role_value) VALUES ('Utilizador');
 INSERT INTO utilizador_role (utilizador_role_value) VALUES ('Admin');
 -- 'Moderador': fase futura (notas de seed) — não inserido por agora.
 
-INSERT INTO utilizador_nationality (nationality_value) VALUES ('Portuguesa');
-INSERT INTO utilizador_nationality (nationality_value) VALUES ('Espanhola');
-INSERT INTO utilizador_nationality (nationality_value) VALUES ('Francesa');
-INSERT INTO utilizador_nationality (nationality_value) VALUES ('Britânica');
-INSERT INTO utilizador_nationality (nationality_value) VALUES ('Brasileira');
-INSERT INTO utilizador_nationality (nationality_value) VALUES ('Alemã');
-INSERT INTO utilizador_nationality (nationality_value) VALUES ('Italiana');
-INSERT INTO utilizador_nationality (nationality_value) VALUES ('Norte-Americana');
+-- O 2.º valor é o código ISO do país (a app desenha a bandeira a partir dele; ver 13_patch_nacionalidade_codigo.sql).
+INSERT INTO utilizador_nationality (nationality_value, nationality_codigo_pais) VALUES ('Portuguesa', 'PT');
+INSERT INTO utilizador_nationality (nationality_value, nationality_codigo_pais) VALUES ('Espanhola', 'ES');
+INSERT INTO utilizador_nationality (nationality_value, nationality_codigo_pais) VALUES ('Francesa', 'FR');
+INSERT INTO utilizador_nationality (nationality_value, nationality_codigo_pais) VALUES ('Britânica', 'GB');
+INSERT INTO utilizador_nationality (nationality_value, nationality_codigo_pais) VALUES ('Brasileira', 'BR');
+INSERT INTO utilizador_nationality (nationality_value, nationality_codigo_pais) VALUES ('Alemã', 'DE');
+INSERT INTO utilizador_nationality (nationality_value, nationality_codigo_pais) VALUES ('Italiana', 'IT');
+INSERT INTO utilizador_nationality (nationality_value, nationality_codigo_pais) VALUES ('Norte-Americana', 'US');
 
 -- Avatares — 27 desenhos de linha (SVG) fornecidos pelo utilizador, 9 por categoria.
 -- Ficheiros em backend/src/main/resources/static/icones/avatares/ (servidos pelo Spring Boot
