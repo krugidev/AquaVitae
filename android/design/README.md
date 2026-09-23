@@ -1,0 +1,510 @@
+# AquaVitae — design dos ecrãs (referência para construir o frontend)
+
+Os ecrãs vêm do Figma do utilizador, enviados como prints. Esta pasta guarda os prints e **o que foi pedido para cada ecrã**,
+para não depender da conversa onde foram enviados. **Regra:** cada ecrã novo entra aqui (print + notas + estado) antes de se
+construir, e o estado atualiza-se no fim de cada fatia (ver também `../README.md` e o `PLANO.md`).
+
+```
+design/
+  auth-onboarding/   os 13 prints de 2026-09-21 (loading, login, recuperar password, registo, onboarding)
+  homepage/          o mockup da homepage (fatia 2a), enviado em 2026-09-23
+  catalogo/          os 2 mockups do catálogo/filtros (fatia 2b), enviados em 2026-09-23: popup de filtros + resultados
+  caves/             os 5 mockups da cave e do popup de bebida (fatia 3), enviados em 2026-09-23 (ver "16." abaixo — feito todo)
+  logos/             logótipo entregue pelo utilizador (2026-09-23): logo-homepage-normal.png
+  icones/            os 6 ícones da barra de navegação, entregues pelo utilizador (2026-09-23)
+  implementado/      screenshots do emulador do que já está feito, para comparar com os prints
+                     (fatia-1a-resumo.png; 1b-NN-*.png = fatia 1b; 2a-NN-*.png = homepage; 2b-NN-*.png = catálogo/filtros;
+                     3a-NN-*.png = popup de detalhe da bebida; 3b-NN-*.png = cave)
+```
+
+Os prints são frames do Figma a ~1× (auth ≈ 380×611, onboarding ≈ 290×475, escalados): **1 px ≈ 1 dp**. O utilizador autorizou
+expressamente **melhorar o que fique mais bonito e limpo** ("se quiser alterar alguma parte do UI para ser mais bonita e clean pode
+fazê-lo"): quando isso acontecer, anotar a diferença na coluna "Notas" abaixo.
+
+## Tokens (medidos nos pixels dos prints; código em `app/.../ui/theme/`)
+
+| O quê | Valor | Onde |
+|---|---|---|
+| Grená (botões, títulos, rótulos, linhas) | `#8F321D` | `Burgundy` |
+| Tinta ("AQUA" do logótipo, texto escrito) | `#1B1714` | `Ink` |
+| Fundo dos ecrãs | `#FFFFFF` | `Paper` |
+| Cartão | `#F8F8F8` | `CardGray` |
+| Botão "voltar" | `#E9E9E9` (seta preta) | `ChipGray` |
+| Pontos do loading / erros | `#C41F21` | `DotsRed` / `ErrorRed` |
+| Extremo dos sliders de doçura/acidez | `#1D5DFE` (degradê de branco a azul) | `SliderBlue` |
+| Escurecimento atrás de popups | preto a 43 % (`#919191` sobre branco) | `ScrimBlack` |
+| Formas | cartão/popup raio 24, botão grande raio 26 | `Shape.kt` |
+| Tipo de letra | Inter (Bold nos rótulos e botões) | `Type.kt` (`AquaText`) |
+
+**Emblema** (diâmetro 92): anel exterior fino 5, intervalo 6, anel grosso 10, buraco central 50 (`res/drawable/ic_logo_emblem.xml`).
+Há 3 versões do logótipo: **empilhado** (emblema por cima do nome: login, registo, recuperar), **horizontal com a etiqueta
+"ESPIRITUOSAS & FACTOS"** (loading) e **compacto** (emblema pequeno + nome, topo dos ecrãs de preferências). O nome "AQUAVITAE" é
+texto Inter (aproximação): falta o **SVG do logótipo**.
+
+**Padrões visuais:** cartão cinzento muito arredondado; campos só com linha grená por baixo e rótulo grená a negrito; botão grande
+grená que **se sobrepõe à margem inferior do cartão** (login, registo); cabeçalho em **pílula grená** com título branco a negrito
+(recuperar password, preferências); navegação por dois botões redondos (voltar cinzento, seguir grená) ou um "PRÓXIMO →" grená;
+"IGNORAR" em texto por baixo.
+
+## Ecrãs
+
+Estado: ✅ feito e validado no emulador · ⏳ por fazer · 🔶 provisório.
+
+| # | Ecrã | Print | Estado |
+|---|---|---|---|
+| 1 | Loading | `01-loading.png` | ✅ fatia 1a |
+| 2 | Login | `02-login.png` | ✅ fatia 1a |
+| 3a | Recuperar password — identificar (username ou email) | *(sem print)* | 🔶 desenhado por mim (fatia 1b), no estilo do 3 |
+| 3 | Recuperar password — código | `03-recuperar-codigo.png` | ✅ fatia 1b (2026-09-22) |
+| 4 | Recuperar password — nova password | `04-recuperar-nova-password.png` | ✅ fatia 1b |
+| 5 | Modal "Password alterada!" | `05-password-alterada.png` | ✅ fatia 1b |
+| 6 | Registo (fase 1) | `06-registo.png` | ✅ fatia 1a |
+| 7 | Onboarding — nome | `07-onboarding-nome.png` | ✅ fatia 1b |
+| 8 | Onboarding — nacionalidade e descrição | `08-onboarding-nacionalidade-descricao.png` | ✅ fatia 1b |
+| 9 | Onboarding — avatar | `09-onboarding-avatar.png` | ✅ fatia 1b |
+| 10 | Onboarding — tipos de bebida | `10-onboarding-tipos-bebida.png` | ✅ fatia 1b |
+| 11 | Onboarding — doçura (slider) | `11-onboarding-docura.png` | ✅ fatia 1b |
+| 12 | Onboarding — acidez (slider) | `12-onboarding-acidez.png` | ✅ fatia 1b |
+| 13 | Onboarding — castas (opcional) | `13-onboarding-castas.png` | ✅ fatia 1b |
+| — | Popup dos termos e condições | *(sem print)* | 🔶 desenhado por mim (fatia 1a); o utilizador pode enviar o do Figma |
+| — | Ícone da app | *(sem print; só o emblema)* | ✅ emblema grená sobre branco, adaptativo + monocromático |
+| 14 | Homepage (fatia 2a) | `homepage/01-homepage.png` | ✅ feita e validada ao vivo (2026-09-23) — ver secção própria abaixo |
+| 15a | Catálogo — popup de filtros | `catalogo/01-filtros-popup.png` | ✅ feita e validada ao vivo (2026-09-23) — ver secção própria abaixo |
+| 15b | Catálogo — resultados | `catalogo/02-catalogo-resultados.png` | ✅ feita e validada ao vivo (2026-09-23) — ver secção própria abaixo |
+| 16a | As minhas Caves | `caves/01-caves-lista.png` | ✅ feita e validada ao vivo (2026-09-23) — ver secção própria abaixo |
+| 16b | Popup "Nova cave" | `caves/02-nova-cave-popup.png` | ✅ feita e validada ao vivo (2026-09-23) — ver secção própria abaixo |
+| 16c | Popup de detalhe da bebida — Detalhes | `caves/03-bebida-detalhe-popup.png` | ✅ feita e validada ao vivo (2026-09-23) — ver secção própria abaixo |
+| 16d | Popup "Adicionar à cave" | `caves/04-adicionar-a-cave-popup.png` | ✅ feita e validada ao vivo (2026-09-23) — ver secção própria abaixo |
+| 16e | Popup de detalhe da bebida — Reviews | `caves/05-bebida-reviews-popup.png` | ✅ feita e validada ao vivo (2026-09-23) — ver secção própria abaixo |
+
+## O que foi pedido para cada ecrã
+
+**1. Loading.** Logótipo horizontal ao centro e, em baixo, **5 pontos vermelhos que aumentam e diminuem de tamanho em sequência**
+("uma rodinha ou 5 pontos vermelhos, até prefiro esta segunda"). *Feito.* Notas: o fundo do print é cinzento `#D9D9D9` (a cor por
+omissão do Figma); usei branco como nos outros ecrãs. Decide para onde ir pela sessão (ver `../README.md`).
+
+**2. Login.** "Username ou Email", "Password" (olho para mostrar), "Esqueci-me da password", botão "LOGIN", "AINDA NÃO TENS CONTA?
+REGISTA-TE" e "TERMOS E CONDIÇÕES" no fundo. *Feito.* Notas: o olho do print é laranja/amarelo, o meu é grená; depois do login,
+quem ainda não aceitou os termos vê o popup.
+
+**3–5. Recuperar password.** *Feito (fatia 1b, 2026-09-22).* (3) Cabeçalho "RECUPERAR PASSWORD", texto "Enviámos um código único para o email
+'******ouser@gmail.com'", "INSIRA O CÓDIGO ABAIXO" e **5 espaços** para o código, com seta para trás e para a frente. (4) "Nova
+Password" e "Repetir a Password", com as duas setas. (5) Depois de mudar: modal grená **"Password alterada!"** com um visto, por
+cima do login escurecido.
+- **O print não tem o 1.º passo** (onde se escreve o email/username): desenhei um no mesmo estilo (pílula, uma frase de apoio, o
+  campo "Username ou Email", seta para trás = voltar ao login). **Decisão do utilizador (2026-09-22): username OU email**, como o login
+  (o backend passou a aceitar `identificador` nos 3 endpoints).
+- **O backend gera 6 dígitos**, o print tem 5 espaços: **usa 6** (não se mexeu no backend).
+- O email mascarado só se mostra se o utilizador escreveu o **email** (`******o2@aquavitae.local`: as últimas letras do nome e o
+  domínio); se escreveu o username, a frase é genérica ("Se a conta existir, enviámos um código único para o email associado."):
+  senão revelava parte do email de uma conta a quem adivinhar um username.
+- **Comportamento:** o teclado numérico abre sozinho no passo do código (dá para colar o código); a seta para trás e o gesto de voltar
+  percorrem os passos (código → identificar → login); código errado/expirado → mensagem da API em vermelho e a caixa pintada de vermelho;
+  passwords diferentes → "As passwords não coincidem." e o campo da repetição a vermelho; ao concluir volta ao login e mostra o popup
+  "Password alterada!" (fecha-se sozinho passados ~2,6 s ou ao tocar fora: o desenho não tem botão).
+- **Ideia do utilizador (a fazer a seguir a estes ecrãs, com o sistema de email):** um **temporizador de validade do código único** no
+  ecrã do código e a possibilidade de **pedir um código novo quando o tempo acaba**. Pede backend: `POST /recuperar-password` devolver
+  `expiraEm` (sempre, exista ou não a conta), um pedido novo **invalidar os códigos anteriores** (hoje ficam todos válidos 15 min)
+  e um intervalo mínimo entre pedidos. *Adiado:* fica para quando houver o email real. **Até lá o código não chega por email: aparece no
+  log da API** (`Código de recuperação de password para ...`), por isso o texto "Enviámos um código..." só passa a ser verdade com o email.
+
+**6. Registo.** "Username", "Email", "Password" (olho), botão "COMEÇAR", "JÁ TENS UMA CONTA? LOGIN", "TERMOS E CONDIÇÕES". *Feito.*
+"COMEÇAR" valida, mostra o popup dos termos e só cria a conta ao aceitar; depois segue para o onboarding.
+
+**7–13. Onboarding** *(feito na fatia 1b, 2026-09-22)* (depois do registo; o utilizador pode **ignorar todas as perguntas** e isso
+**não entra nas preferências**). Tudo é guardado **no fim** do último ecrã, de uma vez: `PUT /api/users/me` (só se preencheu algo do
+perfil) e `PUT /api/users/me/preferencias` (só se respondeu a algo); se ignorou tudo não se faz pedido nenhum. Se falhar, fica no último
+ecrã com a mensagem e pode tentar de novo. Se a app for fechada a meio perde-se o que estava por guardar (o perfil pode ser preenchido
+mais tarde; o login de uma conta já criada vai direto para o catálogo).
+- **7. Nome:** cabeçalho "QUAL É O TEU NOME ?", campos "Nome próprio" e "Apelido", "PRÓXIMO →". (`PUT /api/users/me`: `firstName`, `lastName`.)
+- **8. Nacionalidade e descrição:** "ESTAMOS QUASE LÁ", "Nacionalidade" com **bandeira** e seta de lista, "Descrição do perfil" (caixa de
+  texto com ícone de editar), "PRÓXIMO →". (`nationalityId`, `bioDesc`; `GET /api/lookup/nacionalidades`.) **Aberto:** a bandeira
+  precisa de um código de país e `utilizador_nationality` só tem o texto ("Portuguesa") — ver decisões no `PLANO.md`.
+- **9. Avatar:** "ESCOLHE UM AVATAR", grelha 3×3, "PRÓXIMO →". **Pedido: acrescentar o filtro por categoria de avatar, em pílulas**
+  (Castas / Garrafas / Copos). (`GET /api/lookup/avatar-categorias`, `/avatares?categoriaId=`, `avatarId`; os avatares são SVG servidos
+  pela API — requer a biblioteca Coil com suporte a SVG.)
+- **10. Tipos de bebida:** "COMPLETA O PERFIL — QUE TIPOS DE BEBIDA PREFERES?" com VINHO, WHISKY, GIN, AGUARDENTE, LICOR, VODKA.
+  **Pedido: permitir escolher vários.** (`categoriaIds` em `PUT /api/users/me/preferencias`; `GET /api/lookup/categorias-bebida`.)
+- **11. Doçura:** "GOSTAS DE BEBIDAS MAIS DOCES OU SECAS?" — **slider vertical** (degradê de branco a azul) com MUITO SECA, SECA,
+  EQUILIBRADA, DOCE, MUITO DOCE; seta para trás, seta para a frente e "IGNORAR". (`docuraMin`/`docuraMax`, 1 = muito seca … 5 = muito doce.)
+- **12. Acidez:** "GOSTAS DE BEBIDAS MAIS MACIAS OU FRESCAS?" — igual ao anterior, com MUITO MACIA, MACIA, EQUILIBRADA, FRESCA, MUITO FRESCA.
+  (`acidezMin`/`acidezMax`, 1 = muito macia … 5 = muito fresca.)
+- **13. Castas (opcional):** "VINHO: QUE TIPOS DE CASTAS MAIS APRECIAS?", lista com TOURIGA NACIONAL, TOURIGA FRANCA, TINTA RORIZ, ALVARINHO,
+  BAGA, ARINTO… com barra de scroll; seta para trás, para a frente e "IGNORAR". **Só aparece se o utilizador marcou VINHO no ecrã 10.**
+  **Pedido: escolher várias e, ao chegar ao fim das primeiras 10, "carregar" mais 10 na lista.** (`castaIds`; `GET /api/lookup/castas`
+  devolve as ~277 de uma vez, por isso a paginação de 10 em 10 faz-se na app.)
+- **Sliders:** a API guarda **intervalos** e o slider escolhe **um nível**: **decidido (2026-09-22): enviar `min = max = nível`** (um
+  "DOCE" vai como `docuraMin = docuraMax = 4`). Escolhe-se tocando num nível ou arrastando; sem tocar não há resposta (o ponteiro fica
+  esbatido a meio).
+- **Ordem:** nome → nacionalidade/descrição → avatar → tipos → doçura → acidez → castas (se vinho) → catálogo.
+- Cabeçalho: nos ecrãs 10–13 o logótipo é o **compacto** (canto superior esquerdo); nos 7–9 o **empilhado** (o mesmo tamanho do login).
+- **Nacionalidade:** **decidido (2026-09-22): código ISO na BD** (`utilizador_nationality.nationality_codigo_pais`, patch `13`); a app
+  desenha a bandeira (emoji) a partir dele, na lista e no rebordo do campo. Uma nacionalidade nova é uma linha de SQL, sem mexer na app.
+- **Castas:** **decidido (2026-09-22): destaques no topo** — as 6 do print, pela ordem dele (Touriga Nacional, Touriga Franca,
+  Aragonez (Tinta Roriz), Alvarinho, Baga, Arinto) e depois as restantes por ordem alfabética; a lista mostra 10 e, ao chegar ao fim,
+  mais 10 (as 277 já estão na app). Sem isto a Touriga Nacional caía na posição 253. (No print aparece "Tinta Roriz"; na BD chama-se
+  "Aragonez (Tinta Roriz)".)
+
+## Diferenças conscientes face aos prints (fatia 1a)
+
+Fundo do loading branco; olho da password grená; rótulos dos campos que sobem e encolhem ao escrever (não desaparecem); sombra
+suave nos botões grandes; popup dos termos meu; "LOGIN" e "COMEÇAR" com a mesma largura do cartão.
+
+## Diferenças conscientes face aos prints (fatia 1b)
+
+Diz-me se preferes o original em qualquer uma.
+
+- **Recuperar password:** o 1.º passo (identificar) é meu; o código tem **6** espaços (o print tem 5); o email tapado só aparece a quem
+  escreveu o email; o popup "Password alterada!" fecha-se sozinho (~2,6 s) porque o desenho não tem botão. O escurecimento atrás dos
+  popups (este e o dos termos) passou de 60 % (omissão do Compose) para os **43 % do print** (`#919191` sobre branco, confirmado no pixel).
+- **Opções de escolha (tipos de bebida, castas):** o círculo do print fica **cheio, com um visto** quando está escolhida (é escolha
+  múltipla) e a linha ganha um fundo grená a 10 % e o contorno mais grosso, para se ver bem o que está marcado. As linhas do print são
+  transparentes com contorno grená (igual).
+- **Ordem dos tipos de bebida:** vem da API (Vinho, Whisky, Gin, **Vodka**, Aguardente, Licor); o print tem a Vodka no fim. Se quiseres a
+  ordem do print, muda-se a ordem dos ids no seed (ou ordena-se na app).
+- **Slider de doçura/acidez:** o ponteiro é **grená** (o do print é o cinzento `#D9D9D9` por omissão do Figma, quase invisível sobre o
+  cartão); os níveis não escolhidos ficam esbatidos depois de escolher um; sem escolha o ponteiro fica esbatido a meio. Os rótulos
+  distribuem-se pela altura toda (o do print está ligeiramente irregular).
+- **Avatares:** grelha 3×3 de quadrados arredondados (como no print) e não os círculos da "especificação do perfil" do README dos
+  avatares; **pílulas de categoria** (Castas, Garrafas, Copos) por cima, como pedido; o avatar escolhido fica com contorno grosso e fundo
+  tingido; tocar nele outra vez tira-o.
+- **Nacionalidade:** a lista (menu) mostra a bandeira e o nome; o campo mostra o nome escolhido, com o rótulo a subir, e a bandeira no
+  rebordo (o print mostra a bandeira de Portugal por omissão; a app começa sem nada escolhido).
+- **Navegação:** nos ecrãs 7–10 só há "PRÓXIMO →" (como nos prints); voltar atrás é pelo gesto/botão do sistema. Nos 11–13 há seta para
+  trás, "IGNORAR" e seta para a frente.
+- **Ecrãs de preferências (10–13):** o cartão ocupa a altura toda e a navegação fica encostada ao fundo (como no print); num telemóvel
+  alto sobra bastante espaço vazio dentro do cartão nos ecrãs curtos (tipos de bebida).
+- **Teclado:** nos campos de password a tecla "Seguinte" passa ao campo seguinte (Nova → Repetir): o olho da password deixou de ser
+  focável pelo teclado (antes o foco parava nele). Nos ecrãs de recuperar password o conteúdo rola até ao fim quando o teclado abre,
+  para os botões de navegação não ficarem tapados.
+
+## 14. Homepage (fatia 2a, feita e validada ao vivo — 2026-09-23)
+
+Mockup enviado a 2026-09-23 (`homepage/01-homepage.png`, 163×767 — muito pequeno; as medidas exatas de espaçamento/tamanho de letra
+foram aproximadas, não pixel-medidas como nos ecrãs de auth). Junto com o mockup, o utilizador enviou o **logótipo real**
+(`logos/logo-homepage-normal.png`, fundo branco — tratado para transparente em `res/drawable/ic_wordmark_home.png`, usado só na
+homepage por agora) e os **6 ícones da barra de navegação** (`icones/*.png`: homepage, catálogo, cave, wishlist, favorito, perfil —
+SVG-like em traço branco/cinza-claro sobre fundo transparente, pensados para se tingirem por código; copiados para
+`res/drawable/ic_nav_*.png` e `ic_perfil.png`, sem os reexportar).
+
+**O que o ecrã mostra e o que ficou feito nesta 1.ª parte:**
+- **Cabeçalho:** logótipo (a imagem real) à esquerda, avatar (SVG do onboarding, ou as iniciais do nome/username) à direita; por
+  baixo, o dia da semana + data por extenso, e "O que queres **provar** hoje?" numa serifa itálica (ver "Tipografia" abaixo).
+  **Feito**, ligado a `GET /users/me` (nome, avatar).
+- **Pesquisa:** a barra com o placeholder do mockup; **feita só como botão** — toca nela e vai para o `catalog` (o ecrã de
+  pesquisa a sério é o placeholder do esqueleto, por refazer numa fatia própria). Sem campo de texto funcional aqui.
+- **"Escolhido para ti":** pílulas de categoria (`GET /lookup/categorias-bebida`, a "Vinho" escolhida por omissão) que filtram
+  `GET /bebidas?categoriaIds=&sort=ratingMedio,desc&size=2` — **decisão tomada ao construir** (documentada em "Diferenças
+  conscientes" abaixo): usei o catálogo filtrado por categoria em vez de `GET /bebidas/sugeridas` (esse endpoint não aceita
+  filtro de categoria, só preferências do utilizador). **Feito e validado ao vivo** (troquei para "Whisky", mostrou "Sem
+  sugestões nesta categoria." — o resto do ecrã não recarregou, como previsto). **"Ver mais sugestões" feito (2026-09-23):** link
+  no cabeçalho da secção (reutiliza o `link` do `SectionHeader`, já usado em "As minhas Caves"), vai para o `catalog`
+  (placeholder do esqueleto, sem filtro pré-aplicado — o mesmo destino da pesquisa) — validado ao vivo.
+- **"As minhas Caves":** pílulas com as caves do utilizador (`GET /users/me/caves`) + botão "+" (**sem ação própria ainda** —
+  vai para o `cave`, placeholder); lista das garrafas da cave escolhida (`GET /caves/{id}`, `prontasAAbrir` + `emGuarda`) com
+  quantidade, nome, categoria + janela de consumo, preço. **Validado ao vivo com garrafas a sério (2026-09-23):** criei pela API
+  uma cave para `demo_user2` (`Adega Principal`) com 2 garrafas — uma "pronta a abrir" (janela já aberta) e outra "em guarda"
+  (janela no futuro) — ambas renderizam corretamente (quantidade, nome, "VINHO • BEBER ENTRE aaaa-aaaa", preço `/UN`); a lista
+  concatena as duas listas do `CaveDetailResponse` sem separador visual entre estados (prontas primeiro, depois em guarda — como
+  a API devolve). A pílula extra do mockup ("Vinho 2025", por baixo do nome da cave) **continua por modelar** — não é claro o
+  que representa (um filtro por categoria dentro da cave? uma "vintage"?) — a confirmar com o utilizador.
+- **"Estatísticas":** as 3 caixas (provadas/wishlist/favoritos) — **feito e validado ao vivo** com números reais (`GET /users/me`
+  já tinha os 3 campos, da fatia 1b).
+- **Produtor em destaque:** cartão grená escuro com `GET /produtores/destaque` (nome, região, ano de fundação, "recebe visitas",
+  história, nº de garrafas no catálogo). **Feito e validado ao vivo** ("Luís Pato", Bairrada). O botão "VER PRODUTOR" **ainda não
+  tem destino** (a página de um produtor é um ecrã por construir).
+- **Barra de navegação (`BottomNavBar`):** os 5 ícones do mockup, com o "Home" elevado ao centro num círculo grená com halo
+  branco. **Feita e validada ao vivo**: troca de separador funciona (`Catálogo` ↔ `Home`), preserva o estado de cada aba
+  (`saveState`/`restoreState`, o padrão standard de navegação por abas). Os ícones tingem-se por código (`ColorFilter`, branco
+  cheio quando selecionado, 62% de opacidade quando não) — não precisei de reexportar variantes.
+
+**Contas de teste usadas:** `demo_user2` (a mesma da fatia 1b) — tem 1 review (dá o "Barca Velha 2015" na sugestão) e, desde
+2026-09-23, **uma cave real** (`Adega Principal`, id 21, criada pela API para a validação acima — ver `PLANO.md`, "Ambiente no
+fim da sessão"): 2 garrafas (Barca Velha 2015 ×2, pronta; Esporão Reserva Tinto 2018 ×1, em guarda). Fica na BD de propósito,
+para continuar a servir de dado de teste (o ecrã de "adicionar à cave" ainda não existe, por isso continua a ser a única forma
+de lá pôr garrafas).
+
+### Diferenças conscientes face ao mockup (fatia 2, homepage)
+
+Diz-me se preferes o original em qualquer uma — nenhuma delas está fechada.
+
+- **Tipografia serifada nos títulos:** o mockup usa uma serifa nos títulos de secção, no "O que queres provar hoje?" e no nome
+  de uma bebida num cartão — diferente do Inter do resto da app. **Usei a serifa do sistema** (`FontFamily.Serif`, ver
+  `AquaText.SectionSerif`/`GreetingSerif`/`BebidaNomeSerif` em `Type.kt`) como aproximação — não sei qual é a serifa exata do
+  Figma. Se tiveres o nome da fonte (ou os ficheiros, como fizeste com a Inter), digo-te.
+- **Cartão "Escolhido para ti":** o mockup mostra `"VINHO TINTO • ACIDEZ/DOÇURA 4 • LEVE"` — a categoria com o **tipo do vinho**
+  (Tinto/Branco) e um número só para acidez/doçura combinadas. Nenhum destes dois vem em `BebidaSummaryDto` (só vêm `corpo`,
+  `nivelAcidez` e `nivelDocura` em separado, e o tipo de vinho só está no *detalhe*, não no resumo). Mostrei
+  `"VINHO • ENCORPADO"` (categoria + corpo) e omiti a linha de acidez/doçura, para não inventar uma fórmula que combine os
+  dois. Se quiseres a linha completa, dá para acrescentar `tipo` a `BebidaSummaryDto` (backend) e decidir a fórmula do número
+  combinado.
+- **"Escolhido para ti" não usa `/bebidas/sugeridas`:** ver acima — as pílulas de categoria funcionam melhor com o catálogo
+  filtrado. O endpoint `/sugeridas` fica por usar por agora.
+- **Produtor da região do produtor** não mostrado como no mockup ("Melgaço" por baixo do nome do produtor, no cartão de
+  bebida) — `BebidaSummaryDto` não traz a região do produtor, só o nome.
+- **Escurecimento/cores exatas:** só medi um punhado de cores no mockup (163×767 px, pouca margem para acertar no pixel certo);
+  usei sobretudo os tokens já existentes (`Burgundy`, `CardGray`, `MutedInk`, ...) + 2 novos (`WineDark` para o cartão do
+  produtor, `RoseBorder` para o contorno das caixas de estatística) medidos à vista, não ao pixel.
+- **Botão de pesquisa:** vai para o `catalog` — **desde a fatia 2b (2026-09-23) já é o ecrã a sério**, não o placeholder (ver
+  "15. Catálogo / Filtros", abaixo). **"+" da cave** continua a ir para o `cave` placeholder do esqueleto (a fatia da cave ainda
+  não foi construída). **"VER PRODUTOR"** continua sem destino (`{}`, não faz nada) — a página de um produtor é um ecrã que ainda
+  não existe.
+
+## 15. Catálogo / Filtros (fatia 2b, feita e validada ao vivo — 2026-09-23)
+
+Dois mockups enviados a 2026-09-23 (`catalogo/01-filtros-popup.png`, 231×622, e `catalogo/02-catalogo-resultados.png`,
+214×529 — outra vez muito pequenos, medidas aproximadas). O utilizador pediu-os assim, no chat: o popup de filtros
+"é acedido ao clicar no ícone de filtro (substituir a lupa por filtro) ou ter um ícone ao lado no outro na barra de pesquisa";
+os resultados aparecem "pela barra de pesquisa da homepage ou pelo ícone do catálogo na barra inferior". O próprio mockup do
+popup trazia uma nota do utilizador por baixo, com o mapeamento dos campos: "categoria de bebida_categoria · origem de país e
+produtor_região · preço de bebida_link_compra · o bloco de baixo troca de campos com a categoria escolhida (vinho_*, whisky_*,
+gin_*...)" — usada tal e qual para decidir os filtros.
+
+**Descoberta ao planear:** o backend já suportava **praticamente todos** os filtros do popup desde a fatia 4 (`GET /api/bebidas`
+já aceitava `categoriaIds`, `paisId`, `regiaoIds`, `precoMin/Max`, `ratingMin`, `acidezMin/Max`, `docuraMin/Max`, `corpoId`,
+`taninoId`, `tipoId`, `castaIds`) e todos os lookups precisos já existiam (`/lookup/paises`, `/lookup/regioes`,
+`/lookup/vinho/corpos`, `/lookup/vinho/taninos`, `/lookup/vinho/tipos`) — só não estavam ligados ao Android. Só foi preciso
+**um acrescento pequeno e seguro ao backend**: `tipo` e `tanino` não vinham no `BebidaSummaryDto` (só no detalhe), e
+`produtorRegiao` (a região do produtor) também não — os três já existiam nas entidades, só não estavam expostos no resumo. Ver
+`backend/API_ENDPOINTS.md`, "`BebidaSummaryDto`", 2026-09-23.
+
+**O que foi pedido e o que ficou feito:**
+- **Popup "Filtros" (`FiltrosSheet.kt`):** categoria (escolha única, ao contrário da homepage), origem (país num
+  "dropdown" + pílulas de região do país escolhido, só as que têm bebidas), preço (`RangeSlider` do Material3, 0€–150€+),
+  rating mínimo (Todos/3+/4+/4,5+), e, só com "Vinho" escolhido, os atributos do vinho: acidez e doçura (intervalo 1 a 5, ver
+  `RangePillRow` abaixo), tipo e corpo (pílulas de escolha única) e castas (pesquisa por texto + pílulas escolhidas
+  removíveis + sugestões). O botão "Ver N bebidas" mostra a **contagem ao vivo** do que os filtros em edição dariam (pedido
+  à API com `size=1`, só para ler `totalElements`, com 350ms de atraso para não disparar 1 pedido por toque) — só aplica à
+  lista de baixo quando se toca nele; fechar de outra forma descarta as alterações. "LIMPAR N" volta a um filtro só com a
+  categoria. **Feito e validado ao vivo.**
+- **Ecrã "Catálogo" (`CatalogScreen.kt`, substituiu o placeholder do esqueleto):** título serifado, barra de pesquisa com o
+  ícone de filtro (funil, `Icons.Filled.FilterList` do Material Icons Extended — já uma dependência do projeto, não precisei
+  de pedir um ícone novo), pílulas de categoria (sempre visíveis, trocam a categoria ativa na hora, sem passar pelo popup),
+  contagem + "ORDENAR" (menu com "Melhor avaliadas"/"Nome (A-Z)" — ver "Diferenças conscientes"), pílulas removíveis dos
+  filtros ativos (região, país, preço, rating, corpo, tipo, castas — tocar no "×" remove só esse filtro e atualiza a lista),
+  lista de cartões (o mesmo `BebidaCard` da homepage, ver abaixo) e "Carregar mais N bebidas" (paginação, 20 de cada vez).
+  **Feito e validado ao vivo:** filtrar por região "Douro" + rating "4+" (contagem ao vivo "Ver 1 bebidas" no popup, depois
+  aplicado); remover a pílula "Douro ×" e voltar às 9 bebidas; trocar de categoria para "Whisky" (0 bebidas, "Sem bebidas com
+  estes filtros.", sem rebentar). **Não validado ao vivo:** "Carregar mais" (o catálogo de teste só tem 9-16 bebidas por
+  categoria, sempre cabe numa página) e o `RangeSlider` do preço (só visto no popup, nunca aplicado — a BD de teste não tem
+  preços variados que valham a pena filtrar).
+- **`BebidaCard` tornou-se partilhado** (`ui/components/BebidaCard.kt`, antes vivia só dentro do `HomeScreen.kt`): a
+  homepage e o catálogo mostram bebidas exatamente da mesma forma. Trouxe consigo `BebidaSummary.linhaAtributos()`
+  (`data/model/BebidaFormatacao.kt`, 8 testes) — a linha "VINHO TINTO • CORPO ENCORPADO • TANINO ELEVADO" do cartão, com uma
+  fórmula fixa (até 2 atributos, por prioridade: corpo, depois tanino-se-tinto-senão-acidez, depois doçura) em vez da
+  simplificação "categoria + corpo" da fatia 2a — **resolve** a diferença consciente que tinha ficado por fechar na homepage.
+- **`RangePillRow` (novo, `ui/components/`):** o seletor 1–5 da acidez/doçura do popup — tocar num nível escolhe-o sozinho;
+  tocar noutro estica o intervalo até lá (como um seletor de datas); tocar dentro do intervalo já escolhido volta a fechá-lo
+  nesse nível. Não arrasta (só toques), simplificação consciente para a 1.ª versão.
+- **Testes:** **53** unitários (45 + 8 do `BebidaFormatacaoTest`, cobrindo a fórmula da linha de atributos). Compilou
+  (`assembleDebug`) e correu ao vivo sem *crashes* (`adb logcat -b crash` só tem o "uwb-service" do emulador, já conhecido).
+
+**Defeito apanhado e corrigido a testar ao vivo:** o `BebidaCard` tem altura fixa (108dp); com `tipo`/`tanino` a linha de
+atributos passou a ter 3 segmentos e, nalgumas bebidas, quebrava para 2 linhas — empurrava o preço para fora do cartão, a
+sobrepor-se ao cartão seguinte (sem *crash*, só visual, só visto na screenshot). Corrigido com `maxLines = 1` +
+`TextOverflow.Ellipsis` na linha de atributos, como as outras linhas do cartão já faziam.
+
+### Diferenças conscientes face ao mockup (fatia 2b, catálogo/filtros)
+
+Diz-me se preferes o original em qualquer uma — nenhuma delas está fechada.
+
+- **"ORDENAR" só tem 2 opções** ("Melhor avaliadas", "Nome (A-Z)") — o mockup mostra o menu fechado, só com "Melhor
+  avaliadas" escolhido, sem revelar as outras opções. Um "ordenar por preço" ficou de fora de propósito: `precoDesde` não é
+  uma coluna da bebida (vem calculado dos links de compra), por isso não é ordenável pelo mecanismo de `Pageable`/`Sort` do
+  Spring sem trabalho extra no backend — não construí isso sem o utilizador pedir.
+- **Tipo de vinho:** o popup mostra 4 pílulas (Branco, Tinto, Rosé, Fortificado) — a API tem 7 tipos (`Tinto`, `Branco`,
+  `Rosé`, `Espumante`, `Frisante`, `Generoso`, `Sobremesa`; "Generoso" é o termo daqui usado para vinho fortificado, tipo
+  Porto). Mostrei os 7, todos os que a `/lookup/vinho/tipos` devolve, em vez de escolher 4 à mão — o padrão já usado nas
+  outras pílulas do popup (mostrar sempre o que a API tem, nunca uma lista fixa no código).
+- **Castas e Tipo/Corpo não quebram linha:** o mockup não deixa claro se as pílulas quebram para a linha de baixo num
+  espaço estreito; usei scroll horizontal (`LazyRow`), como todas as outras pílulas da app (categoria, região, ...), em vez
+  de trazer o `FlowRow` do Compose só para isto.
+- **"Origem" (país):** o campo mostra um fundo rosado sempre (não só quando aberto) para se distinguir de um botão — no
+  mockup parece um campo de formulário normal (fundo bege claro).
+- **Preço nunca testado com dados a sério:** o range 0€–150€+ é uma aproximação (o catálogo de teste só tem uma dúzia de
+  preços, entre 15€ e 180€) — o "150€+" pode não ser o teto certo para o catálogo real.
+
+## 16. Cave e popup de detalhe da bebida (fatia 3, em curso — começada em 2026-09-23)
+
+5 mockups enviados de uma vez a 2026-09-23 (`caves/01` a `05`), com notas do utilizador no chat e escritas dentro dos
+próprios mockups (mapeamento de campos a tabelas — ver os footers de `03` e `04`). Cobre duas coisas distintas: a Cave
+(`01` lista, `02` popup "Nova cave", `04` popup "Adicionar à cave") e o **popup de detalhe de uma bebida** (`03` tab
+"Detalhes", `05` tab "Reviews") — este último é partilhado por toda a app: "abre-se ao pressionar num item duma bebida
+no catálogo (após pesquisa, antes de pesquisa, nas caves, nos favoritos, etc.)". **Só o popup de detalhe (03 e 05) está
+feito nesta 1.ª parte** — a lista de caves e os dois popups de cave (02, 04) ficam para a parte seguinte (a
+infraestrutura já existe: `CaveRepository.createCave`/`addBebidaToCave` fazem exatamente o que o popup "Adicionar à
+cave" pede, desde a fatia 2a).
+
+**O que foi pedido e o que ficou feito (popup de detalhe da bebida):**
+- **Interação:** o mockup só define o toque premido ("ao pressionar"); sem outro destino definido para o toque curto,
+  fiz os dois abrirem o mesmo popup (`BebidaCard.combinedClickable`, `ExperimentalFoundationApi`) — documentado como
+  diferença consciente. **Substitui** o antigo `DetailScreen`/`ReviewsScreen` (rotas `detail/{id}`/`reviews/{id}`, que
+  ficam no código mas deixam de ser alcançadas por toque; por limpar numa próxima fatia).
+- **Cabeçalho:** imagem, "categoria + tipo • ano", nome, produtor • região, rating + total de reviews. **Feito.**
+- **Linha de ações:** preço + retalhista (se houver `linkCompra`; sem ele, os 3 botões vão só para a direita), favorito
+  (coração), wishlist (marcador), "+" adicionar à cave (chama `onAdicionarACave`, por agora sem destino — ver acima).
+  Favorito/wishlist são **otimistas** (mudam a cor logo ao tocar, revertem se o pedido falhar) e já ligados a
+  `POST/DELETE /bebidas/{id}/favorito` e `/wishlist`. **Feito e validado ao vivo.**
+- **Tab "Detalhes":** teor alcoólico, volume, país, ano (grelha 2×2); perfil sensorial (barras de acidez/doçura, só
+  vinho); pílulas de corpo/tanino/tipo; castas com percentagem; cartão do produtor (nome, região, ano de fundação,
+  "recebe visitas"). **Feito e validado ao vivo.**
+- **Tab "Reviews":** a tua review (5 estrelas por toque — só inteiras, sem meias-estrelas do mockup, simplificação),
+  comentário (até 4000), "Publicar"; distribuição por estrela (gráfico de barras) com a média **precisa** (a mesma do
+  cabeçalho, `bebida.ratingMedio` — não recalculada a partir da distribuição, que vem arredondada por estrela e perderia
+  a casa decimal); lista "Da comunidade" com avatar (`AvatarBadge` reaproveitado, iniciais a partir do "nome apelido"),
+  nome, data relativa ("há N dias", "em mês"), rating, comentário. **Feito e validado ao vivo**, incluindo publicar uma
+  review nova de propósito (ver abaixo).
+- **Marcar como provada antes de avaliar:** a API só aceita uma review de uma bebida já `provada` (409 caso contrário,
+  ver `backend/API_ENDPOINTS.md`) — o mockup não mostra esse passo, por isso o popup marca-a sozinho
+  (`POST /bebidas/{id}/provada`, idempotente) mesmo antes de `POST .../reviews`, sem o utilizador ver nada disso.
+- **Sincronização da API que isto obrigou:** `getReviews` mudou de `List<ReviewResponse>` para
+  `ReviewsResponse { distribuicao, reviews }` (o backend já devolvia assim desde a fatia de reviews — só a app estava
+  desatualizada); `ReviewResponse` ganhou `utilizadorNome`/`utilizadorAvatar`; novos `addProvada`/`removeProvada`
+  (`ProvadaRepository`, novo). Ver `backend/API_ENDPOINTS.md`.
+- **Sem argumento de navegação:** ao contrário dos ecrãs por rota, o popup não tem `SavedStateHandle` — usa
+  `hiltViewModel(key = "bebida-detalhe-$bebidaId")` (uma chave por bebida em vez de injeção assistida do Hilt) e um
+  `carregar(bebidaId)` chamado por `LaunchedEffect`, em vez do `init {}` habitual. Ver `CLAUDE.md` para o porquê.
+- **Testes:** sem testes novos (a lógica do ViewModel — otimismo do toggle, o pré-requisito da provada — pediria
+  `kotlinx-coroutines-test`, ainda não configurado no projeto; fica com a dívida já registada no `android/README.md`).
+
+**Defeitos apanhados e corrigidos a construir/testar ao vivo:**
+- **`data class Ready` sem `: BebidaDetalheUiState`** — faltava o supertipo depois dos parênteses do construtor (só
+  `Loading`/`Error` o tinham); o Kotlin não avisa que uma sealed interface "perdeu" uma subclasse, só dá erros de tipo
+  confusos ("Incompatible types: X e X") em sítios que não têm nada a ver com a causa. Ver `CLAUDE.md`.
+- **`Modifier.weight()` fora de `ColumnScope`/`RowScope`:** uma função `@Composable` chamada de dentro de um `Column`
+  não herda automaticamente o `ColumnScope` — só o tem se for declarada como `fun ColumnScope.Minha Função(...)`.
+  "Unresolved reference: weight" apontava para a linha certa, mas a causa (falta do `ColumnScope` na assinatura) não era
+  óbvia à primeira vista.
+- **Pílulas de atributos sem `LazyRow`:** um `Row` normal, sem scroll nem quebra de linha, espreme os itens a mais
+  quando não cabem (o texto de "VINHO TINTO" partiu-se em "VI"/"N") — o mesmo tipo de bug já apanhado no
+  `FiltrosSheet`, desta vez esquecido aqui; corrigido para `LazyRow`.
+- **Média da distribuição vs. `ratingMedio`:** a distribuição por estrela vem arredondada (uma review de 4,5 cai no
+  balde "5"); calcular a média a partir dela dava "5,0" em vez de "4,5" — corrigido para mostrar sempre
+  `bebida.ratingMedio` (a mesma fonte do cabeçalho).
+- **Cabeçalho por atualizar depois de publicar:** `carregarReviews()` só volta a pedir a lista/distribuição, não a
+  bebida — o cabeçalho ("4,5/5 • 1 reviews") ficava com os números de antes de publicar. Corrigido com
+  `atualizarRatingDaBebida()`, um pedido leve só à bebida (não `carregar()` inteiro, que reporia a tab e as marcações
+  otimistas de favorito/wishlist).
+
+**Validado ao vivo** (emulador `Pixel_8` + API real, conta `demo2@aquavitae.local`): popup aberto por toque premido a
+partir da homepage, nas duas tabs; alternar favorito e wishlist (cor muda logo, persiste ao reabrir); publicar uma
+review nova numa bebida sem nenhuma (`Vinha Grande Tinto 2019`, agora com 1) — a distribuição, o total e o cabeçalho
+todos a refletir o valor novo; confirmado por API (`GET /api/bebidas/2`) que `ratingMedio`/`totalReviews` batem certo.
+
+**Em aberto / por fazer, na altura:** a lista de caves, "Nova cave" e "Adicionar à cave" (mockups 01, 02, 04) — **feitas na 2.ª
+parte da sessão, ver abaixo**; as meias-estrelas do input da review (só inteiras por agora); os antigos
+`DetailScreen`/`ReviewsScreen`/rotas ficam como código morto até se limparem.
+
+### Cave: lista, "Nova cave" e "Adicionar à cave" (fatia 3b, feita e validada ao vivo — 2026-09-23)
+
+Continuação direta do mesmo pedido (os 5 mockups de "16."), com um pedido extra do utilizador: no popup "Adicionar à cave",
+**destacar as caves onde aquela bebida já está** — distinto de qual cave se escolhe para este "adicionar" (pode-se juntar mais
+garrafas a uma cave onde já há).
+
+**Backend:** um acrescento pequeno — `GET /api/users/me/caves` ganhou `?bebidaId=` (opcional), que acrescenta `temBebida: Boolean`
+a cada `CaveResponse` (reaproveita a mesma query em lote já feita para os totais, não pede mais nada à BD). O
+`POST .../consumir` já existia desde a fatia 4 do backend, só não estava ligado ao Android.
+
+**Android:**
+- **`feature/cave/CaveScreen.kt`** (reescrito, substitui o placeholder do esqueleto): pílulas de cave + "+" (popup "Nova
+  cave"), 3 estatísticas (garrafas, investido, a abrir já — da cave escolhida), "Prontas a abrir" com botão "Consumir"
+  (`POST .../consumir`, recarrega a cave depois), "Em guarda" com "ORDENAR" (preço/janela de consumo, `?sort=` já existia na
+  API). "Ver as N garrafas" é só informativo por agora (a lista já mostra tudo, sem paginação — não há ecrã à parte).
+- **`NovaCaveSheet.kt`** (novo): nome (100) + descrição opcional (500), com contadores; "JÁ LÁ DENTRO" é sempre "Ainda sem
+  garrafas" (é uma cave nova). Reutilizado tal e qual dentro do `AdicionarACaveSheet` (o "+ nova cave" das pílulas de cave).
+- **`AdicionarACaveSheet.kt`** (novo, aberto a partir do "+" do popup de detalhe da bebida): pílulas de cave com **duas
+  marcas independentes** — cheia a grená se escolhida para este "adicionar", com um ✓ se a bebida já lá está
+  (`CaveResponse.temBebida`); quantidade (stepper), preço pago, data de aquisição (`DatePicker` do Material3), janela de
+  consumo (dois campos de ano, convertidos para `aaaa-01-01`/`aaaa-12-31` ao guardar), notas; "Guardar na cave" chama
+  `CaveRepository.addBebidaToCave` (já existia desde a fatia 2a, sem mudanças).
+- **Os dois popups empilham-se:** "Adicionar à cave" abre por cima do popup de detalhe da bebida (que fica aberto por
+  baixo) — mais simples do que fechar um para abrir o outro, e o utilizador vê o resultado ao fechar só o de cima.
+- **Testes:** sem testes novos (mesma dívida já registada — `kotlinx-coroutines-test`). Compilou e correu ao vivo sem
+  *crashes*.
+
+**Defeito apanhado e corrigido a testar ao vivo (condição de corrida):** criar uma cave nova, no `CaveViewModel`, fazia
+`carregar()` (assíncrono) e depois `selecionarCave(nova.id)` — a resposta do `carregar()` podia chegar **depois** e repor a
+seleção para a 1.ª cave da lista, perdendo a seleção da cave acabada de criar. A cave ficava criada mas não selecionada, sem
+erro nenhum. Corrigido fazendo tudo na mesma corrotina, pela ordem certa (buscar a lista nova → só depois escolher a cave
+nova). O `AdicionarACaveViewModel` já não tinha este problema (só uma chamada assíncrona a fazer as duas coisas de uma vez).
+
+**Validado ao vivo** (emulador `Pixel_8` + API real, conta `demo2@aquavitae.local`): "Consumir" numa garrafa "pronta a abrir"
+(quantidade e estatísticas a recalcular); criar uma cave nova a partir do "+" da Cave (ficou logo selecionada, depois do
+conserto); abrir "Adicionar à cave" a partir do popup de detalhe da "Barca Velha 2015" — "Adega Principal" aparece com ✓
+(já lá está) e selecionada, "Tintos de guarda" sem ✓; escolher "Tintos de guarda", preencher preço e janela de consumo
+(2030–2035), guardar — confirmado por API (`GET /api/caves/22`: `janelaInicio: "2030-01-01"`, `janelaFim: "2035-12-31"`,
+`precoPago: 34.5`); criar uma 2.ª cave nova a partir do popup "Adicionar à cave" (ficou logo selecionada).
+
+**Em aberto / por fazer:** "Ver as N garrafas" sem destino próprio (a lista já mostra tudo); mover uma garrafa entre caves
+(não pedido nos mockups); editar uma garrafa já na cave (o `PATCH` já existe na API, sem UI); os antigos
+`DetailScreen`/`ReviewsScreen`/rotas continuam como código morto, por limpar. **Com isto, as fatias 1 a 3 cobrem o fluxo
+principal do MVP** (login → homepage → catálogo → detalhe da bebida → cave) — falta produtor, perfil/listas e afinar o resto
+(ver `PLANO.md`).
+
+### Ajustes de feedback + "Já provadas" (fatia 3c, feita e validada ao vivo — 2026-09-23)
+
+O utilizador testou a fatia 3 completa e devolveu uma lista de 5 ajustes, com um novo mockup (imagem 17, "Bebidas já
+provadas") e 3 imagens de contexto (Favoritos/Wishlist/Caves, enviadas só para situar — **não pedidas para construir agora**).
+**A imagem 17 não foi copiada para `design/caves/`** (chegou já depois de um resumo de contexto desta sessão, sem ficheiro em
+disco para copiar) — fica por arquivar se o utilizador a reenviar numa próxima sessão.
+
+**1. Popup de confirmação ao duplicar numa cave:** pedido porque o "✓" de "já tens esta bebida aqui" (fatia 3b) não impedia
+adicionar de qualquer forma — faltava um passo de confirmação. `AdicionarACaveViewModel.guardar()` verifica
+`caveSelecionadaJaTemBebida` (calculado de `CaveResponse.temBebida` da cave escolhida) e, se verdadeiro, mostra um
+`AlertDialog` ("Já tens esta bebida aqui" / "A cave 'X' já tem garrafas desta bebida. Queres mesmo adicionar mais?") antes de
+gravar; "Adicionar na mesma" segue com a gravação original, "Cancelar" só fecha o popup. **Feito e validado ao vivo.**
+
+**2. Review a exigir "provada" (em vez de a marcar sozinha):** reversão deliberada da fatia 3a — antes, publicar uma review
+marcava "provada" sozinho (`POST .../provada` antes de `POST .../reviews`), sem o utilizador ver esse passo. O pedido agora é
+o oposto: **uma bebida só pode ter review de um utilizador quando ele já a tem na lista de consumidos** — por um dos dois
+caminhos abaixo, nunca automaticamente ao avaliar. `BebidaDetalheViewModel.publicarReview()` deixou de chamar `addProvada`;
+em vez disso, `MinhaReviewForm` (`BebidaDetalheSheet.kt`) verifica `bebida.isProvada` e, se `false`, mostra uma caixa
+("AINDA NÃO PROVASTE ESTA BEBIDA — Só se pode avaliar uma bebida já marcada como consumida. Marca-a com 'Consumir' numa cave,
+ou adiciona-a diretamente à lista de já provadas...") em vez do formulário de estrelas/comentário. **Feito e validado ao
+vivo** (bloqueio confirmado no "Esporão Reserva Tinto 2018", `isProvada: false` para `demo_user2`).
+
+**3. "Consumir" passa também a marcar "provada":** o 2.º caminho para a lista de consumidos. `CaveViewModel.consumir()`
+chama `provadaRepository.addProvada(bebidaId)` a seguir a `POST .../consumir` (idempotente no backend, por isso não faz mal
+mesmo que já estivesse provada). **Feito e validado ao vivo** (consumir "Barca Velha 2015" não alterou a "Já provadas" porque
+já lá estava de uma review anterior — confirma a idempotência).
+
+**4. Resumo "Já provadas" na Cave (pergunta do mockup, imagem 5 da fatia 3, respondida agora):** um `snippet` de até 5
+bebidas por baixo de "Em guarda", com "ABRIR MAIS" a navegar para o ecrã inteiro. `CaveViewModel.carregar()` chama
+`GET /users/me/provadas` uma vez (não depende da cave escolhida — é do utilizador, não da cave) e guarda `take(5)` em
+`CaveUiState.Ready.provadasRecentes`; `ProvadaResumoRow` mostra nome, produtor e nota (`—` se sem nota). **Feito e validado
+ao vivo** (mostrou corretamente "Vinha Grande Tinto 2019 · 4,0" e "Barca Velha 2015 · 4,5").
+
+**5. Ecrã "Bebidas já provadas" completo** (`feature/provadas/`, mockup imagem 17): pílulas de filtro por nota (Todas/Com
+nota/Sem nota) e por categoria (mutuamente exclusivas — escolher uma reset a outra, não há UI para as combinar no mockup);
+agrupamento por mês (mais recente primeiro), com "Carregar mais antigas" a mostrar mais 2 meses de cada vez
+(`mesesVisiveis`); estatística "N bebidas • M com nota tua". **Barra de pesquisa acrescentada, fora do mockup** (pedido
+explícito do utilizador: "falta no mockup a barra de pesquisa alternativa caso o user queira adicionar uma por conta própria
+que não estivesse na cave") — pesquisa com *debounce* de 350 ms (`BebidaRepository.searchBebidas`), cada resultado com um
+"+" que chama `POST /bebidas/{id}/provada` diretamente (sem passar por nenhuma cave) e recarrega a lista. **Feito e validado
+ao vivo**, incluindo o caminho da busca (adicionado "Gin 44°" por esta via, depois removido — dado de teste, não fica na BD).
+
+**Resposta à pergunta do utilizador — "como surgem as garrafas 'Em guarda'":** é o `EstadoCaveBebida` calculado no backend
+(`CaveRegras.kt`, sem mudanças nesta fatia) a partir da janela de consumo de cada garrafa: **sem `consumida`**, e **sem
+`janelaInicio` nem `janelaFim`** → `EM_GUARDA` (não há informação para dizer que já está pronta); com `janelaInicio` no
+futuro → também `EM_GUARDA` (ainda não chegou a data de começar a beber); dentro da janela → `PRONTA` (aparece em "Prontas a
+abrir"); depois de `janelaFim` sem consumir → `EM_ATRASO` (também aparece em "Prontas a abrir", junto com `PRONTA` — ver
+`onConsumirEhUtil` em `CaveScreen.kt`). Ou seja: uma garrafa cai em "Em guarda" sempre que não se indicou nenhuma janela de
+consumo, ou a janela ainda não começou — o `AdicionarACaveSheet` deixa "Janela de consumo" opcional exatamente por isto.
+
+**Defeito apanhado e corrigido a testar ao vivo:** as linhas de garrafa da Cave (`GarrafaRow`, tanto "Prontas a abrir" como
+"Em guarda") e o novo `ProvadaResumoRow` **não tinham nenhum toque/premido ligado** — descoberto ao tentar testar o bloqueio
+da review a partir da Cave (o mockup original da fatia 3 já dizia "nas caves" como um dos sítios onde o popup de detalhe
+abre, mas essa ligação nunca tinha sido feita). Corrigido com o mesmo padrão do `BebidaCard`
+(`combinedClickable(onClick, onLongClick)`, `ExperimentalFoundationApi`), passando `onBebidaClick: (Long) -> Unit` de
+`CaveScreen` através de `CaveContent` até às duas linhas. **Lição:** um ecrã novo que mostra bebidas não herda
+automaticamente a abertura do popup de outro ecrã — tem de se ligar explicitamente linha a linha.
+
+**Testes:** sem testes novos (mesma dívida do `kotlinx-coroutines-test`, já registada). `assembleDebug testDebugUnitTest`
+continua a passar (53 testes, sem alterações à suite).
+
+**Validado ao vivo** (emulador `Pixel_8` + API real, conta `demo2@aquavitae.local`): as 5 verificações da lista acima, todas
+com capturas de ecrã confirmando o comportamento esperado — ver o resumo de cada ponto.
+
+**Em aberto / por fazer:** os antigos `DetailScreen`/`ReviewsScreen`/rotas continuam como código morto; imagem 17 por copiar
+para `design/caves/`; Favoritos/Wishlist (imagens 14/15, enviadas como contexto) continuam por construir — não pedidos nesta
+fatia.
