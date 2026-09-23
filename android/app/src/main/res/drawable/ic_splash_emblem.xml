@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Emblema para o ecrã de arranque do sistema: 288dp, com o desenho dentro do círculo de 192dp que o Android 12+ mostra. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="288dp"
+    android:height="288dp"
+    android:viewportWidth="288"
+    android:viewportHeight="288">
+    <group
+        android:scaleX="1.6304"
+        android:scaleY="1.6304"
+        android:translateX="69"
+        android:translateY="69">
+        <path
+            android:pathData="M46,2.5A43.5,43.5 0 1,1 46,89.5A43.5,43.5 0 1,1 46,2.5Z"
+            android:strokeWidth="5"
+            android:strokeColor="#8F321D" />
+        <path
+            android:pathData="M46,16A30,30 0 1,1 46,76A30,30 0 1,1 46,16Z"
+            android:strokeWidth="10"
+            android:strokeColor="#8F321D" />
+    </group>
+</vector>

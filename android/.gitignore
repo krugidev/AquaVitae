@@ -8,7 +8,8 @@
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
 .DS_Store
-/build
+# build/ em qualquer nível (a raiz e app/build): o esqueleto só ignorava /build
+build/
 /captures
 .externalNativeBuild
 .cxx

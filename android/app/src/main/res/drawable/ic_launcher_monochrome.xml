@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Versão monocromática do ícone (Android 13+, ícones temáticos): o sistema pinta-a com a cor do tema. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="0.6304"
+        android:scaleY="0.6304"
+        android:translateX="25"
+        android:translateY="25">
+        <path
+            android:pathData="M46,2.5A43.5,43.5 0 1,1 46,89.5A43.5,43.5 0 1,1 46,2.5Z"
+            android:strokeWidth="5"
+            android:strokeColor="#000000" />
+        <path
+            android:pathData="M46,16A30,30 0 1,1 46,76A30,30 0 1,1 46,16Z"
+            android:strokeWidth="10"
+            android:strokeColor="#000000" />
+    </group>
+</vector>

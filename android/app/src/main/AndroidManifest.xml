@@ -12,10 +12,12 @@
         android:theme="@style/Theme.AquaVitae"
         android:supportsRtl="true">
 
+        <!-- A Activity arranca com o tema do ecrã de arranque (SplashScreen), que passa a Theme.AquaVitae. -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.AquaVitae">
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.AquaVitae.Starting">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

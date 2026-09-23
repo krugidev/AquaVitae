@@ -1,0 +1,50 @@
+package pt.aquavitae.android.ui.components
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import pt.aquavitae.android.data.model.Avatar
+import pt.aquavitae.android.data.network.resolveImageUrl
+import pt.aquavitae.android.ui.theme.AquaText
+import pt.aquavitae.android.ui.theme.Burgundy
+import pt.aquavitae.android.ui.theme.BurgundyTint
+
+/**
+ * O avatar do utilizador (canto superior direito da homepage, e onde mais for preciso): o SVG escolhido no onboarding, ou,
+ * sem avatar, as iniciais do nome (nome + apelido; sem apelido, as duas primeiras letras do username).
+ */
+@Composable
+fun AvatarBadge(avatar: Avatar?, iniciais: String, modifier: Modifier = Modifier, size: Dp = 40.dp) {
+    Box(
+        modifier = modifier.size(size).clip(CircleShape).background(BurgundyTint),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (avatar?.path != null) {
+            AsyncImage(model = resolveImageUrl(avatar.path), contentDescription = null, modifier = Modifier.size(size * 0.7f))
+        } else {
+            Text(text = iniciais, style = AquaText.Label.copy(color = Burgundy, fontWeight = FontWeight.Bold, fontSize = (size.value * 0.36).sp))
+        }
+    }
+}
+
+/** As iniciais a mostrar quando não há avatar: 1.ª letra do nome + 1.ª do apelido, ou as 2 primeiras do username. */
+fun iniciaisDe(firstName: String?, lastName: String?, username: String?): String {
+    val nome = firstName?.trim()?.firstOrNull()
+    val apelido = lastName?.trim()?.firstOrNull()
+    return when {
+        nome != null && apelido != null -> "$nome$apelido"
+        nome != null -> nome.toString()
+        else -> username?.trim()?.take(2)?.ifEmpty { null } ?: "?"
+    }.uppercase()
+}

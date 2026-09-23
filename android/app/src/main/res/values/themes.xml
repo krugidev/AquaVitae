@@ -2,12 +2,19 @@
 <resources>
     <!--
         Tema de plataforma mínimo (não usa a biblioteca com.google.android.material,
-        que não é dependência deste projeto). Serve apenas de base para a Activity
-        antes do Compose assumir o desenho da UI; a paleta/tipografia Material 3
-        reais estão definidas em código em ui/theme/Theme.kt.
+        que não é dependência deste projeto). A paleta/tipografia reais estão em
+        ui/theme/ (Compose). A barra de estado e de navegação são transparentes e o
+        conteúdo desenha por baixo (edge-to-edge, obrigatório no Android 15+): ver
+        MainActivity.enableEdgeToEdge().
     -->
     <style name="Theme.AquaVitae" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/background</item>
-        <item name="android:statusBarColor">@color/wine_primary</item>
+    </style>
+
+    <!-- Ecrã de arranque do sistema (emblema sobre fundo branco); passa a Theme.AquaVitae quando a app arranca. -->
+    <style name="Theme.AquaVitae.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_emblem</item>
+        <item name="postSplashScreenTheme">@style/Theme.AquaVitae</item>
     </style>
 </resources>
