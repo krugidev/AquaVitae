@@ -3,51 +3,99 @@
 Roadmap vivo do MVP. Atualizar isto no fim de cada sessão de trabalho relevante — é o que uma sessão
 nova do Claude Code (ou tu, ao voltares passado um tempo) deve ler primeiro para saber onde ficámos.
 
-## ▶ Retomar aqui (última atualização: 2026-09-21)
+## ▶ Retomar aqui (última atualização: 2026-09-23, fatias 1 a 3c do Android feitas + 2 correções pós-3c — fluxo principal do MVP completo)
 
-**Ponto da situação:** **o backend da 1.ª versão está fechado.** Todos os endpoints do contrato estão implementados e
-**validados ao vivo** contra o Oracle real, e a BD reconstruída do zero (num schema temporário, com os 5 scripts do
-`run-migrations`) é idêntica à de dev. Em 2026-09-20 e 21 fecharam-se as decisões que faltavam: EAN, imagens (URL do
-retalhista), lista final de regiões (também para o whisky), Portugal no topo dos países, grafias PT-PT e a data de
-aceitação dos termos — detalhe em "Fecho do backend v1", mais abaixo. O que ficou fora do backend está adiado de propósito
-(ver "Por fazer depois"). Falta só o **script de verificação do catálogo**, que se escreve com o 1.º lote de bebidas. O
-próximo grande passo é o **Android**. Contrato dos endpoints em [`backend/API_ENDPOINTS.md`](backend/API_ENDPOINTS.md).
+**Numa sessão nova, ler por esta ordem:** `CLAUDE.md` (convenções e ferramentas desta máquina) → esta secção → `android/README.md`
+(estado do frontend, estrutura, mapa de ecrãs) → `android/design/README.md` (os prints e **o que o utilizador pediu para cada ecrã**,
+secções "14. Homepage", "15. Catálogo / Filtros", "16. Cave e popup de detalhe da bebida" e "Ajustes de feedback + 'Já provadas'"
+têm o detalhe do que falta) → `backend/API_ENDPOINTS.md` (contrato). O frontend documenta-se nesses dois ficheiros do `android/`; o
+PLANO guarda o roadmap e as decisões.
 
-**Git:** branch `feature/api-endpoints-design`, PR aberto: https://github.com/krugidev/AquaVitae/pull/1. **Tudo commitado e
-enviado em 2026-09-21** (último commit: "Fecho do backend v1: ...", ver `git log`) e a **descrição do PR atualizada** (cobre a
-branch inteira, não só a 1.ª fatia). De fora dos commits, de propósito (regra do `CLAUDE.md`: não commitar as notas do
-utilizador): `android/AQUAVITAESEEDS-NOTES` e, na raiz, `—--------------- DADOS A INSERIR NA.txt`, que estão **em stage**, e
-`REGIÕES A AJUSTAR (...).txt` (a lista de regiões que enviaste, por rastrear). Se as quiseres no repo, commita-as tu (ou diz-me).
-Ao commitar, usar `git commit <caminhos explícitos>`. A `main` só tem a landing page em `docs/` (GitHub Pages). Sobre o `gh`, ver
-`CLAUDE.md` ("Ferramentas").
+**Ponto da situação:** o backend da 1.ª versão está fechado. **Todas as fatias do Android até agora estão feitas e validadas ao
+vivo:** 1a/1b (auth, onboarding), 2a (homepage), 2b (catálogo/filtros), 3a (popup de detalhe de uma bebida, partilhado por toda a
+app), 3b (cave: lista, "Nova cave", "Adicionar à cave" com destaque de onde a bebida já está) e 3c (ajustes de feedback: popup de
+confirmação ao duplicar numa cave, review a exigir "provada" em vez de a marcar sozinha, "Consumir" a marcar "provada", resumo e
+ecrã inteiro "Já provadas"). **Depois da 3c, o utilizador testou por conta própria (a sua conta pessoal, não a `demo_user2`) e
+apanhou 2 bugs, já corrigidos e validados ao vivo nessa mesma conta:** (a) Favoritos/Wishlist ficavam vazios/em erro
+("Required value 'id' missing") — `getFavoritos`/`getWishlist` na app esperavam `BebidaSummary` direto, mas a API sempre devolveu
+`{ bebida, data }`; (b) "INVESTIDOS"/"GARRAFAS" da Cave não atualizavam depois de guardar uma garrafa pelo popup "Adicionar à
+cave" — a lista de caves só era pedida de novo em `carregar()`/`criarCave()`/`consumir()`, não depois de guardar. Detalhe completo
+em `backend/API_ENDPOINTS.md`, "Sincronização pendente com o Android" ("correção pós-3c"). Isto fecha o **fluxo principal do
+MVP**: login → homepage → catálogo (com filtros) → detalhe de uma bebida (favoritar, avaliar — só se já provada —, adicionar à
+cave) → cave (consumir, criar, ver já provadas) → favoritos/wishlist (placeholders simples, mas agora com dados a sério). **Não
+há nenhuma fatia "a meio" neste momento** — o que falta são pontas soltas (página do produtor, perfil, o desenho dos ecrãs de
+favoritos/wishlist) e polimento (ver "Próximos passos"). Boa altura para o utilizador rever tudo com calma antes de decidir o
+que vem a seguir.
 
-**Ambiente, como ficou:** BD de dev migrada até ao patch `12`; contentor `aquavitae-oracle-xe` a correr; API parada
-(`bootRun` em `backend/`); contas de teste `demo2@aquavitae.local` (1 review na bebida 1, 1 "provada", sem avatar) e
-`demo@aquavitae.local`, ambas **sem termos aceites** (`NULL`: são anteriores aos termos, por isso `precisaAceitarTermos =
-true`). Se o Windows reiniciou: `docker compose up -d` em `database/` (e ver em `CLAUDE.md` o que fazer se o Docker Desktop
-crashar). Testes: `.\gradlew.bat test` em `backend/` (69, não precisam de BD).
+**Git:** duas branches. **`feature/api-endpoints-design`** = PR #1 (backend v1): já fundido/enviado. **`feature/android-app`** =
+criada a partir dela em 2026-09-21 para o Android. **Está tudo por commitar nesta branch** (`git status` para a lista completa; ficou
+muito grande — sugestão forte: um commit por fatia/tema, não tudo de uma vez, dado o volume acumulado). Desde o último apontamento
+aqui, para além do resto: **no backend**, `tipo`/`tanino`/`produtorRegiao` no `BebidaSummaryDto` e `?bebidaId=`/`temBebida` em
+`GET /users/me/caves` (sem mudanças de backend na fatia 3c nem na correção pós-3c — só reaproveitaram endpoints já existentes);
+**no Android**, os modelos sincronizados (`BebidaModels`/`CaveModels`/`ProdutorModels`/`UserModels`/`ReviewModels`/
+`CatalogFiltro` novo/`BebidaFormatacao` novo), a homepage (`feature/home/`), o catálogo/filtros (`feature/catalog/` reescrito), o
+popup de detalhe da bebida (`feature/bebidadetalhe/` novo), a cave (`feature/cave/` reescrito: `CaveScreen`/`CaveViewModel`/
+`NovaCaveSheet`/`AdicionarACaveSheet`/`AdicionarACaveViewModel`, este último com o popup de confirmação de duplicado),
+`feature/provadas/` (novo: `ProvadasScreen`/`ProvadasViewModel`), `ProvadaRepository.kt` (com `getProvadas` novo),
+`FavoritoRepository.kt`/`WishlistRepository.kt`/`feature/favoritos/`/`feature/wishlist/` (corrigidos para `BebidaRelacao`),
+componentes partilhados novos (`ui/components/BebidaCard.kt`, `RangePillRow.kt`), a barra de navegação
+(`ui/components/BottomNavBar.kt`), o avatar (`AvatarBadge.kt`), os assets do utilizador (`res/drawable/ic_wordmark_home.png`,
+`ic_nav_*.png`, `ic_perfil.png`) e `android/design/homepage/` + `catalogo/` + `caves/` + `logos/` + `icones/`. **Ficam de fora dos
+commits, de propósito** (regra do `CLAUDE.md`): as notas do utilizador — `android/AQUAVITAESEEDS-NOTES` e, na raiz,
+`—--------------- DADOS A INSERIR NA.txt` e `REGIÕES A AJUSTAR (...).txt` — e a linha que o Android Studio acrescentou a
+`android/gradle.properties`. Ao commitar, usar `git commit <caminhos explícitos>`, nunca `git add -A`. A `main` só tem a landing
+page em `docs/`.
+
+**Ambiente no fim da sessão:** BD de dev migrada até ao patch `13`; contentor `aquavitae-oracle-xe` a correr; **API a correr**, perfil
+`dev` (sem `mailpit`), com as credenciais do Gmail carregadas e já a servir `tipo`/`tanino`/`produtorRegiao`/`temBebida` — se
+reiniciar, ver `CLAUDE.md`, "Email de recuperação — Gmail", para voltar a carregar `backend/.env.mail` antes do `bootRun`; contentor
+`aquavitae-mailpit` ainda a correr (não é preciso para o dia a dia — `docker compose -f backend/docker-compose.mail-dev.yml down`
+para parar). **Emulador `Pixel_8` ligado, com a build mais recente instalada, sessão ativa da conta pessoal do utilizador**
+(`miguelafsmcruz@gmail.com`, não a `demo_user2` — foi essa conta que o utilizador usou para testar por conta própria depois da
+fatia 3c e onde os 2 bugs desta correção foram validados ao vivo): tem as caves reais "Vinhos 2026" (4 garrafas, 208,00€) e
+"Gins 2026" (**revertida para vazia/0,00€** — usada para validar a correção dos totais, com uma garrafa de teste da "Esporão
+Reserva Tinto 2018" a 50,00€, removida no fim via `DELETE /api/caves/{id}/bebidas/{id}`; o mesmo favorito/wishlist de teste
+nessa bebida também foram desmarcados via API, `DELETE .../favorito` e `.../wishlist` — a conta ficou tal como o utilizador a
+deixou). Conta de teste `demo2@aquavitae.local` / `password123` (username `demo_user2`, papel `Utilizador`) **continua com 3
+caves de sessões anteriores**: "Adega Principal" (id 21, 1 garrafa — Esporão Reserva Tinto 2018 ×1 em guarda; a Barca Velha 2015
+que lá estava foi consumida numa sessão anterior), "Tintos de guarda" (id 22, 1 Barca Velha 2015 em guarda até 2035) e "Brancos
+frescos" (id 23, vazia) — **ficam na BD de propósito**, dado de teste contínuo; termos repostos a `NULL` numa sessão anterior.
+Testes: backend `.\gradlew.bat test` em `backend/` (**88**, sem BD, não corridos nesta sessão — sem mudanças no backend); Android
+`testDebugUnitTest` (**53**, sem alterações à suite, ver `android/README.md`). Não corri o `database/verify/rebuild-check.sh`
+nesta sessão (não mexi no schema).
+
+**Arrancar tudo** (detalhes no `CLAUDE.md`): (1) `docker ps` — se o Oracle estiver parado, `docker compose up -d` em `database/`;
+(2) API: carregar `backend/.env.mail` (ver acima) e `.\gradlew.bat bootRun` em `backend/` (em background), confirmar com
+`curl.exe http://localhost:8080/api/lookup/categorias-bebida`; (3) emulador: Device Manager do Android Studio ou
+`emulator.exe -avd Pixel_8`; (4) compilar, instalar e ver: `android/README.md`, "Compilar, instalar e ver". Se o Windows reiniciou, ver
+no `CLAUDE.md` o que fazer se o Docker Desktop crashar.
 
 **Próximos passos, por ordem:**
-1. **Android** — sincronizar o `AquaVitaeApi.kt` com o contrato (está desatualizado: reviews, favoritos/wishlist/provadas,
-   filtros, regiões, Caves, termos, campos novos — ver o fim do `API_ENDPOINTS.md`) e construir os ecrãs por feature.
-   Proposta de ordem: **registo/login em 2 fases com o popup dos termos** (o registo envia `aceitouTermos`; no login o
-   `getMe()` diz se `precisaAceitarTermos`; o texto está em `GET /legal/termos.html`) → onboarding → catálogo → detalhe. O
-   Android tem de aceitar **URL absoluto** nas imagens (ver "Imagens" no contrato). Ecrã "Onde comprar" desenhado em
-   conversa (lista de retalhistas com disponível/indisponível, aviso de afiliação). **O registo que o Android faz hoje dá
-   400** até o popup existir (campo novo obrigatório).
-2. **1.º lote de ~30 bebidas da Awin** (em paralelo com o Android; não depende dele) — fluxo em "Como entram as bebidas"
+1. **O utilizador testa o fluxo todo no emulador, incluindo os ajustes da fatia 3c** (popup de duplicado, bloqueio da review sem
+   "provada", "Consumir" a marcar provada, resumo e ecrã "Já provadas" com a busca) **e dá feedback** — em especial as
+   **diferenças conscientes** listadas em `android/design/README.md` ("14.", "15.", "16."): a serifa aproximada, "ORDENAR" só com
+   2 opções no catálogo, os 7 tipos de vinho mostrados (o mockup só tinha 4), o preço nunca testado com dados a sério, a review só
+   com estrelas inteiras, o toque curto a abrir o mesmo popup do premido, a pílula "Vinho 2025" da cave (não modelada — o que
+   representa?), "Ver as N garrafas" sem destino (só informativo).
+2. **Página do produtor:** "VER PRODUTOR" do popup de detalhe continua sem destino — fica para a fatia 6 do plano original.
+3. **Depois:** perfil e desenhar Favoritos/Wishlist a sério a partir de um mockup (os dados já estão corretos desde a correção
+   pós-3c — só falta a UI); editar uma garrafa já na cave (o `PATCH` já existe na API e no repositório Android, sem UI); limpar
+   o esqueleto morto (`feature/detail`, `feature/reviews`, as rotas `detail/{id}`/`reviews/{id}`, já sem forma de lá chegar por
+   toque desde a fatia 3a).
+4. **1.º lote de ~30 bebidas da Awin** (em paralelo com o Android; não depende dele) — fluxo em "Como entram as bebidas"
    (logo abaixo). Escrevo então o **script de verificação do catálogo** (aprovado: mínimo por categoria = nome, categoria,
    produtor, país, teor, volume; vinho + tipo e castas; whisky + tipo e idade; gin + destilação; bebida sem linha no
-   subtype da categoria e vice-versa; e whisky com região de um país diferente do país de origem da bebida). Antes, **tu**
-   avalias os termos dos programas escolhidos na Awin (comparação de preços; uso das imagens do feed).
-3. **Termos e condições — a concluir quando tiveres o texto (tu avisas):** substitui-se
-   `backend/src/main/resources/static/legal/termos.html` (hoje é só um marcador "versão provisória") e fica a implementação
-   concluída. O texto deve incluir a maioridade 18+ e o aviso de afiliação/comissões; convém revisão jurídica. Não bloqueia o
-   Android, mas é preciso antes do lançamento (a Google Play também exige uma política de privacidade com URL público).
-4. **Adiado — "Por fazer depois":** decidido em 2026-09-21 que se trabalha nessa lista **quando a 1.ª versão da app estiver
+   subtype da categoria e vice-versa; e whisky com região de um país diferente do país de origem da bebida). Antes, **o utilizador**
+   avalia os termos dos programas escolhidos na Awin (comparação de preços; uso das imagens do feed).
+5. **Texto final dos termos, quando o utilizador o tiver:** substitui-se `backend/src/main/resources/legal/termos.txt` (hoje é um
+   texto de exemplo) — formato simples (`# ` = título de secção, parágrafos separados por linha em branco), sem mexer no backend nem
+   na app. Deve incluir a maioridade 18+ e o aviso de afiliação/comissões; convém revisão jurídica. Não bloqueia o Android, mas é
+   preciso antes do lançamento (a Google Play também exige uma política de privacidade com URL público).
+6. **Adiado — "Por fazer depois":** decidido em 2026-09-21 que se trabalha nessa lista **quando a 1.ª versão da app estiver
    pronta**. Inclui os subtypes das outras categorias (**nota:** se o 1.º lote trouxer gins/whiskies, o detalhe só mostra os
-   campos gerais da bebida, sem os atributos da categoria), o email do código de recuperação de password, a pesquisa de
-   produtores à parte, o `Page<...>` como DTO próprio, os testes com BD, a pesquisa sem distinção de acentos e o CI/Dockerfile.
+   campos gerais da bebida, sem os atributos da categoria), a pesquisa de produtores à parte, o `Page<...>` como DTO próprio, os
+   testes com BD, a pesquisa sem distinção de acentos, o CI/Dockerfile, a migração da toolchain do Android e o temporizador do código
+   de recuperação com "pedir novo" (`expiraEm` na resposta — o intervalo mínimo entre pedidos já está feito).
 
 **Como entram as bebidas (combinado em 2026-09-19):** as linhas `bebida` criam-se **à mão, em lotes** (~30), não
 automaticamente a partir do feed da Awin. Da Awin vêm os **links de compra** (uma bebida pode ter vários, de retalhistas
@@ -99,12 +147,464 @@ domain" nas definições do Pages** (aconteceu por engano uma vez e desviou o si
 - VS Code configurado com Extension Pack for Java + Gradle for Java.
 
 ### Android
-- Esqueleto de projeto criado (Compose + MVVM + Hilt + Retrofit/Moshi + DataStore), estrutura de
-  pacotes por feature, `AquaVitaeApi` com o contrato completo dos endpoints já existentes.
-- Ecrãs `auth` e `catalog` com lógica real ligada à API; os restantes são placeholders de UI já ligados
-  aos repositórios correspondentes, ainda por desenhar/implementar a sério.
+- **Esqueleto** (2026-09-12): Compose + MVVM + Hilt + Retrofit/Moshi + DataStore, pacotes por feature. Compila e corre no emulador
+  (verificado em 2026-09-21).
+- **Fatia 1a (2026-09-21): ícone, loading, login e registo** — tema, fonte Inter, componentes reutilizáveis, sessão, popup dos
+  termos; ligada à API real e validada no emulador. Ver "Android — fatia 1a", em "Em curso", e `android/README.md`.
+- **Fatia 1b (2026-09-22): recuperar password e onboarding** — 3 passos + popup, 7 ecrãs de perfil e preferências, Coil + SVG; ligada à
+  API real e validada no emulador. Ver "Android — fatia 1b", em "Em curso".
+- **Fatia 2a (2026-09-23): homepage** — cabeçalho, "Escolhido para ti", "As minhas Caves", estatísticas, produtor em destaque, barra
+  de navegação principal; ligada à API real e validada no emulador (com garrafas a sério). Ver "Android — fatia 2a", em "Em curso".
+- **Fatia 2b (2026-09-23): catálogo e popup de filtros** — lista de resultados, pesquisa, filtros completos (categoria, origem,
+  preço, rating, atributos de vinho, castas) com contagem ao vivo; ligada à API real e validada no emulador. Ver "Android — fatia
+  2b", em "Em curso".
+- **Fatia 3a (2026-09-23): popup de detalhe da bebida** — partilhado por toda a app (catálogo, caves, favoritos, ...): tabs
+  Detalhes/Reviews, favorito/wishlist/adicionar à cave, publicar review; ligada à API real e validada no emulador. Ver "Android —
+  fatia 3a", em "Em curso".
+- **Fatia 3b (2026-09-23): cave** — lista "As minhas Caves", popup "Nova cave", popup "Adicionar à cave" (com destaque das caves
+  onde a bebida já está); ligada à API real e validada no emulador. Ver "Android — fatia 3b", em "Em curso". **Com isto fecha-se o
+  fluxo principal do MVP** (login → homepage → catálogo → detalhe → cave).
+- **Fatia 3c (2026-09-23): ajustes de feedback + "Já provadas"** — popup de confirmação ao duplicar numa cave, review a exigir
+  "provada" em vez de a marcar sozinha, "Consumir" a marcar "provada", resumo de 5 na Cave + ecrã inteiro "Já provadas" (com busca
+  para adicionar uma bebida fora de qualquer cave); validada no emulador. Ver "Android — fatia 3c", em "Em curso".
+- **Correção pós-3c (2026-09-23):** 2 bugs apanhados pelo utilizador a testar por conta própria — Favoritos/Wishlist vazios/em erro
+  (`getFavoritos`/`getWishlist` com o modelo errado) e "INVESTIDOS"/"GARRAFAS" da Cave sem atualizar depois de guardar uma garrafa
+  pelo popup "Adicionar à cave"; ambos corrigidos e validados ao vivo. Ver `backend/API_ENDPOINTS.md`, "Sincronização pendente com
+  o Android".
+- Os restantes ecrãs (`detail`, `reviews`) são ainda os placeholders do esqueleto (esqueleto morto, por limpar); `wishlist` e
+  `favoritos` já leem dados a sério (corrigidos acima) mas continuam com a UI simples do esqueleto, por desenhar a partir de um
+  mockup numa fatia futura.
 
 ## Em curso 🔜
+
+### Android — como vamos construir e ligar (combinado em 2026-09-21)
+
+**Ponto de partida (verificado em 2026-09-21).** O esqueleto **compila tal como está**: `assembleDebug` deu `BUILD SUCCESSFUL` em
+2 min 14 s (JDK 21 + Gradle 8.7 + AGP 8.5.2 + Kotlin 1.9.24), com um `app-debug.apk` de 11 MB e só avisos (kapt do Moshi obsoleto,
+`Divider` renomeado, AGP 8.5.2 testado até compileSdk 34). Mas **nunca tinha sido compilado nem aberto no Android Studio** (não há
+`.idea` nem `build`). Nesta máquina: Android Studio AI-261 (o JDK dele é o **25**, que o Gradle 8.7 e o AGP 8.5.2 não suportam: no
+Studio, *Gradle JDK = 21*); o SDK só tinha a Platform 37 e o build de teste instalou a **Platform 35 e as Build-Tools 34** (o
+projeto precisa delas); **sem emulador** (criado depois, ver "Preparação"; continua a não haver `cmdline-tools`); aceleração WHPX disponível, 32 GB de RAM.
+**Não se atualiza já a toolchain** (AGP 9 / Kotlin 2 / KSP em vez de kapt): funciona e é uma migração à parte, fica para depois da
+1.ª versão ("Por fazer depois"). Receita de compilação por linha de comandos no `CLAUDE.md`.
+
+**Princípio:** fatias verticais, **ligadas à API real desde o 1.º ecrã** (o contrato já está validado; nada de dados falsos).
+
+**Cada fatia** (um fluxo de ecrãs) faz-se assim:
+1. Mandas os prints de **todos os ecrãs do fluxo de uma vez**, com o que os prints não mostram (estados vazios, erros,
+   carregamento, animações).
+2. Construo a UI (Compose) + o ViewModel + o repositório + as chamadas Retrofit, **só com os endpoints e DTOs desse fluxo** (o
+   `AquaVitaeApi.kt` está desatualizado e sincroniza-se por fatia; a lista está no fim do `API_ENDPOINTS.md`).
+3. Compilo por linha de comandos (e escrevo testes das regras e dos ViewModels onde fizer sentido).
+4. Corre no emulador contra a API local (`10.0.2.2:8080`, com o Oracle e o `bootRun` a correr); tu testas e mandas feedback.
+5. Se um ecrã pedir algo que a API não tem, **corrige-se primeiro a API** (o ciclo sequencial mantém-se) e atualiza-se o contrato.
+6. No fim de cada fatia: PLANO e contrato atualizados; commit e push só quando pedires.
+
+**Fundações (feitas uma vez, na 1.ª fatia):** o tema (cores, tipografia, formas) tirado dos prints — melhor ainda com os tokens do
+Figma —, os componentes base reutilizáveis (botão, campo de texto, pílula/chip, cartão de bebida, estrelas, barra de navegação),
+carregamento de imagens com Coil (+ SVG para os avatares, e a regra URL absoluto vs relativo), tratamento dos erros da API
+(`{ status, error, message }`), sessão (401 → volta ao login) e navegação. O ecrã "Onde comprar" (lista de retalhistas com
+disponível/indisponível e aviso de afiliação) foi desenhado em conversa e entra na fatia do detalhe.
+
+**Ordem proposta:** (1) auth: login, registo em 2 fases com o popup dos termos (`aceitouTermos`; no login o `getMe()` diz se
+`precisaAceitarTermos`; texto em `GET /legal/termos.html`) e recuperação de password; (2) onboarding: nacionalidade, avatar,
+preferências; (3) home/catálogo: lista, pesquisa e popup de filtros; (4) detalhe da bebida: reviews, onde comprar, produtor;
+(5) perfil e listas: favoritos, wishlist, provadas; (6) caves; (7) página do produtor.
+
+**Preparação (feita em 2026-09-21).** O Android Studio abre `android/` e o sync corre (Gradle JDK = JBR 21, que o Studio descarregou);
+o utilizador criou o emulador **`Pixel_8`** (Android 17 / API 37.2, x86_64) e a app do esqueleto foi **compilada por linha de
+comandos (1 min 12 s), instalada e aberta nele, com screenshot**: o ciclo **compilar → instalar → abrir → ver o ecrã** já funciona
+sem o Studio (comandos no `CLAUDE.md`), por isso consigo comparar cada ecrã com os teus prints. O esqueleto mostra o ecrã de login
+provisório (título, email, password, botão grená, "Regista-te"). **Defeitos visíveis a tratar nas fundações:** os ícones da barra de
+estado ficam invisíveis (claros sobre fundo claro: a app não trata o *edge-to-edge* do Android 15+) e o 1.º arranque tem *jank* ("Skipped
+105 frames", normal em debug, a reavaliar depois). Correção do `.gitignore` do Android (`build/` em qualquer nível; ignorava só `/build`).
+
+**O que preciso de ti:** (a) o SVG do logótipo (emblema + nome + etiqueta) e os ícones do Figma — hoje o emblema é um vetor desenhado
+à medida e o nome é texto Inter; (b) *(feito: as decisões da 1b foram fechadas em 2026-09-22)*; (c) os prints de cada fluxo seguinte.
+
+**Branch:** `feature/android-app` (criada em 2026-09-21 a partir da `feature/api-endpoints-design`; o PR #1 fica só com o backend;
+ao fundir o PR #1, faz-se rebase).
+
+### Android — fatia 1a: ícone, loading, login e registo (feita e validada no emulador, 2026-09-21)
+
+Feita a partir dos prints do utilizador. **Medido nos pixels dos prints:** grená `#8F321D`, cartão `#F8F8F8`, tinta `#1B1714`, botão
+"voltar" `#E9E9E9`, pontos do loading `#C41F21`, azul dos sliders `#1D5DFE`, escurecimento dos popups 43 % de preto; emblema de 92
+de diâmetro = anel exterior 5, intervalo 6, anel grosso 10, buraco 50.
+
+- **Fundações:** tema **só claro** (o design é claro; não segue o modo escuro do sistema), tipografia **Inter** (ficheiros copiados
+  do Android Studio, licença OFL: falta o aviso de licença antes de publicar), formas, componentes reutilizáveis em `ui/components/`
+  (logótipo em 3 variantes, campo sublinhado com rótulo flutuante, botão, cartão, `overlapTop`, popup dos termos, 5 pontos),
+  **edge-to-edge** (corrige a barra de estado invisível), ecrã de arranque do sistema, **ícone da app** (adaptativo, com versão
+  monocromática para os ícones temáticos), tradução dos erros da API para português (`{status,error,message}`), sessão. Dependências
+  novas: `core-splashscreen` e `material-icons-extended`. Os ecrãs antigos do esqueleto ficaram embrulhados em `LegacyScreen`.
+- **Loading** (`feature/loading`): logótipo horizontal + **5 pontos vermelhos que crescem e encolhem em onda**. Decide o destino: sem
+  sessão → login; com sessão → `GET /me` (token recusado → apaga a sessão e vai ao login; os termos mudaram → login; servidor
+  sem resposta → "Sem ligação ao servidor" + **TENTAR DE NOVO**). Mostra a marca pelo menos 1,2 s.
+- **Login:** "Username ou Email" + password (com olho), "Esqueci-me da password" (vai para um placeholder até à fatia 1b), "LOGIN"
+  sobreposto à margem do cartão, ligação ao registo e "TERMOS E CONDIÇÕES" (abre `/legal/termos.html` no browser). Depois do login
+  faz `GET /me`: se `precisaAceitarTermos` aparece o popup e `POST /me/termos/aceitar`.
+- **Registo (fase 1):** username, email, password, "COMEÇAR". Valida no cliente (username 3–30 sem espaços nem `@`, email, password
+  8–72; o campo com problema fica vermelho), mostra o popup dos termos e **só cria a conta ao aceitar** (`aceitouTermos: true`);
+  "Agora não" volta ao formulário sem criar nada. Erros da API em português (409: fica vermelho o campo em conflito). Depois do
+  registo vai para o onboarding (ainda o placeholder do esqueleto).
+- **Backend (mudou por causa do ecrã):** o campo diz "Username ou Email", por isso o login da API passou a aceitar `identificador`
+  (username OU email), sem distinguir maiúsculas e com `trim`; o registo também verifica a unicidade sem maiúsculas (senão "Ana" e
+  "ana" seriam duas contas e o login ficaria ambíguo). Ver `API_ENDPOINTS.md`.
+- **Validado** (emulador `Pixel_8` + API + Oracle, tudo pelo `adb`): arranque (ecrã do sistema → loading → login); login com password
+  errada (erro vermelho da API) e certo com `Demo_User2` (username em maiúsculas) → popup dos termos → data gravada na BD → catálogo
+  com dados reais; registo com formulário vazio, email inválido, "Agora não" (BD sem conta nova), aceitar (conta criada, sessão
+  guardada, onboarding) e conta já existente (409); sem servidor (mensagem + "Tentar de novo" volta a funcionar). **10 testes
+  unitários Android** (validação do registo) e **69 do backend**. Dados de teste apagados (conta `teste_ecra`; `demo2` reposta).
+- **Escolhas minhas face aos prints (diz-me se preferes o original):** fundo do loading branco (o cinzento `#D9D9D9` é a cor por
+  omissão do Figma, deve ser um marcador); olho da password grená (o print tem um laranja/amarelo); o nome "AQUAVITAE" é texto Inter
+  (aproximação: falta o SVG); **popup dos termos** desenhado por mim no estilo do "Password alterada!" (não estava nos prints);
+  rótulos que sobem ao escrever (em vez de desaparecerem); sombra suave nos botões grandes; o login vai para o catálogo (placeholder)
+  e só o registo passa pelo onboarding.
+
+### Android — fatia 1b: recuperar password e onboarding (feita e validada no emulador, 2026-09-22)
+
+Feita a partir dos 13 prints e das notas do utilizador (em `android/design/`). Detalhe dos ecrãs, do que foi pedido e das diferenças
+face aos prints em `android/design/README.md`; componentes, estrutura e convenções em `android/README.md`.
+
+**Decisões fechadas com o utilizador (2026-09-22), todas na opção recomendada:**
+1. **Recuperar por username ou email** → os 3 endpoints passaram a aceitar `identificador` (como o login; helper partilhado
+   `findByIdentificador`); o email tapado só aparece a quem escreveu o email.
+2. **Bandeira da nacionalidade** → **código ISO na BD**: `utilizador_nationality.nationality_codigo_pais` (patch `13` + `01_tables.sql`
+   + seed; `/lookup/nacionalidades` devolve `{ id, nome, codigoPais }`); a app desenha a bandeira (emoji).
+3. **Sliders** → um nível enviado como `min = max`; "IGNORAR" não envia nada.
+4. **Castas** (surgiu ao implementar: a Touriga Nacional caía na posição 253 de 277) → **6 castas em destaque no topo**, as do desenho e
+   pela ordem dele, e depois as alfabéticas; a app mostra 10 e, ao chegar ao fim, mais 10.
+
+**Backend (mudou por causa dos ecrãs):** recuperação de password por `identificador`; `codigoPais`; destaques em `/lookup/castas`
+(`CASTAS_EM_DESTAQUE`); `PUT /api/users/me` passou a validar os tamanhos (400 em vez de um erro 500 da BD). Testes do backend: **71**
+(+2 das castas). `rebuild-check.sh`: a BD reconstruída do zero é idêntica à de dev.
+
+**Android:**
+- **Recuperar password** (`feature/recovery`): 3 passos no mesmo cartão (identificar → código de 6 dígitos → password nova) e popup "Password
+  alterada!" sobre o login. Teclado numérico automático, gesto de voltar por passos, erros em português com o campo pintado.
+- **Onboarding** (`feature/onboarding`): 7 ecrãs — nome; nacionalidade (com bandeira) e descrição; avatar (pílulas de categoria + grelha 3×3
+  de SVG); tipos de bebida (escolha múltipla); doçura e acidez (slider vertical); castas (só se escolheu vinho; lista de 10 em 10 com
+  barra de deslocamento). Tudo opcional; **guarda no fim** (`PUT /users/me` e `PUT /users/me/preferencias`, só o que foi respondido);
+  depois vai para o catálogo.
+- **Técnico:** **Coil 2.7 + SVG** (carregador em `AquaVitaeApplication`, `resolveImageUrl`); `AquaVitaeApi.kt` sincronizado com a
+  recuperação, o perfil, as preferências e os lookups; `LookupRepository`; `LookupState`/`LookupContent` para as listas da API; componentes
+  novos (`PillCard`, `NavRow`, `OptionRow`, `LevelSlider`, `CodeInput`, `FlagChip`, `PasswordChangedDialog`, ...); o escurecimento dos
+  popups passou a 43 % (`DialogScrim`, confirmado no pixel: `#919191`). **39 testes unitários** (10 antigos + 29 novos).
+- **Defeitos apanhados a testar ao vivo e corrigidos:** a tecla "Seguinte" do teclado parava no olho da password em vez de ir para o campo
+  seguinte (`UnderlineField`); os botões de navegação ficavam tapados pelo teclado no ecrã do código; o escurecimento dos popups era 60 %.
+
+**Validação** (emulador `Pixel_8` + API + Oracle; conta descartável, apagada no fim): recuperação por username em maiúsculas e por email;
+código errado ("Código inválido"); passwords diferentes; password alterada (código marcado `usado = 1` na BD) e popup no login; gesto de
+voltar por passos e saída no login; registo → popup dos termos → onboarding completo (Ana Silva, Portuguesa, descrição, avatar, Vinho e Gin,
+doçura "Doce", acidez ignorada, Touriga Nacional e Baga) — a BD ficou exatamente com isso (doçura 4/4, acidez vazia); 2.ª passagem a ignorar
+quase tudo (perfil todo vazio, só acidez 2/2 e Whisky, zero castas: sem vinho o fluxo acabou na acidez); seta para trás da acidez para a
+doçura (ignorada, por isso sem resposta); paginação das castas a deslizar. **Não exercitado ao vivo:** o estado de erro das listas ("TENTAR DE NOVO") e a falha ao
+guardar no último ecrã (a API tinha de cair a meio); estão cobertos só por leitura de código e pelos testes das regras.
+
+**Em aberto / a rever com o utilizador:** as diferenças face aos prints (`android/design/README.md`); o SVG do logótipo e os ícones do
+Figma; o texto final dos termos (ver "Email de recuperação e popup dos termos", a seguir — o email já está ligado a sério).
+
+### Email de recuperação e popup dos termos (feito e validado ao vivo, 2026-09-22)
+
+Pedido do utilizador no fim da sessão da fatia 1b: fechar o dia com o envio real do código de recuperação por email e o popup do
+texto dos termos (por agora com Lorem ipsum). Detalhe técnico em `backend/API_ENDPOINTS.md` ("Recuperação de password por email",
+"Termos e condições") e `CLAUDE.md` (a receita do Mailpit, e um "gotcha" novo sobre `Dialog` a ecrã inteiro no Compose).
+
+- **Backend — email:** `EmailService` (Spring Mail, `spring-boot-starter-mail`) envia o código em texto e HTML (sem ligações,
+  só o código; nome do destinatário escapado no HTML). Servidor por `SPRING_MAIL_HOST`/`PORT`/`USERNAME`/`PASSWORD`
+  (`AQUAVITAE_MAIL_FROM_ADDRESS`/`NAME` para o remetente) — **nunca no repositório**; sem `SPRING_MAIL_HOST`, em dev o código fica só
+  no log (como antes), fora de dev só um aviso. Envio em `@Async`, para o pedido HTTP não esperar pelo SMTP nem denunciar pelo tempo
+  de resposta se a conta existe. **Anti-abuso, pedido do utilizador:** um pedido novo invalida os códigos anteriores por usar, e só
+  se gera código (e email) novo passado `aquavitae.recuperacao.intervalo-minimo-segundos` (60s) desde o último pedido da mesma
+  conta — dentro do intervalo continua a responder 202. `PasswordResetRegras.kt` (3 testes) + `RecuperacaoPasswordEmail.kt` (6 testes).
+- **Testado sem enviar nada real, depois a sério:** primeiro com um **Mailpit** local (`backend/docker-compose.mail-dev.yml`, perfil
+  Spring `mailpit`) — confirmei ao vivo (`bootRun` + `curl`/PowerShell): o email chega, assunto e corpo em PT-PT corretos, HTML bem
+  formatado (visto no browser pelo `Claude_Browser`); um 2.º pedido imediato não gera 2.º email (intervalo mínimo); passado o
+  intervalo, gera um código novo e o antigo passa a dar 401 "Código inválido" (invalidado). **Depois, com o Gmail real** (o
+  utilizador criou `aquavitaerecovery@gmail.com` e gerou a app password, guardada em `backend/.env.mail`, fora do git — eu nunca a
+  vi): conta descartável com esse email, pedido de recuperação disparado, log confirma o envio, e o utilizador confirmou o email a
+  chegar à caixa real. **Concluído.**
+- **Backend — termos:** o texto passou de página estática (`static/legal/termos.html`) para um ficheiro simples,
+  `src/main/resources/legal/termos.txt` (`# ` = título; parágrafos por linha em branco), lido por `TermosTexto.kt` (8 testes) e
+  servido em dois formatos a partir da mesma fonte: `GET /api/legal/termos` (JSON, para o popup da app) e `GET /legal/termos.html`
+  (a página pública, inalterada na URL). `termos.txt` tem hoje um texto de exemplo (Lorem ipsum, 4 secções) — combinado ficar assim
+  até o utilizador dar o texto final.
+- **Android — `TermsSheet`:** popup grená que sobe de baixo com o texto (`LegalRepository` + `TermsViewModel`, cache em memória
+  depois do 1.º pedido), a substituir os antigos "abre `/legal/termos.html` no browser" do login, registo e recuperação de password.
+  Fecha-se pelo botão "FECHAR", a arrastar o cabeçalho para baixo, a tocar fora ou com o gesto de voltar — as 4 validadas ao vivo.
+  Feito sobre `Dialog` (não `ModalBottomSheet`, que não desenhava por baixo da barra de estado): apanhados e corrigidos dois defeitos
+  do `Dialog` a ecrã inteiro no Compose (a janela dimensiona-se por omissão ao conteúdo; `navigationBarsPadding()` dentro do `Dialog`
+  não recebia o inset certo e o botão ficava tapado pela barra de navegação, sem erro nenhum — só visível comparando com o esperado).
+  Ambos documentados no `CLAUDE.md` para não se repetirem. Estado por defeito: a carregar (5 pontos) / erro com "TENTAR DE NOVO" / o
+  texto, tudo ligado à API real.
+- **Validado ao vivo** (emulador `Pixel_8` + API + Mailpit): recuperação de password ponta a ponta com o código a chegar por email
+  real (Mailpit) em vez de por log; popup dos termos aberto a partir do rodapé do login, com as 4 formas de fechar testadas.
+
+### Android — fatia 2a: homepage (feita e validada ao vivo, 2026-09-23)
+
+Pedido do utilizador a abrir a sessão seguinte: o mockup da homepage (uma imagem só), o logótipo em `android/design/logos/`
+(aplicado com fundo transparente) e os ícones da barra inferior em `android/design/icones/`. Detalhe completo do que foi pedido, do
+que ficou feito e das diferenças conscientes em `android/design/README.md`, "14. Homepage" — aqui só o resumo. Prints e notas
+copiados para `android/design/homepage/` antes de construir, como de costume.
+
+**Backend:** nada por fazer para esta 1.ª versão — a homepage usa só endpoints já existentes (`GET /users/me`,
+`GET /lookup/categorias-bebida`, `GET /bebidas` com filtro por categoria, `GET /caves` e `GET /caves/{id}`,
+`GET /produtores/destaque`). O `getFavoritos`/`getWishlist` desatualizados (ver `backend/API_ENDPOINTS.md`) não são usados por este
+ecrã, por isso não bloquearam.
+
+**Android:**
+- **Modelos sincronizados primeiro** (`BebidaModels`, `CaveModels`, `ProdutorModels`, `UserModels`) com o `BebidaSummaryDto` /
+  `CaveResponse` / `CaveDetailResponse` / `UtilizadorMeDto` atuais do backend — trouxe campos novos (`precoDesde`,
+  `retalhistaNome`, `corpo`, as estatísticas do perfil, o estado de cada garrafa na cave) e obrigou a rever os ecrãs que já usavam
+  esses modelos (`CatalogScreen`, `DetailScreen`, `WishlistScreen`, `FavoritosScreen`, `CaveScreen` — só ajustes de nulidade, sem
+  mudar comportamento).
+- **`feature/home/`** (`HomeUiState`, `HomeViewModel`, `HomeScreen`): cabeçalho (saudação + data em PT-PT + avatar), pesquisa (só o
+  botão — sem ecrã próprio ainda), "Escolhido para ti" (pílulas de categoria + 2 cartões, por rating desc.), "As minhas Caves"
+  (pílulas de cave + lista de garrafas da selecionada + "+"), estatísticas do perfil (3 números), produtor em destaque. Carregamento
+  independente por secção: só o `/users/me` bloqueia o ecrã (erro com "TENTAR DE NOVO"); sugestões/caves/produtor falham em
+  silêncio para vazio/`null` sem arrastar o resto.
+- **Barra de navegação principal** (`ui/components/BottomNavBar.kt`): 5 ícones (Catálogo, Cave, Home ao centro elevado, Wishlist,
+  Favoritos), PNGs do Figma tingidos por `ColorFilter`/`Icon(tint=...)` (funciona seja qual for a cor original do PNG, desde que o
+  alfa defina a forma — não foi preciso pedir variantes de cor). `AppNavHost.kt`: login/registo/onboarding passam a ir para `HOME`
+  em vez de `CATALOG`; um `TabScreen` novo embrulha os 5 ecrãs principais com a barra sobreposta (`popUpTo(HOME){saveState=true}`).
+- **`AvatarBadge.kt`** (novo, reutilizável): avatar SVG do onboarding ou, sem avatar, iniciais (nome+apelido, só nome, ou 2 letras
+  do username) — **defeito apanhado a escrever os testes**: username vazio (`""`) não caía no `"?"`; corrigido com `.ifEmpty { null }`.
+- **Assets:** logótipo com o fundo branco removido por chroma-key em PowerShell (`ic_wordmark_home.png`) e os 5 ícones da barra
+  tingidos, todos copiados para `res/drawable/`. Fonte serifada dos títulos ("Escolhido para ti", saudação em itálico, nome da
+  bebida): **aproximação com `FontFamily.Serif` do sistema** — a fonte exata do Figma é desconhecida, fica em aberto.
+- **Decisão tomada sem parar para perguntar** (ainda de pé): "Escolhido para ti" usa
+  `GET /bebidas?categoriaIds=X&sort=ratingMedio,desc&size=2` (não um endpoint de "sugestões" dedicado, que não existe com esse
+  filtro). A linha de atributos do cartão, que na 1.ª parte da sessão mostrava só "VINHO • ENCORPADO" por faltar `tipo` no
+  `BebidaSummaryDto`, **foi resolvida na fatia 2b** (`tipo`/`tanino` acrescentados à API + `BebidaCard` extraído para um
+  componente partilhado com uma fórmula própria — ver "Android — fatia 2b").
+- **Testes:** **45** unitários nesta parte (39 + 6 do `AvatarBadgeTest`; passou a 53 na fatia 2b). Compilou (`assembleDebug`) à
+  primeira tentativa, sem erros.
+
+**"Ver mais sugestões" e "As minhas Caves" fechados na 2.ª parte da sessão (2026-09-23):** o link "Ver mais sugestões" (mockup) não
+tinha destino nem aparecia no ecrã — acrescentado ao `SectionHeader` de "Escolhido para ti" (o mesmo padrão já usado em "As minhas
+Caves" → "Todas as caves"), a ir para o `catalog` (mesmo destino da pesquisa, sem filtro pré-aplicado — o catálogo a sério com o
+filtro já escolhido fica para a fatia 2b). Para validar "As minhas Caves" com garrafas a sério, criei pela API uma cave para
+`demo_user2` (`Adega Principal`, id 21) com 2 garrafas — uma "pronta a abrir" (`janelaInicio` no passado) e outra "em guarda"
+(`janelaInicio` no futuro) — para exercitar os dois estados do `CaveDetailResponse`. Fica na BD de propósito como dado de teste.
+
+**Validado ao vivo** (emulador `Pixel_8` + API real, conta `demo2@aquavitae.local`): login → homepage com saudação, avatar e
+estatísticas reais; troca de categoria em "Escolhido para ti" e os cartões a atualizar; "Ver mais sugestões" a abrir o catálogo;
+"As minhas Caves" com as 2 garrafas reais (quantidade, nome, categoria + janela de consumo formatada, preço `/UN`) — a lista
+concatena `prontasAAbrir` + `emGuarda` sem separador visual entre estados, como esperado; navegação entre os 5 separadores da barra
+inferior mantendo o estado (`saveState`/`restoreState`); produtor em destaque a aparecer quando existe um com bebidas.
+
+**Em aberto / por fazer:** "VER PRODUTOR" e o "+" da cave continuam sem destino próprio — dependem de ecrãs que ainda não existem
+(página do produtor, adicionar à cave), propositadamente fora desta fatia; decidir a pílula "Vinho 2025"; a fonte serifada exata. A
+homepage em si está pronta para revisão do utilizador.
+
+### Android — fatia 2b: catálogo e popup de filtros (feita e validada ao vivo, 2026-09-23)
+
+Pedido do utilizador logo a seguir a fechar a fatia 2a, com dois mockups (`android/design/catalogo/`) e uma nota escrita dentro do
+próprio mockup do popup, explicando o mapeamento dos campos a lookups da BD. Detalhe completo (o que foi pedido, o que ficou feito,
+as diferenças conscientes) em `android/design/README.md`, "15. Catálogo / Filtros" — aqui só o resumo.
+
+**Backend:** quase nada por fazer — `GET /api/bebidas` **já suportava desde a fatia 4** todos os parâmetros que o popup de filtros
+precisa (`categoriaIds`, `paisId`, `regiaoIds`, `precoMin/Max`, `ratingMin`, `acidezMin/Max`, `docuraMin/Max`, `corpoId`, `taninoId`,
+`tipoId`, `castaIds`), e todos os lookups também já existiam (`/lookup/paises`, `/lookup/regioes`, `/lookup/vinho/{corpos,taninos,
+tipos}`) — só não estavam ligados ao Android. **Único acrescento:** `tipo`, `tanino` e `produtorRegiao` no `BebidaSummaryDto` (os
+dois primeiros já existiam em `Vinho`, só não estavam expostos no resumo; o terceiro é uma navegação LAZY extra,
+`bebida.produtor?.regiao?.nome`, o mesmo padrão já usado para `produtorNome`). Backend reiniciado a meio da sessão para carregar.
+
+**Android:**
+- **`CatalogFiltro.kt`** (novo, `data/model/`): espelha o `BebidaFiltro` do backend — um campo por filtro, mais `totalAtivos`
+  (para o "LIMPAR N") e `limpo()` (mantém só a categoria).
+- **`CatalogViewModel.kt`/`CatalogUiState`** (reescrito): guarda um filtro **aplicado** (o que a lista usa) e um **rascunho** (o
+  que o popup edita) — só "Ver N bebidas" copia rascunho → aplicado; fechar de outra forma descarta. Uma contagem ao vivo no botão
+  ("Ver N bebidas") pede a mesma pesquisa com `size=1` a cada edição, com 350ms de atraso (`Job` cancelado e relançado, não um
+  operador `debounce` de Flow — mais simples de acertar). Também trata paginação ("Carregar mais", 20 de cada vez) e o sort.
+- **`FiltrosSheet.kt`** (novo): o popup, sobre `Dialog` como o `TermsSheet` (`DialogScrim`/`DialogFillScreen`), mas sem arrasto
+  para fechar (simplificação — o conteúdo já rola por dentro). Categoria (escolha única), origem (país + região, região só
+  aparece depois de escolher país), preço (`RangeSlider` do Material3), rating mínimo, e, só com "Vinho", os atributos do vinho:
+  acidez/doçura (`RangePillRow`, novo), tipo/corpo (pílulas) e castas (pesquisa + pílulas removíveis).
+- **`RangePillRow.kt`** (novo, `ui/components/`): o seletor de intervalo 1–5 por toques (sem arrastar) — tocar noutro nível estica
+  o intervalo até lá, tocar dentro do intervalo já escolhido fecha-o outra vez a um só nível.
+- **`CatalogScreen.kt`** (reescrito, substitui o placeholder do esqueleto): título serifado, pesquisa com ícone de filtro
+  (`Icons.Filled.FilterList`, já uma dependência — não precisei de pedir um ícone novo), pílulas de categoria sempre visíveis,
+  contagem + "ORDENAR" (menu), pílulas removíveis dos filtros ativos, lista de cartões, "Carregar mais N bebidas".
+- **`BebidaCard` tornou-se partilhado** (`ui/components/BebidaCard.kt`, saiu do `HomeScreen.kt`) com `BebidaSummary.linhaAtributos()`
+  (`data/model/BebidaFormatacao.kt`, 8 testes): até 2 atributos por prioridade (corpo → tanino-se-tinto-senão-acidez → doçura) —
+  substitui a simplificação "categoria + corpo" da fatia 2a nos dois ecrãs de uma vez.
+- **Defeito apanhado e corrigido a testar ao vivo:** o `BebidaCard` tem altura fixa (108dp); com `tipo`/`tanino` a linha de
+  atributos passou a ter 3 segmentos e, nalgumas bebidas, quebrava para 2 linhas — empurrava o preço para fora do cartão (sem
+  *crash*, só visual). Corrigido com `maxLines = 1` + `TextOverflow.Ellipsis`, como as outras linhas do cartão já faziam. Ver
+  `CLAUDE.md` para o "gotcha" completo (altura fixa + texto de comprimento variável).
+- **Testes:** **53** unitários (45 + 8 do `BebidaFormatacaoTest`). Compilou (`assembleDebug`) e correu ao vivo sem *crashes*.
+
+**Validado ao vivo** (emulador `Pixel_8` + API real, conta `demo2@aquavitae.local`): abrir o popup de filtros a partir do catálogo;
+escolher região "Douro" + rating "4+" (contagem ao vivo "Ver 1 bebidas" a atualizar); aplicar (a lista filtra para 6 bebidas, chip
+"Douro ×" aparece); remover a pílula (volta às 9); trocar de categoria para "Whisky" na lista principal (0 bebidas, "Sem bebidas com
+estes filtros.", sem rebentar). **Não validado ao vivo:** "Carregar mais" (o catálogo de teste cabe sempre numa página) e o
+`RangeSlider` do preço aplicado a sério (só visto a abrir, nunca com um intervalo estreito real).
+
+**Em aberto / por fazer:** ordenar por preço (pede trabalho no backend, `precoDesde` não é uma coluna ordenável pelo `Pageable`
+diretamente); os 7 tipos de vinho da API vs. os 4 do mockup (mostrei os 7, ver "Diferenças conscientes"); o preço nunca testado
+com dados a sério. O catálogo em si está pronto para revisão do utilizador.
+
+### Android — fatia 3a: popup de detalhe da bebida (feita e validada ao vivo, 2026-09-23)
+
+Pedido do utilizador logo a seguir a fechar a fatia 2b, com 5 mockups de uma vez (`android/design/caves/`): a Cave (lista, "Nova
+cave", "Adicionar à cave") e o **popup de detalhe de uma bebida** (tabs "Detalhes"/"Reviews"), partilhado por toda a app — "abre-se
+ao pressionar num item duma bebida no catálogo (após pesquisa, antes de pesquisa, nas caves, nos favoritos, etc.)". **Só o popup de
+detalhe ficou feito nesta 1.ª parte** (é a peça mais reutilizada, e a Cave também depende dele — o "+" que adiciona à cave vive lá).
+Detalhe completo em `android/design/README.md`, "16." — aqui só o resumo.
+
+**Backend:** um acrescento pequeno — `tipo`, `tanino` e `produtorRegiao` já tinham entrado no `BebidaSummaryDto` na fatia 2b, mas o
+popup também precisava do `ReviewsResponse` (já existia desde a fatia de reviews, só a app é que estava desatualizada) e de marcar
+"provada" antes de avaliar (`POST /bebidas/{id}/provada`, também já existia). **Nada de novo no backend.**
+
+**Android:**
+- **Interação:** o mockup só define o toque premido; sem outro destino para o toque curto, os dois abrem o mesmo popup
+  (`BebidaCard.combinedClickable`, `ExperimentalFoundationApi`) — decisão documentada como diferença consciente. **Substitui** as
+  antigas rotas `detail/{id}`/`reviews/{id}` (ficam no código como esqueleto morto, sem forma de lá chegar por toque).
+- **`feature/bebidadetalhe/`** (`BebidaDetalheSheet`, `BebidaDetalheViewModel`, `BebidaDetalheUiState`): cabeçalho (imagem,
+  categoria+tipo+ano, nome, produtor•região, rating); linha de ações (preço+retalhista se houver, favorito, wishlist, "+" adicionar
+  à cave — otimistas, revertem se o pedido falhar); tabs "Detalhes" (teor/volume/país/ano, perfil sensorial em barras, pílulas de
+  corpo/tanino/tipo, castas, cartão do produtor) e "Reviews" (a tua review — 5 estrelas + comentário + publicar —, distribuição por
+  estrela, lista "Da comunidade" com avatar/nome/data relativa/rating/comentário).
+- **Marca "provada" sozinho antes de publicar** (`POST .../provada`, idempotente) — o mockup não mostra esse passo, é o
+  pré-requisito que a API já exigia desde a fatia de reviews (409 sem ele).
+- **Sem rota:** `hiltViewModel(key = "bebida-detalhe-$bebidaId")` (uma chave por bebida, sem injeção assistida do Hilt) +
+  `carregar(bebidaId)` por `LaunchedEffect`, em vez do `init {}`/`SavedStateHandle` habituais — ver `CLAUDE.md`.
+- **`BebidaCard` e `linhaAtributos()` (fatia 2a/2b) validados na prática:** os cartões já mostravam "VINHO TINTO • CORPO ENCORPADO •
+  TANINO ELEVADO" corretamente antes mesmo de construir este popup — a fórmula resolveu-se bem.
+- **Testes:** sem testes novos (a lógica do ViewModel pediria `kotlinx-coroutines-test`, ainda não configurado — dívida já
+  registada). Compilou e correu ao vivo sem *crashes*.
+
+**Defeitos apanhados e corrigidos a construir/testar ao vivo** (detalhe em `android/design/README.md`, "16."): `data class Ready`
+sem `: BebidaDetalheUiState` (esqueci o supertipo — Kotlin só avisa bem mais tarde, com erros de tipo confusos; ver `CLAUDE.md`);
+`Modifier.weight()` usado fora de `ColumnScope` (função `@Composable` separada não herda o scope do `Column` que a chama); pílulas
+de atributos sem `LazyRow` (texto a partir-se, o mesmo bug já visto no `FiltrosSheet`); a média grande da tab "Reviews" calculada a
+partir da distribuição arredondada por estrela em vez de `bebida.ratingMedio` (dava "5,0" em vez de "4,5"); o cabeçalho por
+atualizar depois de publicar uma review (só a lista de reviews recarregava, não a bebida).
+
+**Validado ao vivo** (emulador `Pixel_8` + API real, conta `demo2@aquavitae.local`): popup aberto por toque premido a partir da
+homepage; as duas tabs; alternar favorito e wishlist (cor muda logo, persiste ao reabrir); publicar uma review nova no "Vinha Grande
+Tinto 2019" (0 reviews antes) — a distribuição, o total e o cabeçalho todos corretos, confirmado por `GET /api/bebidas/2`
+(`ratingMedio: 4, totalReviews: 1`).
+
+**Em aberto / por fazer, na altura:** a Cave (lista, "Nova cave", "Adicionar à cave" — feita a seguir, ver "fatia 3b"); meias-estrelas
+na review (só inteiras, continua por fazer); limpar `feature/detail`/`feature/reviews` (esqueleto morto, continua por fazer).
+
+### Android — fatia 3b: cave (feita e validada ao vivo, 2026-09-23)
+
+Continuação direta do mesmo pedido da fatia 3a (os 5 mockups de uma vez), com um pedido extra do utilizador ao retomar: no popup
+"Adicionar à cave", **destacar as caves onde aquela bebida já está**. Detalhe completo em `android/design/README.md`, "16." (secção
+"Cave: lista, 'Nova cave' e 'Adicionar à cave'") — aqui só o resumo. Com esta fatia fecha-se o **fluxo principal do MVP**.
+
+**Backend:** um acrescento pequeno — `GET /api/users/me/caves?bebidaId=` (opcional) acrescenta `temBebida: Boolean` a cada
+`CaveResponse`, reaproveitando a mesma query em lote já feita para os totais (sem pedidos extra à BD). `POST .../consumir` já
+existia desde a fatia 4 do backend, só não estava ligado ao Android.
+
+**Android:**
+- **`feature/cave/CaveScreen.kt`** (reescrito): pílulas de cave + "+" (popup "Nova cave"), 3 estatísticas da cave escolhida,
+  "Prontas a abrir" com "Consumir" (recarrega a cave depois), "Em guarda" com "ORDENAR" (preço/janela).
+- **`NovaCaveSheet.kt`** (novo): nome + descrição opcional, com contadores — reutilizado tal e qual dentro do
+  `AdicionarACaveSheet` ("+ nova cave", sem sair do popup).
+- **`AdicionarACaveSheet.kt`** (novo, do "+" do popup de detalhe): pílulas de cave com **duas marcas independentes** — cheia a
+  grená se escolhida para este "adicionar", com ✓ se a bebida já lá está (`temBebida`); quantidade, preço, data de aquisição
+  (`DatePicker` do Material3, 1.ª vez usado no projeto), janela de consumo (2 campos de ano), notas.
+- **Os dois popups empilham-se** (detalhe fica aberto por baixo do "Adicionar à cave") em vez de um fechar o outro.
+- **Testes:** sem testes novos (mesma dívida do `kotlinx-coroutines-test`). Compilou e correu ao vivo sem *crashes*.
+
+**Defeito apanhado e corrigido a testar ao vivo (condição de corrida):** `CaveViewModel.criarCave` fazia `carregar()`
+(assíncrono) e logo a seguir `selecionarCave(nova.id)` — a resposta do `carregar()` podia chegar depois e repor a seleção para
+a 1.ª cave da lista. A cave nova ficava criada mas não selecionada, sem erro nenhum. Corrigido fazendo tudo na mesma corrotina,
+pela ordem certa. Ver `CLAUDE.md` para o "gotcha" completo.
+
+**Validado ao vivo** (emulador `Pixel_8` + API real, conta `demo2@aquavitae.local`): "Consumir" numa garrafa pronta (quantidade e
+estatísticas a recalcular ao vivo); criar uma cave nova pelo "+" da Cave (selecionada, depois do conserto); "Adicionar à cave" a
+partir do popup de detalhe da "Barca Velha 2015" — "Adega Principal" com ✓ e selecionada, "Tintos de guarda" sem ✓; escolher
+"Tintos de guarda", preencher preço e janela (2030–2035), guardar — confirmado por `GET /api/caves/22`
+(`janelaInicio: "2030-01-01"`, `janelaFim: "2035-12-31"`, `precoPago: 34.5`); criar uma 2.ª cave nova a partir do próprio popup
+"Adicionar à cave" (também selecionada de imediato).
+
+**Em aberto / por fazer:** "Ver as N garrafas" sem destino (a lista já mostra tudo, sem paginação); mover uma garrafa entre caves
+(não pedido nos mockups); editar uma garrafa já na cave (o `PATCH` existe na API e no repositório, sem UI); limpar
+`feature/detail`/`feature/reviews` (esqueleto morto).
+
+### Android — fatia 3c: ajustes de feedback + "Já provadas" (feita e validada ao vivo, 2026-09-23)
+
+O utilizador testou a fatia 3 completa ("Já testei tudo e adorei!") e devolveu 5 ajustes, com um mockup novo ("Bebidas já
+provadas") e 3 imagens de contexto (Favoritos/Wishlist/Caves — não pedidas para construir agora). Detalhe completo em
+`android/design/README.md`, secção "Ajustes de feedback + 'Já provadas'" — aqui só o resumo.
+
+**Backend:** nenhuma mudança — tudo já existia (`GET /users/me/provadas?categoriaId=&ano=`, `POST/DELETE .../provada`,
+`POST .../consumir`).
+
+**Android:**
+1. **Popup de confirmação ao duplicar numa cave:** `AdicionarACaveSheet` mostra um `AlertDialog` ("Já tens esta bebida
+   aqui" / "Adicionar na mesma" / "Cancelar") se a cave escolhida já tiver a bebida (`temBebida`), em vez de gravar direto.
+2. **Review a exigir "provada" (reversão da fatia 3a):** publicar uma review deixou de marcar "provada" sozinho; agora
+   bloqueia o formulário com um aviso se `isProvada == false`. Regra do utilizador: "uma bebida só pode ter review de um
+   utilizador quando ele já a tem na sua lista de consumidos e somente nessa lista" — nunca automaticamente ao avaliar.
+3. **"Consumir" também marca "provada"** (`CaveViewModel.consumir` chama `addProvada` a seguir, idempotente) — o 2.º
+   caminho é adicionar diretamente à lista de já provadas (ponto 5).
+4. **Resumo "Já provadas" na Cave:** até 5 bebidas por baixo de "Em guarda", com "ABRIR MAIS" → ecrã inteiro.
+5. **Ecrã "Já provadas" novo** (`feature/provadas/`): filtros (nota/categoria), agrupamento por mês com "carregar mais
+   antigas", e uma **barra de pesquisa fora do mockup** (pedida explicitamente pelo utilizador) para adicionar uma bebida
+   que não esteve em nenhuma cave.
+
+**Resposta à pergunta do utilizador ("como surgem as garrafas 'Em guarda'"):** é o `EstadoCaveBebida` do backend
+(`CaveRegras.kt`, sem mudanças): sem janela de consumo, ou com `janelaInicio` ainda no futuro → `EM_GUARDA`; dentro da
+janela → `PRONTA`; depois de `janelaFim` sem consumir → `EM_ATRASO`. Ou seja, cai em "Em guarda" sempre que não há
+informação (ou é cedo demais) para dizer que já está pronta a abrir.
+
+**Defeito apanhado e corrigido a testar ao vivo:** as linhas de garrafa da Cave (`GarrafaRow`) e o novo `ProvadaResumoRow`
+não tinham nenhum toque/premido ligado ao popup de detalhe — o mockup original da fatia 3 já dizia "nas caves" como um dos
+sítios onde o popup abre, mas a ligação nunca tinha sido feita. Corrigido com o mesmo padrão do `BebidaCard`
+(`combinedClickable`), `onBebidaClick` passado de `CaveScreen` até às duas linhas. Ver `CLAUDE.md` para a lição geral.
+
+**Testes:** sem testes novos (mesma dívida do `kotlinx-coroutines-test`). `assembleDebug testDebugUnitTest` continua com 53,
+todos a passar.
+
+**Validado ao vivo** (emulador `Pixel_8` + API real, conta `demo2@aquavitae.local`): as 5 alterações, uma a uma — popup de
+duplicado no "Esporão Reserva Tinto 2018" (já em "Adega Principal"); bloqueio da review no mesmo bebida (`isProvada: false`);
+"Consumir" na "Barca Velha 2015" (idempotente, já estava provada de uma review anterior); resumo "Já provadas" na Cave
+("Vinha Grande Tinto 2019 · 4,0", "Barca Velha 2015 · 4,5"); ecrã inteiro com filtros, agrupamento por mês e busca (adicionou
+"Gin 44°" pela busca, depois removido — dado de teste, não fica na BD).
+
+**Em aberto / por fazer:** o mockup "Bebidas já provadas" não foi copiado para `design/caves/` (chegou depois de um resumo
+de contexto desta sessão, sem ficheiro em disco); Favoritos/Wishlist continuam por construir (não pedidos nesta fatia); os
+antigos `DetailScreen`/`ReviewsScreen`/rotas continuam como código morto.
+
+### Correção pós-3c: favoritos/wishlist e totais da cave (feita e validada ao vivo, 2026-09-23)
+
+O utilizador testou a fatia 3c por conta própria, na sua conta pessoal (não a `demo_user2`), e devolveu 2 bugs — resumo aqui,
+detalhe técnico em `backend/API_ENDPOINTS.md`, "Sincronização pendente com o Android" ("correção pós-3c").
+
+**Bug 1 — "Favoritos"/"Wishlist" vazios ou em erro:** `AquaVitaeApi.getFavoritos`/`getWishlist` declaravam
+`List<BebidaSummary>`, mas a API sempre devolveu `List<BebidaRelacaoDto>` (`{ bebida, data, hasReview? }`) — o Moshi falhava
+com `Required value 'id' missing at $[1]` (tentava ler `id` no wrapper, não em `bebida.id`), e os dois ecrãs ficavam sempre
+vazios ou com esse erro. Mesma classe de bug já corrigida no `getProvadas` (fatia 3c) — só faltava replicar aqui. Corrigido:
+`AquaVitaeApi`/`FavoritoRepository`/`WishlistRepository` passam a `List<BebidaRelacao>` (`getWishlist` ganhou também `?sort=`,
+que a API já aceitava); `FavoritosViewModel`/`WishlistViewModel`/`*Screen.kt` atualizados para desembrulhar `.bebida`. As duas
+telas continuam com a UI simples do esqueleto (fatia 4 do plano original é que as desenha a sério) — só a leitura de dados é
+que estava partida.
+
+**Bug 2 — "INVESTIDOS"/"GARRAFAS" da Cave sem atualizar:** o utilizador criou "Vinhos 2026"/"Gins 2026" e reparou que, depois
+de guardar uma garrafa pelo popup "Adicionar à cave" (aberto de dentro da própria Cave ou da homepage), os totais no topo
+ficavam com o valor de antes de adicionar — só a lista de garrafas por baixo (sempre pedida de novo ao trocar de cave) é que
+estava certa. **Não era bug do cálculo** (`CaveRegras.resumir`, backend: soma `precoPago × quantidade` de cada linha ativa,
+exatamente a regra pedida pelo utilizador — "cada quantidade conta como mais 1 valor do preço a adicionar" — já estava
+correta e confirmada ao vivo). Era só a app: `GET /users/me/caves` só era pedido de novo em `carregar()`/`criarCave()`/
+`consumir()`; guardar pelo `AdicionarACaveSheet` (uma `ViewModel` à parte) não disparava nenhum desses. Corrigido com
+`CaveViewModel.atualizarAposGuardar()`/`HomeViewModel.atualizarAposGuardar()` (pedem `getCaves()` de novo e o detalhe/garrafas
+da cave atual, sem repor a seleção nem mostrar o ecrã de carregamento inteiro), chamados no `onGuardado` do
+`AdicionarACaveSheet` nesses dois ecrãs.
+
+**Testes:** sem testes novos. `assembleDebug testDebugUnitTest` continua com 53, todos a passar.
+
+**Validado ao vivo** (emulador `Pixel_8` + API real, **conta pessoal do utilizador**): criou "Gins 2026" (vazia), adicionou
+"Esporão Reserva Tinto 2018" a 50,00€ pelo popup aberto de dentro da própria Cave — as pílulas "GARRAFAS"/"INVESTIDOS" da cave
+atualizaram de imediato (1/50,00€), sem sair do ecrã; marcou favorito + wishlist na mesma bebida e os ecrãs "Favoritos"/
+"Wishlist" passaram a mostrá-la corretamente. Dados de teste revertidos no fim (token extraído do `DataStore` via
+`adb run-as` só para chamar `DELETE .../bebidas/{id}` na cave, `.../favorito` e `.../wishlist` — a conta do utilizador ficou
+tal como estava antes destes testes).
 
 ### Desenho dos endpoints (concluído, 2026-09-17)
 
@@ -395,7 +895,8 @@ estiver pronta.
   a variável `AQUAVITAE_TERMOS_EM_VIGOR_DESDE`) força nova aceitação a quem aceitou antes, sem perder o histórico. O texto é
   `GET /legal/termos.html` (público), **hoje só um marcador provisório**: o texto final é teu. Contrato em "Termos e condições"
   no `API_ENDPOINTS.md`. **Quebra o registo** (campo novo obrigatório): o Android ainda não o envia.
-- **Reconstrução do zero verificada:** num schema temporário (`aq_rebuild`, já apagado) corri os 5 scripts do `run-migrations`
+- **Reconstrução do zero verificada** (o script ficou guardado em `database/verify/rebuild-check.sh`, com testes de controlo que
+  o veem falhar de propósito): num schema temporário (`aq_rebuild`, já apagado) corri os 5 scripts do `run-migrations`
   e comparei com a dev — 57 tabelas, 239 colunas (tipo, nulidade, identity), 219 constraints (estrutura e nomes), o trigger, o
   texto de todas as tabelas de lookup, 159 regiões por país, 15 produtores com região e `pais`/`produtor_pais` alinhadas:
   **tudo idêntico**; só diferem os dados de utilizador que só existem na dev (contas, reviews, favoritos, ...). **Apanhou um erro

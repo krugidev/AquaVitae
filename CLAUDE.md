@@ -4,7 +4,9 @@ App Android (Kotlin) de catalogação e comunidade de vinhos e bebidas espirituo
 português. Contexto de produto completo em [`briefing/aqua-vitae-mvp-briefing.md`](briefing/aqua-vitae-mvp-briefing.md)
 — lê isso primeiro se for a tua primeira vez neste projeto. **Estado atual e próximos passos em
 [`PLANO.md`](PLANO.md) (começa pela secção "Retomar aqui")**; contrato dos endpoints (existentes e em falta) em
-[`backend/API_ENDPOINTS.md`](backend/API_ENDPOINTS.md), que é a fonte da verdade da API.
+[`backend/API_ENDPOINTS.md`](backend/API_ENDPOINTS.md), que é a fonte da verdade da API. **Frontend (Android):** estado, estrutura,
+convenções, componentes e mapa de ecrãs em [`android/README.md`](android/README.md); os prints do Figma e **o que o utilizador pediu para
+cada ecrã** em [`android/design/README.md`](android/design/README.md) — ler os dois antes de mexer no Android.
 
 ## Stack e localização
 
@@ -12,7 +14,8 @@ português. Contexto de produto completo em [`briefing/aqua-vitae-mvp-briefing.m
 briefing/    briefing de produto + schema DBML original
 database/    Oracle XE (Docker) — DDL, triggers, seed
 backend/     API Spring Boot + Kotlin (recursos estáticos, ex. avatares, em src/main/resources/static)
-android/     app Android (Compose + MVVM + Hilt) — esqueleto, ainda sem UI final
+android/     app Android (Compose + MVVM + Hilt) — em construção por fatias (feitas: 1a loading/login/registo, 1b recuperar password/onboarding)
+android/design/   prints do Figma + especificação por ecrã (o que foi pedido, estado, diferenças)
 docs/        landing page (GitHub Pages, só na branch main) — o URL foi enviado à Awin, não mexer no repo/domínio
 ```
 
@@ -20,8 +23,11 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
   Schema em `database/ddl/`, seed em `database/seed/`. `database/run-migrations.ps1` aplica tudo.
 - **Backend:** Kotlin 2.4.20 + Spring Boot 3.5.16 + Gradle 9.7.1 (wrapper já commitado, `./gradlew bootRun`).
   Hibernate em `ddl-auto: validate` — o schema é sempre gerido pelo SQL em `database/ddl`, nunca pelo Hibernate.
-- **Android:** Kotlin + Jetpack Compose + Hilt + Retrofit/Moshi + DataStore. Ainda por implementar a
-  maior parte dos ecrãs — ver `PLANO.md`. O `AquaVitaeApi.kt` está desatualizado face ao backend (ver `PLANO.md`).
+- **Android:** Kotlin + Jetpack Compose + Hilt + Retrofit/Moshi + DataStore. Construído por **fatias verticais**, uma por fluxo de ecrãs
+  do Figma, ligada à API real (a 1a — loading, login, registo — e a 1b — recuperar password e onboarding — estão feitas; os restantes
+  ecrãs são placeholders do esqueleto, ver `android/README.md`). O `AquaVitaeApi.kt` só está sincronizado para auth (com recuperação),
+  `/me`, termos, perfil/preferências do onboarding e os lookups do onboarding: o resto está desatualizado (ver
+  `backend/API_ENDPOINTS.md`, "Sincronização pendente com o Android"). No fim de cada fatia cumpre-se a checklist de `android/README.md`.
 
 ## Convenções importantes (para não repetir bugs já apanhados)
 
@@ -82,7 +88,9 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
 - **Ao alterar o schema:** atualizar `database/ddl/01_tables.sql` (fonte da verdade, para quem reconstrói do zero)
   **e** criar um patch `database/ddl/0N_patch_*.sql` para a BD de dev já existente (fora do `run-migrations`; só o
   README da pasta `database/` explica). Seguir os padrões existentes: atributo categórico = tabela de lookup + FK
-  (o utilizador já corrigiu um desvio a isto); booleano = `NUMBER(1)` + `CHECK`.
+  (o utilizador já corrigiu um desvio a isto); booleano = `NUMBER(1)` + `CHECK`. **Depois, corre
+  `database/verify/rebuild-check.sh`** (Git Bash): reconstrói a BD do zero num schema temporário e compara-a com a dev — apanha
+  seeds que dependem de um nome de lookup alterado, `CREATE TABLE` com erros que os patches não exercitam, etc.
 - **Colunas-flag com `DEFAULT` cujo campo Kotlin é não-nulo** (`produtor_permite_visitas`, `retalhista_is_ativo`,
   `avatar_is_active`, `cave_bebida_is_consumida`, `cave_bebida_quantidade`, `bebida_rating_medio`,
   `bebida_total_reviews`): ao inserir por SQL, omite a coluna ou usa 0/1 — **nunca `NULL` explícito** (a API
@@ -107,17 +115,49 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
   tabela** (`whisky.whisky_regiao_id` → `regiao`; a tabela `whisky_regiao` já não existe, 2026-09-21): um whisky de um país sem
   regiões na lista fica sem região (`NULL`) mas mostra o país de origem. **Ao renomear um valor de lookup, procurar o nome
   antigo nos seeds** (`02_bebidas.sql` procura regiões/países por nome e devolve `NULL` em silêncio se não achar).
-- **Termos e condições (2026-09-21):** `utilizador_termos_aceites_em` (`NULL` = nunca aceitou; só a data, sem versão). O registo
-  exige `aceitouTermos: true`; `GET /api/users/me` traz `termosAceitesEm` e `precisaAceitarTermos`; `POST
-  /api/users/me/termos/aceitar` regista a aceitação; `aquavitae.termos.em-vigor-desde` força nova aceitação. O texto é
-  `static/legal/termos.html` (público) e **hoje é um marcador provisório**: o texto final é do utilizador. Ver `API_ENDPOINTS.md`.
+- **Termos e condições (2026-09-21, texto passou a JSON em 2026-09-22):** `utilizador_termos_aceites_em` (`NULL` = nunca aceitou; só a
+  data, sem versão). O registo exige `aceitouTermos: true`; `GET /api/users/me` traz `termosAceitesEm` e `precisaAceitarTermos`; `POST
+  /api/users/me/termos/aceitar` regista a aceitação; `aquavitae.termos.em-vigor-desde` força nova aceitação. O texto vive em
+  `backend/src/main/resources/legal/termos.txt` (`# ` = título de secção; parágrafos por linha em branco) e serve-se em dois formatos
+  a partir daí — `GET /api/legal/termos` (JSON, o popup `TermsSheet` da app) e `GET /legal/termos.html` (a página pública). **Hoje é um
+  texto de exemplo (Lorem ipsum)**: o texto final é do utilizador — substitui-se só o `.txt`, sem mexer no backend nem na app.
+- **Login e unicidade (2026-09-21):** `POST /api/auth/login` recebe `{ identificador, password }` — `identificador` é o username OU o
+  email, **sem distinguir maiúsculas** e com `trim` (o teclado do telemóvel capitaliza e deixa espaços). A unicidade de username e email
+  no registo também ignora maiúsculas (senão "Ana" e "ana" seriam duas contas e o login ficava ambíguo). **A recuperação de password
+  usa o mesmo `identificador`** nos 3 passos (desde 2026-09-22; o helper partilhado é `UtilizadorRepository.findByIdentificador`).
+- **Email de recuperação de password (2026-09-22):** o código vai por email real (`EmailService`, Spring Mail); sem `SPRING_MAIL_HOST`
+  configurado, **em dev o código continua a aparecer no log da API** (`Código de recuperação de password para ...`), fora de dev só um
+  aviso — nunca o código em log fora de dev. Um pedido novo invalida os códigos anteriores por usar; só se gera código (e email) novo
+  passado `aquavitae.recuperacao.intervalo-minimo-segundos` (60 s) desde o último pedido da mesma conta.
+  - **Testar sem enviar nada real (Mailpit local):** `docker compose -f backend/docker-compose.mail-dev.yml up -d` (SMTP em
+    `localhost:1025`, caixa em `http://localhost:8025`) e `$env:SPRING_PROFILES_ACTIVE = "dev,mailpit"` antes do `bootRun`
+    (`application-mailpit.yml` aponta para lá). `docker compose -f backend/docker-compose.mail-dev.yml down` para parar.
+  - **Email real (Gmail, `aquavitaerecovery@gmail.com`, criado pelo utilizador em 2026-09-22):** o Gmail exige uma **"app
+    password"** por SMTP (não a password da conta) — gera-se em `myaccount.google.com/apppasswords`, depois de ativar a
+    "Verificação em duas etapas". Guarda-se num ficheiro local `backend/.env.mail` (fora do git, `.gitignore`; modelo em
+    `backend/.env.mail.example`, que o utilizador preenche à mão — nunca colar a app password no chat). Carregar antes do
+    `bootRun` (Git Bash, sem imprimir os valores):
+    ```bash
+    set -a; source backend/.env.mail; set +a
+    ```
+    ou em PowerShell:
+    ```powershell
+    Get-Content backend\.env.mail | ForEach-Object { if ($_ -match '^([A-Z_]+)=(.*)$') { Set-Item "env:$($matches[1])" $matches[2] } }
+    ```
+    Depois `$env:SPRING_PROFILES_ACTIVE = "dev"` (sem `mailpit`) e `bootRun` normal — os `SPRING_MAIL_*` do ficheiro sobrepõem-se aos
+    valores por omissão do `application.yml`.
+- **Nacionalidades e castas (2026-09-22):** `utilizador_nationality.nationality_codigo_pais` (ISO alfa-2, ex.: `PT`; patch `13`) — a app
+  desenha a bandeira (emoji) a partir dele; uma nacionalidade nova é uma linha de SQL **com o código**. `/lookup/castas` traz 6 castas em
+  destaque primeiro (`CASTAS_EM_DESTAQUE` em `OrdemAlfabetica.kt`, as do desenho do onboarding) e o resto por ordem alfabética.
+  `PUT /api/users/me` valida os tamanhos (nome ≤ 25, apelido ≤ 40, username 3–30, descrição ≤ 1000).
 
 **Ferramentas nesta máquina (Windows)**
 
 - **Gradle:** se depois de editar ficheiros o `compileKotlin`/`bootRun` disser `UP-TO-DATE` ou falhar com um bean
   em falta, forçar com `--rerun-tasks`; se falhar com "Could not delete ...caches-jvm", é o daemon Kotlin do VS Code
   a segurar ficheiros — voltar a correr sem `--rerun-tasks`. Testes: `.\gradlew.bat test` (os que usam HTTP levantam
-  um `HttpServer` local do JDK, sem rede real).
+  um `HttpServer` local do JDK, sem rede real). **"Failed to compile with Kotlin daemon" seguido de "Unresolved reference" em testes
+  que apontam para classes de `main`** é um soluço do daemon (o `main` não chegou a compilar): `.\gradlew.bat --stop` e repetir.
 - **Servidor a correr em background** (`bootRun`): para o parar, `Get-NetTCPConnection -LocalPort 8080` → `Stop-Process`.
 - **Docker Desktop depois de reiniciar o Windows:** o contentor Oracle fica parado (`docker compose up -d` em
   `database/`) e o próprio Docker Desktop pode crashar ao arrancar com `sailor-ingest.sock ... rename ... The file cannot
@@ -127,6 +167,121 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
 - **Validar a API ao vivo:** `bootRun` em background + `curl.exe` (sem `jq` nesta máquina; no PowerShell 5.1 ler as
   respostas com `[Text.Encoding]::UTF8` e comparar números com `InvariantCulture`, senão saem com vírgula decimal); os
   ficheiros `.ps1` sem BOM são lidos como ANSI (acentos nos literais chegam duplamente codificados à API).
+- **Android — compilar por linha de comandos (verificado em 2026-09-21):** o `android/` não tem `gradlew` (ver
+  `android/README.md`). Compila-se com o Gradle 8.7 da cache (`~/.gradle/wrapper/dists/gradle-8.7-bin/*/gradle-8.7/bin/gradle.bat`)
+  e o **JDK 21** (`~/.gradle/jdks/eclipse_adoptium-21-amd64-windows.2`) em `JAVA_HOME` — o JDK por omissão desta máquina é o 25,
+  que o Gradle 8.7/AGP 8.5.2 não suportam (e o JDK do Android Studio também é o 25: no Studio, *Gradle JDK = 21*). Precisa de um
+  `android/local.properties` (`sdk.dir=C\:\\Users\\migue\\AppData\\Local\\Android\\Sdk`; já está no `.gitignore`). Comando:
+  `gradle.bat -p android assembleDebug --console=plain` → `app/build/outputs/apk/debug/app-debug.apk` (~2 min a 1.ª vez). O SDK
+  precisa da Platform 35 e das Build-Tools 34 (instaladas por esse build; a máquina só tinha a 37). O esqueleto compilou tal como
+  estava, só com avisos (kapt do Moshi obsoleto, `Divider` renomeado, AGP 8.5.2 testado até compileSdk 34).
+- **Emulador Android e o ciclo compilar → ver (verificado em 2026-09-21):** há um AVD **`Pixel_8`** (Pixel 8, Android 17 / API
+  37.2, imagem `google_apis_playstore_ps16k` x86_64, 2 GB de RAM), criado pelo utilizador no Device Manager; a aceleração (WHPX)
+  funciona e no `adb` aparece como `emulator-5554`. Não há `cmdline-tools` (não se criam AVDs por linha de comandos). O emulador
+  alcança o backend em `http://10.0.2.2:8080/` (o `API_BASE_URL` de debug). **Sem o Studio:** `adb` em
+  `$LOCALAPPDATA/Android/Sdk/platform-tools/adb.exe`; `adb install -r android/app/build/outputs/apk/debug/app-debug.apk`;
+  `adb shell am start -W -n pt.aquavitae.android/.MainActivity`; `adb exec-out screencap -p > ecra.png` (1080×2400) e ler a
+  imagem. **Esperar ~3 s** depois de arrancar: o 1.º screenshot apanha o ecrã de arranque do sistema (o ícone), não a app. Um
+  "crash" de um processo `android.hardwar…` em `adb logcat -b crash` é do sistema do emulador, não da app. O AVD também se lista e
+  arranca pela linha de comandos (`emulator.exe -list-avds`; `emulator.exe -avd Pixel_8`, este último não testado). **Não compilar pela
+  linha de comandos ao mesmo tempo que o Android Studio** (dois builds na mesma pasta podem bloquear-se). Se a API estiver parada, a
+  app mostra "Sem ligação ao servidor" com "Tentar de novo" (é o comportamento esperado do ecrã de loading).
+- **Android — a UI (2026-09-21, atualizado em 2026-09-23):** tema **só claro** (o design é claro); tipografia **Inter** (`res/font/`,
+  copiada do `testFramework.jar` do Android Studio; licença OFL, falta o aviso de licença antes de publicar) + **uma serifa do sistema**
+  para os títulos da homepage/catálogo (`AquaText.SectionSerif`/`GreetingSerif`/`BebidaNomeSerif`, aproximação — falta saber qual é a
+  exata do Figma); tokens medidos nos prints em `ui/theme/Color.kt`; componentes reutilizáveis em `ui/components/` (`AquaVitaeLogo`,
+  `UnderlineField`, `PrimaryButton`, `AuthCard`/`AuthScaffold`/`overlapTop`, `LoadingDots`, `PillCard`/`NavRow`/`NextButton`,
+  `OptionRow`/`PillChip`/`LookupContent`, `LevelSlider`, `RangePillRow`, `CodeInput`, `FlagChip`, `BottomNavBar`, `AvatarBadge`,
+  `BebidaCard`, popups `TermsDialog`/`PasswordChangedDialog` com `DialogScrim`; lista completa em `android/README.md`) — reutilizar, não
+  recriar. Cada ecrã novo aplica `systemBarsPadding()` (edge-to-edge); os ecrãs antigos do esqueleto vão embrulhados em `LegacyScreen`
+  (`AppNavHost.kt`) até serem redesenhados (já saíram de lá `home` e `catalog`). **Imagens da API com Coil 2.7** (avatares SVG; o
+  carregador com o `SvgDecoder` está em `AquaVitaeApplication`; `resolveImageUrl` decide URL absoluto vs. relativo). **Ícones PNG
+  entregues pelo utilizador** (traço branco/cinza-claro sobre transparente, ex. `ic_nav_*.png`): tingem-se por código
+  (`Icon(painter=..., tint=cor)`), sem reexportar variantes de cor — o Compose substitui a cor onde o alfa não é zero. **`Icon` de um
+  `ImageVector` do Material Icons Extended** (`Icons.Filled.FilterList`, já dependência do projeto) é mais simples do que pedir um PNG
+  novo ao utilizador quando o ícone é genérico o suficiente (funil de filtro, por exemplo) — só vale a pena pedir um ícone próprio
+  quando a forma importa para a identidade visual. **O detalhe de uma bebida é sempre um popup** (`feature/bebidadetalhe/
+  BebidaDetalheSheet`, 2026-09-23), nunca uma rota — abre-se em toque curto ou premido (`BebidaCard.combinedClickable`) a partir de
+  qualquer ecrã; sem `SavedStateHandle`, usa `hiltViewModel(key = "bebida-detalhe-$id")` (ver `android/README.md`, "Convenções").
+  **`DatePicker`/`DatePickerDialog` do Material3** (`AdicionarACaveSheet`, fatia 3b) são `@ExperimentalMaterial3Api` — precisam de
+  `@OptIn`, já usados pela 1.ª vez neste projeto (a "data de aquisição" do popup "Adicionar à cave").
+  Testes unitários: `gradle.bat -p android testDebugUnitTest --console=plain` (53: registo, recuperar password, onboarding,
+  bandeiras, URLs, iniciais do avatar, formatação de bebida).
+- **Um `Row`/`Column` de altura fixa com texto de comprimento variável perde conteúdo sem erro nenhum (apanhado no `BebidaCard`,
+  2026-09-23):** o cartão de bebida tem `height(108.dp)` fixo; ao acrescentar `tipo`/`tanino` à linha de atributos, algumas bebidas
+  passaram a ter uma linha com 3 segmentos que quebrava para 2 linhas — sem `maxLines`, isso empurrava o preço (a `Row` seguinte) para
+  fora da altura fixa do cartão, a sobrepor-se ao cartão seguinte. Sem exceção nem aviso, só visível na screenshot. Corrige-se com
+  `maxLines = 1` + `TextOverflow.Ellipsis` em qualquer `Text` dentro de um contentor de altura fixa cujo comprimento dependa dos dados
+  (nome, retalhista e a linha de atributos do `BebidaCard` já seguem este padrão).
+- **Um membro de `sealed interface`/`sealed class` sem o supertipo depois do construtor não avisa a compilar até bem mais tarde**
+  (apanhado no `BebidaDetalheUiState`, 2026-09-23): `data class Ready(...) : MinhaSealedInterface` — esquecer o
+  `: MinhaSealedInterface` no fim (fácil de fazer ao copiar/colar de um `data object`/`data class` mais simples, sem parâmetros a
+  fechar antes) não dá erro na própria declaração; `Ready` fica só uma classe normal, sem relação nenhuma com a sealed interface. O
+  Kotlin só se queixa mais tarde, em sítios que usam `Ready` como se fosse a sealed interface (`_state.value = Ready(...)`, um `when`
+  sobre o `state`), com mensagens confusas do tipo "Incompatible types: X and X" ou "Type mismatch: inferred type is X but X was
+  expected" (o mesmo nome dos dois lados) — nada aponta para a declaração em falta. Ao ver este erro específico, confirmar primeiro
+  se todos os membros da sealed interface/class têm o `: NomeDaSealed` no fim.
+- **`Modifier.weight()` (ou outro extra de `ColumnScope`/`RowScope`) só funciona dentro do `Column`/`Row` que o declara** (apanhado
+  no `BebidaDetalheSheet`, 2026-09-23): uma função `@Composable` chamada de dentro de um `Column { ... }` não herda o `ColumnScope`
+  automaticamente — só o recebe se for declarada como `fun ColumnScope.MinhaFuncao(...)`. Sem isso, `Modifier.weight(1f)` dentro
+  dela dá "Unresolved reference: weight", mesmo com o `Column` correto no sítio de onde é chamada.
+- **Duas chamadas assíncronas seguidas ao mesmo `MutableStateFlow`, uma delas a repor um valor "por omissão", corrida
+  clássica** (apanhado no `CaveViewModel.criarCave`, 2026-09-23): criar uma cave fazia `carregar()` (assíncrono, recarrega a
+  lista e repõe `caveSelecionadaId` para a 1.ª cave) e logo a seguir `selecionarCave(nova.id)` — como `carregar()` só
+  terminava depois (é uma corrotina lançada, não esperada), a sua resposta chegava **depois** de `selecionarCave` e repunha a
+  seleção errada. A cave ficava criada mas não selecionada, sem exceção nem log — só visível comparando com o esperado.
+  Corrige-se fazendo as duas coisas na mesma corrotina, pela ordem certa (`getCaves()` → só depois `copy(caveSelecionadaId =
+  nova.id)`), em vez de duas chamadas que mexem no mesmo estado sem uma esperar pela outra.
+- **Um `Dialog` (Compose) a ecrã inteiro precisa de dois truques, senão perde-se conteúdo sem erro nenhum (apanhado a construir o
+  `TermsSheet`, 2026-09-22):** (1) a janela dimensiona-se por omissão ao conteúdo (mesmo com `usePlatformDefaultWidth = false`, que só
+  afeta a largura) — força-se com `window.setLayout(MATCH_PARENT, MATCH_PARENT)` numa `SideEffect` (`DialogScrim.kt` →
+  `DialogFillScreen()`). (2) com `decorFitsSystemWindows = false` (para o escurecimento cobrir a barra de estado), o conteúdo desenha
+  por baixo da barra de navegação do sistema, e **`Modifier.navigationBarsPadding()` chamado DENTRO do `Dialog` não recebe o inset
+  certo** (ficou a 0, sem erro): o botão do fundo do popup ficava tapado pela barra, só uma nesga de poucos pixels visível — sem
+  exceção nem aviso, só se via comparando o resultado com o esperado. Corrige-se lendo o inset **antes** de entrar no `Dialog`
+  (`WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()`, na janela principal, onde os insets estão corretos) e
+  aplicando-o como padding fixo dentro do popup.
+- **Testar a UI pelo `adb` (sem tocar no emulador):** `adb shell input tap X Y` (X,Y nativos, 1080×2400; uma imagem mostrada a
+  900×2000 tem de se multiplicar por 1,2), `input text` (`@` funciona; **espaços escrevem-se `%s`**), `input keyevent 66` (Enter = a
+  ação do teclado: "Seguinte" ou "Feito"), `67` (apagar), `123` (fim de linha), `4` (voltar; com o teclado aberto o 1.º só o fecha),
+  `input swipe X1 Y1 X2 Y2 ms` (deslizar listas); `adb shell pm clear pt.aquavitae.android` apaga a sessão (volta ao login).
+  **Screenshots: `adb exec-out screencap -p > f.png` só no Git Bash** (o `>` do PowerShell 5.1 estraga o binário). Um `UnderlineField`
+  em `input text` + Enter avança de campo em campo, por isso um formulário inteiro preenche-se numa só chamada. Emblema/logótipo:
+  desenhado em vetor (`ic_logo_emblem.xml`); a homepage já usa o wordmark real (`ic_wordmark_home.png`, fundo tornado transparente —
+  ver "Android — a UI"), os outros ecrãs de auth ainda têm o nome em texto Inter.
+- **Coordenadas de toque: nunca reutilizar as de uma sessão anterior — o layout muda.** Apanhado a testar o login da homepage
+  (2026-09-23): tocar em coordenadas "conhecidas" de outra sessão/ecrã falhou vezes sem conta (texto a ir para o campo errado, botões
+  que não reagem), sem nenhum erro — só dava para perceber pela screenshot a seguir. **Antes de cada sequência de toques**, correr
+  `adb exec-out uiautomator dump /dev/tty 2>&1 | tr '>' '>\n' | grep -o 'text="X"[^>]*bounds="\[...\]"'` e tocar no **centro exato** dos
+  `bounds` devolvidos — mais lento por toque, mas sem re-tentativas às cegas. Um campo que não reage a `input text` normalmente está
+  focado no elemento errado (o toque anterior falhou), não é um bug da app. **`uiautomator dump /dev/tty` às vezes só imprime
+  "UI hierchary dumped to: /dev/tty" sem o XML** (apanhado 2026-09-23): correr antes `uiautomator dump /sdcard/dump.xml` e
+  `adb pull` (com `MSYS_NO_PATHCONV=1` no Git Bash, senão o `/sdcard/...` é convertido para um caminho Windows). Um botão/label do
+  Compose às vezes só aparece na árvore por `content-desc`, não por `text=` (procurar os dois).
+- **Um ecrã novo que mostra bebidas não herda o toque/premido do `BebidaDetalheSheet` de outro ecrã — tem de se ligar
+  explicitamente linha a linha.** Apanhado no `CaveScreen` (2026-09-23): o mockup original já dizia "nas caves" como um dos
+  sítios onde o popup de detalhe abre, mas a ligação nunca tinha sido feita — as linhas de garrafa (`GarrafaRow`) e o resumo de
+  "já provadas" (`ProvadaResumoRow`) não tinham `combinedClickable` nenhum, sem erro nem aviso, só reparado ao tentar testar outra
+  funcionalidade a partir daí. Padrão a repetir: `combinedClickable(onClick, onLongClick)` (`ExperimentalFoundationApi`, o mesmo do
+  `BebidaCard`) em qualquer linha nova que representa uma bebida, com o `onClick` a subir até ao ecrã que guarda o
+  `bebidaSelecionadaId` e monta o `BebidaDetalheSheet`.
+- **Um popup que muda dados partilhados (`AdicionarACaveSheet`, aberto de vários ecrãs) não avisa o ecrã por trás para se
+  atualizar — cada ecrã tem de pedir os dados de novo sozinho no seu próprio `onGuardado`.** Apanhado pelo utilizador a testar
+  por conta própria (2026-09-23): guardar uma garrafa nova numa cave, de dentro da própria `CaveScreen` ou da `HomeScreen`
+  (popup empilhado sobre `BebidaDetalheSheet`), não atualizava as pílulas "GARRAFAS"/"INVESTIDOS" — só a lista de garrafas
+  (sempre pedida de novo ao trocar de cave) é que ficava certa. Causa: `CaveViewModel`/`HomeViewModel` só voltavam a pedir
+  `GET /users/me/caves` em `carregar()`/`criarCave()`/`consumir()`; o `AdicionarACaveSheet` é uma `ViewModel` completamente à
+  parte (`AdicionarACaveViewModel`), sem nenhuma ligação de volta ao ecrã que o abriu. Um `Composable` com Navigation-Compose
+  em modo de abas (`saveState`/`restoreState`, ver "Convenções" do `android/README.md`) **mantém a mesma instância da
+  ViewModel** ao trocar de aba — por isso nem sair e voltar ao ecrã garante dados frescos. Padrão a repetir: sempre que um
+  popup que **muda** dados partilhados por vários ecrãs (aqui, os totais de uma cave) é aberto de dentro de outro ecrã, esse
+  ecrã dá ao popup um `onGuardado` que pede os dados relevantes de novo (`CaveViewModel.atualizarAposGuardar()`/
+  `HomeViewModel.atualizarAposGuardar()`: só `getCaves()` + o detalhe atual, sem repor a seleção nem mostrar o ecrã de
+  carregamento inteiro) — nunca assumir que o popup "avisa" sozinho quem o abriu.
+- **Android Studio (AI-261):** abre `android/` e o sync corre; usa como Gradle JDK um JBR 21 que ele próprio descarregou
+  (`~/.jdks/jbr-21.0.11`, guardado em `android/.gradle/config.properties`, ignorado pelo git). Acrescentou uma linha
+  (`org.gradle.tooling.parallel=true`) ao `android/gradle.properties` — não vale a pena commitá-la. Recusar o *AGP Upgrade
+  Assistant* por agora (a toolchain só se atualiza depois da 1.ª versão).
 - **`gh` (GitHub CLI):** instalado e autenticado, mas no Git Bash é preciso `export PATH="/c/Program Files/GitHub CLI:$PATH"`.
 - **Git:** o trabalho corrente está numa branch de feature (ver `PLANO.md`); `docs/` (landing page) só existe na
   `main` — ao mudar de branch, ficheiros aparecem/desaparecem no disco, é esperado. **Nunca commitar** as notas do
@@ -145,10 +300,13 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
 ```powershell
 cd database; cp .env.example .env; docker compose up -d; .\run-migrations.ps1   # 1. BD
 cd ..\backend; .\gradlew.bat bootRun                                            # 2. API em localhost:8080
-# 3. Android: abrir android/ no Android Studio (API_BASE_URL já aponta para 10.0.2.2:8080 no emulador)
+# 3. Android: abrir android/ no Android Studio (Gradle JDK = 21) OU compilar/instalar pela linha de comandos ("Compilar,
+#    instalar e ver" em android/README.md); emulador Pixel_8; API_BASE_URL já aponta para 10.0.2.2:8080 no emulador
 ```
 
-Conta de teste já existente na BD de dev: `demo2@aquavitae.local` / `password123` (papel `Utilizador`). Para
+Conta de teste já existente na BD de dev: `demo2@aquavitae.local` / `password123` (papel `Utilizador`; username `demo_user2`). **Ao testar
+o onboarding cria-se uma conta descartável no emulador (só o registo passa pelo onboarding) e apaga-se no fim** (perfil, preferências e
+a conta, por SQL). Para
 testar endpoints de admin, promover temporariamente por SQL (`utilizador_role_id` → o de `Admin`) e reverter depois.
 
 ## Preferências de trabalho do utilizador
@@ -159,4 +317,11 @@ testar endpoints de admin, promover temporariamente por SQL (`utilizador_role_id
 - **Decisões de produto/schema:** apresentar a opção recomendada com o principal compromisso e deixar o utilizador
   aprovar ou ajustar *antes* de implementar; ele costuma responder com melhorias (p.ex. lookup em vez de coluna solta).
 - **Commit, push e PR só quando o utilizador pedir** (costuma pedir no fim de cada fatia).
+- **Frontend por fatias, guiado por prints (2026-09-21):** o utilizador envia os prints de **um fluxo inteiro de uma vez**, com notas por
+  ecrã (o que ignorar, o que é opcional, listas paginadas, sliders...). Copiar os prints e as notas para `android/design/` **antes** de
+  construir (a conversa não sobrevive a uma sessão nova). Construir ligado à API real, validar no emulador com screenshots e só depois
+  avançar. Autorizou **melhorar o visual quando fique mais bonito e limpo** ("mais algum ajuste que queira fazer pode fazê-lo"): fazê-lo,
+  mas registar cada diferença em `android/design/README.md` e dizê-lo. Se um ecrã pede algo que a API não tem, corrige-se a API primeiro.
+- **O utilizador muda de sessão de propósito** ("continuamos numa nova sessão?"): no fim de cada sessão deixar o `PLANO.md` ("Retomar
+  aqui"), o `android/README.md` e o `CLAUDE.md` prontos para retomar sem contexto da conversa (estado, por commitar, ambiente, decisões abertas).
 - Conceitos de escalabilidade/otimização ficam deliberadamente para depois de tudo funcionar ponta a ponta.
