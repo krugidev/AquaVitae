@@ -7,14 +7,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import pt.aquavitae.android.data.model.BebidaSummary
+import pt.aquavitae.android.data.model.BebidaRelacao
 import pt.aquavitae.android.data.repository.WishlistRepository
 import javax.inject.Inject
 
 /** Estado do ecrã de wishlist. */
 sealed interface WishlistUiState {
     data object Loading : WishlistUiState
-    data class Success(val bebidas: List<BebidaSummary>) : WishlistUiState
+    data class Success(val bebidas: List<BebidaRelacao>) : WishlistUiState
     data class Error(val message: String) : WishlistUiState
 }
 

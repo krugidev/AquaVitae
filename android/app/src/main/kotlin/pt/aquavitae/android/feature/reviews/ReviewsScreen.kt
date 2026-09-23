@@ -101,7 +101,7 @@ private fun ReviewItem(review: ReviewResponse) {
         Column(modifier = Modifier.padding(12.dp)) {
             Text(text = "${review.utilizadorUsername} · ★ ${review.rating}", style = MaterialTheme.typography.titleSmall)
             review.comment?.let { Text(text = it, style = MaterialTheme.typography.bodyMedium) }
-            Text(text = review.createdAt, style = MaterialTheme.typography.bodySmall)
+            Text(text = review.createdAt.orEmpty(), style = MaterialTheme.typography.bodySmall)
         }
     }
 }

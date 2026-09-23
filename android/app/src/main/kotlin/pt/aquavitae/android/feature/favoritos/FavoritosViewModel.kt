@@ -7,14 +7,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import pt.aquavitae.android.data.model.BebidaSummary
+import pt.aquavitae.android.data.model.BebidaRelacao
 import pt.aquavitae.android.data.repository.FavoritoRepository
 import javax.inject.Inject
 
 /** Estado do ecrã de favoritos. */
 sealed interface FavoritosUiState {
     data object Loading : FavoritosUiState
-    data class Success(val bebidas: List<BebidaSummary>) : FavoritosUiState
+    data class Success(val bebidas: List<BebidaRelacao>) : FavoritosUiState
     data class Error(val message: String) : FavoritosUiState
 }
 

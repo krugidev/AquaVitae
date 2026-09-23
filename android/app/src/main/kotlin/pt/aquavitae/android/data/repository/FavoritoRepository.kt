@@ -1,6 +1,6 @@
 package pt.aquavitae.android.data.repository
 
-import pt.aquavitae.android.data.model.BebidaSummary
+import pt.aquavitae.android.data.model.BebidaRelacao
 import pt.aquavitae.android.data.network.AquaVitaeApi
 import javax.inject.Inject
 
@@ -8,7 +8,7 @@ import javax.inject.Inject
 class FavoritoRepository @Inject constructor(
     private val api: AquaVitaeApi,
 ) {
-    suspend fun getFavoritos(): Result<List<BebidaSummary>> = runCatching {
+    suspend fun getFavoritos(): Result<List<BebidaRelacao>> = runCatching {
         api.getFavoritos()
     }
 

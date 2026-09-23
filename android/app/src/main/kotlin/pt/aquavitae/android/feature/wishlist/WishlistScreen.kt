@@ -19,7 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import pt.aquavitae.android.data.model.BebidaSummary
+import pt.aquavitae.android.data.model.BebidaRelacao
 
 /** Ecrã de wishlist — placeholder de UI, já ligado ao [WishlistViewModel]/API real. */
 @Composable
@@ -45,7 +45,7 @@ fun WishlistScreen(viewModel: WishlistViewModel = hiltViewModel()) {
                     Text("A tua wishlist está vazia.")
                 } else {
                     LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
-                        items(state.bebidas, key = { it.id }) { bebida -> WishlistItem(bebida) }
+                        items(state.bebidas, key = { it.bebida.id }) { relacao -> WishlistItem(relacao) }
                     }
                 }
             }
@@ -54,11 +54,12 @@ fun WishlistScreen(viewModel: WishlistViewModel = hiltViewModel()) {
 }
 
 @Composable
-private fun WishlistItem(bebida: BebidaSummary) {
+private fun WishlistItem(relacao: BebidaRelacao) {
+    val bebida = relacao.bebida
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(12.dp)) {
-            Text(text = bebida.nome, style = MaterialTheme.typography.titleMedium)
-            Text(text = bebida.categoriaNome, style = MaterialTheme.typography.bodySmall)
+            Text(text = bebida.nome.orEmpty(), style = MaterialTheme.typography.titleMedium)
+            Text(text = bebida.categoriaNome.orEmpty(), style = MaterialTheme.typography.bodySmall)
         }
     }
 }

@@ -47,7 +47,7 @@ class ReviewsViewModel @Inject constructor(
         _uiState.value = ReviewsUiState.Loading
         viewModelScope.launch {
             reviewRepository.getReviews(bebidaId)
-                .onSuccess { _uiState.value = ReviewsUiState.Success(it) }
+                .onSuccess { _uiState.value = ReviewsUiState.Success(it.reviews) }
                 .onFailure { _uiState.value = ReviewsUiState.Error(it.message ?: "Não foi possível carregar as reviews.") }
         }
     }
