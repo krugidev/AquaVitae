@@ -91,4 +91,9 @@ interface AdminProdutorRepository : JpaRepository<Produtor, Long> {
         @Param("qualidade") qualidade: String?,
         pageable: Pageable,
     ): Page<ProdutorAdminLinha>
+
+    // Os produtores com este nome, sem acentos nem maiúsculas (`nomeNormalizado` já vem de PesquisaTexto.normalizar): o "já existe" do
+    // formulário. `ignorarId` deixa o produtor que se está a editar fora da comparação (uma criação passa -1).
+    @Query("SELECT p.id FROM Produtor p WHERE $PRODUTOR_NOME = :nomeNormalizado AND p.id <> :ignorarId ORDER BY p.id")
+    fun idsComNome(@Param("nomeNormalizado") nomeNormalizado: String, @Param("ignorarId") ignorarId: Long): List<Long>
 }

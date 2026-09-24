@@ -64,10 +64,10 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
 - **Tabelas de conteúdo geridas pelo admin** (`bebida`, `produtor`, `retalhista`, `bebida_link_compra`,
   todos os lookups incluindo `casta`) **não têm endpoints de escrita na API** — só leitura. Inserção/edição
   é direta via SQL Developer ou `sqlplus` (decisão do briefing, secção 4). Só a API escreve dados gerados
-  pelo utilizador (conta, reviews, favoritos, wishlist, cave, "provadas", preferências). **Vai mudar com o painel web `/admin`
-  (abaixo): a partir da fatia 2 (formulário de produtores) o conteúdo passa a poder editar-se por lá — nesse dia, reescrever esta
-  regra.** Até lá o painel só lê.
-- **Painel de administração web (2026-09-24, fatia 1: base e listas):** páginas HTML no próprio backend (`admin/` em
+  pelo utilizador (conta, reviews, favoritos, wishlist, cave, "provadas", preferências). **Mudou por fatias com o painel web `/admin`
+  (abaixo): desde 2026-09-24 (fatia 2) os PRODUTORES criam-se e editam-se por lá; bebidas, links, retalhistas e lookups continuam só por
+  SQL até às fatias 3+ (reescrever esta regra a cada fatia que escreva algo novo).**
+- **Painel de administração web (2026-09-24, fatias 1 e 2: base, listas e formulário de produtores):** páginas HTML no próprio backend (`admin/` em
   `pt.aquavitae.api`, templates em `src/main/resources/templates/admin/`, CSS em `static/admin/css/`), **Thymeleaf + htmx** (o htmx vem
   do webjar `org.webjars.npm:htmx.org`, servido em `/webjars/htmx.org/dist/htmx.min.js`; sem CDN nem build de front-end). Tem **a sua
   própria `SecurityFilterChain` (`@Order(1)`, sessão + CSRF + login por formulário; a da API passou a `@Order(2)`)** e só deixa entrar
@@ -82,7 +82,16 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
   formulários de escrita (fatias 2+) usam `th:action` (leva o token CSRF sozinho) e, nos pedidos do htmx, o token vai em `hx-headers`.
   **Testes:** `AdminWebTest` (contexto completo sem BD, `MockMvc`, serviço substituído por um falso com **transação de faz-de-conta** —
   o Spring põe um proxy `@Transactional` também à volta do falso e sem isto tenta abrir ligação ao Oracle) apanha erros de template,
-  de segurança e de cabeçalhos; as queries só se validam ao vivo. **Falta:** limite de tentativas de login (antes de expor o
+  de segurança e de cabeçalhos; as queries só se validam ao vivo. **Formulários (fatia 2):** o texto vem tal como foi escrito num `data class` de `String`s (`ProdutorFormulario`) e a validação sem BD é uma
+  função pura (`ProdutorValidacao`, com testes); o que depende da BD (país/região existem e combinam, nome repetido) está no serviço
+  (`AdminProdutorService`), que devolve `Guardado`/`Invalido(erros por campo)`. Um `POST` com sucesso redireciona (F5 não reenvia); com
+  erros devolve `200` com o formulário. **Uma coluna `DEFAULT SYSTIMESTAMP` não se preenche sozinha por JPA** (o `INSERT` leva `NULL`):
+  o serviço põe `dataCriacao = Instant.now(clock)` (guardado em UTC, como o resto). **Ao testar escritas ao vivo:** (a) nunca em linhas do
+  seed — criar produtores descartáveis ("Adega Teste A") e apagá-los por id no fim (mais `ALTER TABLE ... RESTART START WITH LIMIT VALUE`);
+  (b) **nada de acentos em argumentos `-d` do `curl.exe`** (chegam estragados e gravam-se estragados) — usar `--data-urlencode "campo@ficheiro"`
+  com o ficheiro em UTF-8. Aconteceu em 2026-09-24: um teste "editar outro produtor com o nome do 41" escreveu por cima do produtor 8 do seed
+  (o nome do 41 tinha ficado estragado por um `-d` com acento, por isso o teste não viu o repetido); foi reposto à mão e o
+  `rebuild-check.sh` confirmou "igual à dev". **Falta:** limite de tentativas de login (antes de expor o
   `/admin` à internet).
 - **Catálogo curado vs. ofertas de afiliados:** os atributos de uma bebida (corpo, castas, botânicos, ...) são
   sempre do catálogo, curados à mão; dos afiliados só vêm as ofertas (`bebida_link_compra`: preço, link,

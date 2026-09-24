@@ -3,7 +3,7 @@
 Roadmap vivo do MVP. Atualizar isto no fim de cada sessão de trabalho relevante — é o que uma sessão
 nova do Claude Code (ou tu, ao voltares passado um tempo) deve ler primeiro para saber onde ficámos.
 
-## ▶ Retomar aqui (última atualização: 2026-09-24, fatias 1 a 6 + "Comprar" + sessão renovável + pesquisa sem acentos + painel web (fatia 1: base e listas) feitos — a seguir: painel, fatia 2 (formulário de produtores))
+## ▶ Retomar aqui (última atualização: 2026-09-24, fatias 1 a 6 + "Comprar" + sessão renovável + pesquisa sem acentos + painel web (fatias 1 e 2: base, listas e formulário de produtores) feitos — a seguir: painel, fatia 3 (bebidas))
 
 **Numa sessão nova, ler por esta ordem:** `CLAUDE.md` (convenções e ferramentas desta máquina) → esta secção → `android/README.md`
 (estado do frontend, estrutura, mapa de ecrãs) → `android/design/README.md` (os prints e **o que o utilizador pediu para cada ecrã**,
@@ -42,7 +42,7 @@ seguinte — por isso este `PLANO.md` e os READMEs ficam atualizados a cada pont
 **Git:** duas branches. **`feature/api-endpoints-design`** = PR #1 (backend v1): já fundido/enviado. **`feature/android-app`** =
 criada a partir dela em 2026-09-21 para o Android, com [PR #2](https://github.com/krugidev/AquaVitae/pull/2) aberto (para `main`,
 ainda não fundido) — leva tudo desde a fatia 1a até à fatia 6 (a 5 é o commit `d33d440`, a 6 — com a morada e o filtro por
-produtor — o `ff75aa2`), commitado por área/fatia (ver o próprio PR para a lista). **O ponto "Comprar" é o commit `6ae8ec8` e a sessão renovável o `32b31b1`** (ambos enviados); **a pesquisa sem acentos é o `4d81eef`** (enviado); **a fatia 1 do painel web é o commit seguinte** (`git log`): o pacote `admin/` do backend, os templates e o CSS, o `SecurityConfig` com `@Order(2)`, `build.gradle.kts`, `application.yml`, `HqlQueriesTest` e os testes `admin/*`, mais os docs. **Ficam de fora dos commits, de propósito** (regra do `CLAUDE.md`): as notas do utilizador —
+produtor — o `ff75aa2`), commitado por área/fatia (ver o próprio PR para a lista). **O ponto "Comprar" é o commit `6ae8ec8` e a sessão renovável o `32b31b1`** (ambos enviados); **a pesquisa sem acentos é o `4d81eef`** (enviado); **a fatia 1 do painel web é o `fd6cd63`** (enviado); **a fatia 2 (formulário de produtores) é o commit seguinte** (`git log`): `admin/ProdutorFormulario.kt`, `AdminProdutorService.kt`, `AdminProdutorFormController.kt`, `AdminExceptionHandler.kt`, os templates `produtor-form`/`erro`, o CSS, `AdminRepositories.kt`, `RegiaoRepository`, os testes e os docs. **Ficam de fora dos commits, de propósito** (regra do `CLAUDE.md`): as notas do utilizador —
 `android/AQUAVITAESEEDS-NOTES` e, na raiz, `—--------------- DADOS A INSERIR NA.txt`, `REGIÕES A AJUSTAR (...).txt` e
 `NOVOSDADOS.txt` (este último parece um relatório de incidentes sem ligação ao projeto — vale a pena o utilizador confirmar se
 foi parar ali por engano). Ao commitar, usar `git commit <caminhos explícitos>`, nunca `git add -A`. **O utilizador autorizou,
@@ -65,7 +65,7 @@ Barca Velha 2015 em guarda até 2035) e "Brancos frescos" (id 23, vazia) — **f
 contínuo; termos repostos a `NULL` no fim desta sessão, e o papel `Utilizador` reposto depois de a promover temporariamente a `Admin` para testar o painel (a fatia 6 também os aceitou ao testar). **Os dados de teste temporários
 da fatia 6** (história/morada/coordenadas/imagem nos produtores 1 e 8 e 7 bebidas movidas para o 1) **já foram revertidos** — a
 BD de dev ficou como estava (nenhum produtor tem história, morada, coordenadas nem imagem; ver "Android — fatia 6"). Testes:
-backend `.\gradlew.bat test` em `backend/` (**138**, sem BD, corridos nesta sessão); Android
+backend `.\gradlew.bat test` em `backend/` (**168**, sem BD, corridos nesta sessão); Android
 `testDebugUnitTest` (**97**, ver `android/README.md`). Corri o
 `database/verify/rebuild-check.sh` depois do patch `14` (`produtor_morada`): "reconstrução igual à dev". **Landing page (GitHub
 Pages):** já está ativa em `https://krugidev.github.io/AquaVitae/` (fonte `main:/docs`, HTTPS, sem domínio próprio; HTTP 200
@@ -89,12 +89,12 @@ no `CLAUDE.md` o que fazer se o Docker Desktop crashar.
 - **A3. Pesquisa sem acentos — ✅ feito** (ver "Android — Pesquisa sem acentos"): `TRANSLATE(UPPER(coluna), …)` na BD (dentro de um `CAST … AS String`),
   o mesmo mapa aplicado ao termo no Kotlin (`PesquisaTexto`), `LIKE … ESCAPE '!'` a escapar `%`, `_` e `!`; as pesquisas locais de castas da
   app usam `contemSemAcentos()`. Fica em aberto só o alfabeto (o mapa cobre o latim ocidental).
-- **A4. Painel web de administração — fatia 1 ✅ feita (ver "Painel web — fatia 1"); fatias 2 a 5 por fazer.** Decidido: **web, dentro do backend** (`/admin`, Thymeleaf + HTMX, sem build de
+- **A4. Painel web de administração — fatias 1 e 2 ✅ feitas (ver "Painel web — fatia 1" e "Painel web — fatia 2"); fatias 3 a 5 por fazer.** Decidido: **web, dentro do backend** (`/admin`, Thymeleaf + HTMX, sem build de
   front-end, atrás de login `ROLE_ADMIN`), **não na app** (única administradora, trabalho de secretária, sem ciclos de
   publicação, e poderes de escrita fora de um app instalado em milhares de telemóveis). **Muda a decisão antiga de "conteúdo só
   por SQL, sem endpoints de escrita"** (atualizar `CLAUDE.md`/`API_ENDPOINTS.md` quando a 1.ª escrita entrar). Fatias:
   (1) ✅ base — login de administrador e listas com pesquisa e filtros de qualidade ("sem imagem", "sem produtor", "sem
-  atributos": o script de verificação do catálogo aprovado, agora como ecrã); (2) **produtores** — formulário completo (país e
+  atributos": o script de verificação do catálogo aprovado, agora como ecrã); (2) ✅ **produtores** — formulário completo (país e
   região em listas, morada, coordenadas, história, visitas, imagem); (3) **bebidas** — formulário por categoria (vinho com
   castas e %; as outras só com os campos gerais até haver subtypes), EAN validado, imagem e links de compra (retalhista, URL
   de afiliado, URL de verificação, preço); (4) **importador de feed** — CSV/XML (Awin ou Google Shopping) → tabela de revisão
@@ -276,6 +276,9 @@ domain" nas definições do Pages** (aconteceu por engano uma vez e desviou o si
 - **Painel web de administração — fatia 1 (2026-09-24)** — `/admin` no próprio backend (Thymeleaf + htmx): login de administrador (sessão +
   CSRF, cadeia de segurança própria), painel com totais e "qualidade do catálogo", e listas de bebidas e produtores com pesquisa (sem
   acentos; a das bebidas também por EAN), filtros de qualidade, ordenação e paginação. Só lê. Ver "Painel web — fatia 1", em "Em curso".
+- **Painel web de administração — fatia 2: produtores (2026-09-24)** — criar e editar produtores em `/admin/produtores` (país e região em listas
+  ligadas, morada, coordenadas, história, visitas, website, imagem por URL), com validação, recusa de nomes repetidos e página 404 do painel.
+  **É a primeira escrita do painel** (bebidas e links continuam por SQL). Ver "Painel web — fatia 2", em "Em curso".
 - Os restantes ecrãs (`detail`, `reviews`) continuam os placeholders do esqueleto (esqueleto morto, por limpar).
 
 ## Em curso 🔜
@@ -976,6 +979,44 @@ sem região…); pesquisa "esporao"/"Esporão"/"Vale Meão"/casta/`%`/`_`; cada 
 
 **Próximas fatias:** (2) formulário de produtores (país e região em listas, morada, coordenadas, história, visitas, imagem) — é aqui que se
 reescreve a regra do `CLAUDE.md`; (3) bebidas por categoria + links de compra; (4) importador de feed (só com um feed real); (5) rotinas.
+
+### Painel web — fatia 2: formulário de produtores (feita e validada ao vivo, 2026-09-24)
+
+Continuação do painel pedido pelo utilizador; a 1.ª escrita, que reverte por fatias a regra "conteúdo só por SQL" (`CLAUDE.md` e
+`API_ENDPOINTS.md` atualizados). Sem mockup nem alterações à BD.
+
+**O que existe:** `GET /admin/produtores/novo`, `POST /admin/produtores`, `GET|POST /admin/produtores/{id}` e
+`GET /admin/produtores/regioes?paisId=`; a lista de produtores ganhou o botão "Novo produtor" e o nome de cada um é um link para a edição.
+Campos: nome, país, região, ano, website, imagem (URL), morada, latitude/longitude, história, "recebe visitas". **Decisões minhas (a rever se
+quiseres outra):** (1) **nome repetido é recusado** (sem contar acentos nem maiúsculas) — evita duplicados quando entrarem os lotes; (2) **sem
+apagar** produtores (com bebidas a BD recusa de qualquer forma; corrige-se editando); (3) **imagem só por URL** (a coluna tem 255; o envio
+de ficheiros espera pela decisão de alojamento); (4) **regiões/países novos ainda por SQL** (receita em `database/README.md`) — acrescentar
+uma região é um `INSERT` de uma linha; se os lotes trouxerem muitas, vale uma mini-página de regiões (fatia à parte); (5) o site sem esquema
+ganha `https://`, `javascript:`/`data:` são recusados; (6) latitude e longitude vão as duas ou nenhuma; (7) sem histórico de quem mudou o quê.
+
+**Peças:** `ProdutorFormulario.kt` (o formulário em texto + `ProdutorValidacao`, pura), `AdminProdutorService` (país/região existem e combinam,
+nome repetido, gravação; `dataCriacao` à mão porque o `DEFAULT` da coluna não corre por JPA), `AdminProdutorFormController`,
+`AdminExceptionHandler` (um `ResourceNotFoundException` num controller do painel vira a página `admin/erro`, não o JSON da API),
+`AdminProdutorRepository.idsComNome`, `RegiaoRepository.findByPais_Id`, templates `produtor-form` (com o `<select>` da região trocado pelo htmx
+quando o país muda) e `erro`.
+
+**Testes:** +30 (168 no total) — `ProdutorValidacaoTest` (12), `AdminProdutorServiceTest` (10, com repositórios de mentira; inclui "editar
+com o nome de OUTRO produtor não grava nem toca no produtor"), +9 no `AdminWebTest` (formulário com CSRF, criar → redireciona, erros mantêm o
+que se escreveu, sem CSRF/sem papel → 403, edição preenchida, htmx só com as `<option>`, 404 do painel).
+
+**Validado ao vivo** (API + Oracle): criar com acentos (nome, morada, história em duas linhas com "—"), website sem esquema, coordenadas com vírgula,
+visitas → tudo certo na BD (acentos intactos, data em UTC); edição preenche o formulário (região escolhida, caixa marcada); nome repetido
+(sem acento/maiúsculas) recusado com o id do existente; região de outro país, país/região inexistentes, cinco erros de validação de uma vez
+(o que se escreveu mantém-se), sem CSRF → 403; id inexistente → 404 do painel; as `<option>` das regiões de Espanha (e "sem região" para
+país vazio); a página com erros vista no browser (instantâneo estático). **Um erro meu a meio dos testes:** ao testar "editar OUTRO
+produtor com o nome do 41" usei o produtor **8 do seed** em vez de um descartável e, como o nome do 41 tinha ficado estragado por um `-d` com
+acento no `curl.exe`, o teste não viu o repetido e **escreveu por cima do produtor 8** (nome, região, visitas…). Repus o 8 pelo `seed` (nome,
+Portugal, Douro, visitas = 1, resto `NULL`), apaguei o 41 e o `database/verify/rebuild-check.sh` deu "reconstrução igual à dev". Os testes
+seguintes usaram só produtores descartáveis, apagados no fim (identity reposto).
+
+**Em aberto:** o htmx do formulário (região a trocar ao mudar o país) só se testou pelo lado do servidor (fragmento); limite de
+tentativas de login; sem histórico de alterações; **fatia 3 (bebidas)** é a que mais importa para os lotes — formulário por categoria
+(só o vinho tem entidade de subtype; as outras só com os campos gerais), EAN validado, imagem, links de compra e o "duplicado por EAN".
 
 ### Desenho dos endpoints (concluído, 2026-09-17)
 

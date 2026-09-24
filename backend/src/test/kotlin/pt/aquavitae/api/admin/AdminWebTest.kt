@@ -8,6 +8,7 @@ import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.Primary
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user
 import org.springframework.transaction.PlatformTransactionManager
 import org.springframework.transaction.support.AbstractPlatformTransactionManager
@@ -15,8 +16,10 @@ import org.springframework.transaction.support.DefaultTransactionStatus
 import org.springframework.transaction.TransactionDefinition
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import pt.aquavitae.api.common.ResourceNotFoundException
 import pt.aquavitae.api.lookup.BebidaCategoria
 import java.math.BigDecimal
 import kotlin.test.Test
@@ -36,7 +39,7 @@ import kotlin.test.assertTrue
     ],
 )
 @AutoConfigureMockMvc
-@Import(AdminWebTest.CatalogoFalso::class)
+@Import(AdminWebTest.CatalogoFalso::class, AdminWebTest.ProdutorFalso::class)
 class AdminWebTest {
 
     @TestConfiguration
@@ -76,6 +79,30 @@ class AdminWebTest {
                 else -> null
             }
         }
+    }
+
+    // O mesmo para o serviço do formulário do produtor: `criar` recusa um nome em branco e aceita o resto (fica com o id 7).
+    @TestConfiguration
+    class ProdutorFalso {
+        @Bean
+        @Primary
+        fun produtorFalso(): AdminProdutorService = Mockito.mock(AdminProdutorService::class.java) { invocacao ->
+            when (invocacao.method.name) {
+                "paises" -> listOf(OpcaoLookup(1, "Portugal"), OpcaoLookup(2, "Espanha"))
+                "regioesDoPais" -> listOf(OpcaoLookup(10, "Douro"), OpcaoLookup(11, "Alentejo"))
+                "carregar" -> if (invocacao.arguments[0] == 404L) throw ResourceNotFoundException("Produtor 404 não encontrado") else ProdutorParaEditar(
+                    id = 7, nome = "Quinta do Vale Meão",
+                    formulario = ProdutorFormulario(nome = "Quinta do Vale Meão", paisId = "1", regiaoId = "10", morada = "Foz Côa", permiteVisitas = true),
+                    totalBebidas = 3,
+                )
+                "criar" -> resposta(invocacao.arguments[0] as ProdutorFormulario, 7)
+                "atualizar" -> resposta(invocacao.arguments[1] as ProdutorFormulario, invocacao.arguments[0] as Long)
+                else -> null
+            }
+        }
+
+        private fun resposta(form: ProdutorFormulario, id: Long): ResultadoGravacao =
+            if (form.nome.isBlank()) ResultadoGravacao.Invalido(mapOf("nome" to "O nome é obrigatório.")) else ResultadoGravacao.Guardado(id)
     }
 
     @Autowired
@@ -162,6 +189,73 @@ class AdminWebTest {
         val html = mvc.perform(get("/admin/produtores").with(admin)).andExpect(status().isOk).andReturn().response.contentAsString
         assertTrue("Herdade do Esporão" in html && "desde 1973" in html)
         assertTrue("sem imagem" in html && "sem história" in html && "sem morada" in html)
+    }
+
+    @Test
+    fun `o formulario de novo produtor abre com os campos, as listas e o token csrf`() {
+        val html = mvc.perform(get("/admin/produtores/novo").with(admin)).andExpect(status().isOk).andReturn().response.contentAsString
+        assertTrue("Novo produtor" in html)
+        assertTrue("name=\"nome\"" in html && "name=\"paisId\"" in html && "name=\"regiaoId\"" in html && "name=\"historia\"" in html)
+        assertTrue("name=\"_csrf\"" in html, "o formulário de escrita tem de levar o token CSRF")
+        assertTrue(">Portugal<" in html && ">Espanha<" in html)
+        assertTrue("action=\"/admin/produtores\"" in html)
+        assertFalse("Nada foi guardado" in html)
+    }
+
+    @Test
+    fun `gravar um produtor novo redireciona para a edicao`() {
+        mvc.perform(post("/admin/produtores").with(admin).with(csrf()).param("nome", "Esporão").param("paisId", "1"))
+            .andExpect(status().is3xxRedirection)
+            .andExpect(header().string("Location", "/admin/produtores/7?criado"))
+    }
+
+    @Test
+    fun `um formulario com erros volta com o que foi escrito e a mensagem junto ao campo`() {
+        val html = mvc.perform(post("/admin/produtores").with(admin).with(csrf()).param("nome", "").param("morada", "Rua Direita 12").param("permiteVisitas", "true"))
+            .andExpect(status().isOk).andReturn().response.contentAsString
+        assertTrue("O nome é obrigatório." in html)
+        assertTrue("Nada foi guardado" in html)
+        assertTrue("value=\"Rua Direita 12\"" in html, "o que se escreveu não se perde")
+        assertTrue("checked" in html, "a caixa \"recebe visitas\" continua marcada")
+    }
+
+    @Test
+    fun `sem o token csrf nao se grava, e um utilizador sem o papel Admin tambem nao`() {
+        mvc.perform(post("/admin/produtores").with(admin).param("nome", "X").param("paisId", "1")).andExpect(status().isForbidden)
+        mvc.perform(post("/admin/produtores").with(user("ana").roles("UTILIZADOR")).with(csrf()).param("nome", "X")).andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `o formulario de edicao vem preenchido e mostra o aviso depois de gravar`() {
+        val html = mvc.perform(get("/admin/produtores/7?guardado").with(admin)).andExpect(status().isOk).andReturn().response.contentAsString
+        assertTrue("Quinta do Vale Meão" in html)
+        assertTrue("3 bebidas" in html && "/admin/bebidas?q=Quinta" in html)
+        assertTrue("value=\"Foz Côa\"" in html)
+        assertTrue("Alterações guardadas." in html)
+        assertTrue("action=\"/admin/produtores/7\"" in html)
+        assertTrue("<option value=\"10\" selected=\"selected\">Douro</option>" in html, "a região guardada vem escolhida")
+    }
+
+    @Test
+    fun `um produtor que nao existe da uma pagina 404 do painel, nao o JSON da API`() {
+        val resposta = mvc.perform(get("/admin/produtores/404").with(admin)).andExpect(status().isNotFound).andReturn().response
+        assertTrue("Produtor 404 não encontrado" in resposta.contentAsString)
+        assertTrue("<html" in resposta.contentAsString && "Voltar ao painel" in resposta.contentAsString)
+    }
+
+    @Test
+    fun `atualizar um produtor redireciona com o aviso`() {
+        mvc.perform(post("/admin/produtores/7").with(admin).with(csrf()).param("nome", "Novo nome").param("paisId", "1"))
+            .andExpect(status().is3xxRedirection)
+            .andExpect(header().string("Location", "/admin/produtores/7?guardado"))
+    }
+
+    @Test
+    fun `o htmx pede as regioes do pais e recebe so as opcoes`() {
+        val resposta = mvc.perform(get("/admin/produtores/regioes?paisId=1").with(admin).header("HX-Request", "true"))
+            .andExpect(status().isOk).andReturn().response.contentAsString
+        assertFalse("<html" in resposta || "<select" in resposta)
+        assertTrue(">Douro<" in resposta && ">Alentejo<" in resposta && "sem região" in resposta)
     }
 
     @Test

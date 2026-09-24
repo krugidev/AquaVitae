@@ -309,14 +309,14 @@ de mercado. `totalProntasAAbrir` conta **garrafas** (não linhas), incluindo as 
 preço por unidade, o mais caro primeiro (sem preço no fim); `dataConsumo` (por omissão) = nas prontas o prazo (`janelaFim`)
 mais próximo ou já passado primeiro, nas em guarda o início da janela mais próximo primeiro; sem data no fim; o id desempata.
 
-## Painel de administração web (`/admin`) — fatia 1 feita em 2026-09-24
+## Painel de administração web (`/admin`) — fatias 1 e 2 feitas em 2026-09-24
 
 **Não é parte da API JSON**: são páginas HTML feitas no servidor (Thymeleaf + htmx, sem build de front-end), com a sua própria
 cadeia de segurança — **sessão por cookie** (a API é sem estado, com JWT), formulário de login, **CSRF ligado**, e só entra quem
 tem o papel `Admin`. A app Android não lhe toca. Decidido com o utilizador (2026-09-24): painel **web, dentro do backend**, não na
 app (única administradora, trabalho de secretária, e poderes de escrita fora de um app instalado em milhares de telemóveis).
-**Isto vai reverter a regra "conteúdo só por SQL, sem endpoints de escrita"** — mas só quando entrar a primeira escrita (fatias 2 e 3:
-produtores e bebidas); a fatia 1 só lê. Quando isso acontecer, atualizar esta secção e o `CLAUDE.md`.
+**Isto reverte a regra "conteúdo só por SQL, sem endpoints de escrita"**, por fatias: a **fatia 2 (2026-09-24) já escreve produtores**;
+bebidas, links de compra, retalhistas e lookups continuam só por SQL até às fatias seguintes (3 em diante).
 
 | Pedido | O que faz |
 |---|---|
@@ -325,6 +325,9 @@ produtores e bebidas); a fatia 1 só lê. Quando isso acontecer, atualizar esta 
 | `GET /admin` | totais (bebidas, produtores, links ativos/desativados, utilizadores) e, por critério de qualidade, quantas bebidas/produtores o falham — cada linha abre a lista já filtrada |
 | `GET /admin/bebidas?q=&categoria=&qualidade=&ordem=&pagina=` | lista paginada (25 por página) |
 | `GET /admin/produtores?q=&qualidade=&ordem=&pagina=` | idem para os produtores |
+| `GET /admin/produtores/novo` · `POST /admin/produtores` | formulário e criação de um produtor (**escrita**, CSRF): sucesso → `302 /admin/produtores/{id}?criado`; com erros → `200` com o formulário outra vez, o que se escreveu e a mensagem junto de cada campo (nada é gravado) |
+| `GET /admin/produtores/{id}` · `POST /admin/produtores/{id}` | edição (mesmos campos e regras); sucesso → `302 /admin/produtores/{id}?guardado`; id inexistente → página 404 do painel |
+| `GET /admin/produtores/regioes?paisId=` | só as `<option>` das regiões do país (o htmx pede-as quando o país muda no formulário) |
 | `GET /webjars/htmx.org/dist/htmx.min.js`, `GET /admin/css/**` | recursos estáticos, sem sessão (a página de login usa-os) |
 
 - **Pesquisa (`q`)**: a mesma do catálogo (sem acentos nem maiúsculas, `%`/`_` como texto) — bebidas por nome, produtor, casta ou
@@ -343,6 +346,16 @@ produtores e bebidas); a fatia 1 só lê. Quando isso acontecer, atualizar esta 
   CSP só com recursos próprios (imagens de qualquer HTTPS, porque as das bebidas são URLs de retalhistas — um `http://` não aparece);
   `X-Frame-Options: DENY`. **Ainda não há limite de tentativas de login** — antes de expor o `/admin` à internet: limitar tentativas
   e/ou restringir por IP/VPN/proxy.
+
+**Formulário do produtor (fatia 2)** — campos: `nome` (obrigatório, ≤150; os espaços a mais colapsam), `paisId` (obrigatório), `regiaoId`
+(opcional; **tem de ser do país escolhido** — a BD também o exige, por uma FK composta), `anoFundacao` (1000 a este ano), `website` (só
+http/https; falta o esquema → põe-se `https://`; um `javascript:` ou `data:` é recusado), `imagem` (URL `https://…` ou um caminho a começar por
+`/`; a coluna tem 255), `morada` (≤300), `latitude`/`longitude` (**as duas ou nenhuma**; aceita vírgula ou ponto; 6 casas), `historia`
+(≤20 000; as quebras de linha ficam), `permiteVisitas`. **Um nome repetido é recusado** (comparado sem acentos nem maiúsculas: "Esporão" e
+"ESPORAO" são o mesmo; o erro diz o id do existente) — a edição não conta o próprio produtor. Sem apagar (um produtor com bebidas não se
+apaga; corrige-se editando) e sem envio de imagens (só o URL, até haver alojamento). Regiões/países novos ainda se acrescentam por SQL
+(`database/README.md`). O painel não guarda histórico de quem mudou o quê.
+
 - **Ter uma conta de administrador** (só por SQL; o registo cria sempre `Utilizador`):
   `UPDATE utilizador SET utilizador_role_id = (SELECT utilizador_role_id FROM utilizador_role WHERE utilizador_role_value = 'Admin') WHERE utilizador_email = '<email>'; COMMIT;`
   (o mesmo papel serve os endpoints `/api/admin/**`).

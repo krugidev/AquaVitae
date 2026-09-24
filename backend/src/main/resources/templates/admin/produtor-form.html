@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html th:replace="~{admin/layout :: pagina((${produtor == null} ? 'Novo produtor' : 'Editar produtor'), 'produtores', ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<body>
+<main class="conteudo estreito">
+    <p class="migalhas"><a th:href="@{/admin/produtores}">‹ Produtores</a></p>
+    <h1 th:text="${produtor == null} ? 'Novo produtor' : ${produtor.nome}">Novo produtor</h1>
+
+    <p class="mensagem info" th:if="${param.criado}" role="status">Produtor criado.</p>
+    <p class="mensagem info" th:if="${param.guardado}" role="status">Alterações guardadas.</p>
+    <p class="mensagem erro" th:if="${!erros.isEmpty()}" role="alert">Há campos por corrigir — estão assinalados abaixo. Nada foi guardado.</p>
+
+    <p class="ajuda" th:if="${produtor != null}">
+        <span th:text="|Produtor n.º ${produtor.id} · |">Produtor n.º 1 · </span>
+        <a th:href="@{/admin/bebidas(q=${produtor.nome})}"
+           th:text="${produtor.totalBebidas == 1} ? '1 bebida' : |${produtor.totalBebidas} bebidas|">3 bebidas</a>
+    </p>
+
+    <form class="formulario" method="post"
+          th:action="${produtor == null} ? @{/admin/produtores} : @{/admin/produtores/{id}(id=${produtor.id})}">
+
+        <div class="campo" th:classappend="${erros.containsKey('nome')} ? 'com-erro'">
+            <label for="nome">Nome *</label>
+            <input id="nome" name="nome" type="text" maxlength="150" th:value="${form.nome}" required autofocus>
+            <p class="erro-campo" th:if="${erros.containsKey('nome')}" th:text="${erros['nome']}">Erro</p>
+        </div>
+
+        <div class="grelha-2">
+            <div class="campo" th:classappend="${erros.containsKey('paisId')} ? 'com-erro'">
+                <label for="paisId">País *</label>
+                <!-- Ao mudar o país, o htmx troca as opções da região (só as regiões desse país). -->
+                <select id="paisId" name="paisId" required
+                        hx-get="/admin/produtores/regioes" hx-trigger="change" hx-target="#regiaoId" hx-swap="innerHTML">
+                    <option value="">— escolhe —</option>
+                    <option th:each="p : ${paises}" th:value="${p.id}" th:text="${p.nome}"
+                            th:selected="${form.paisId == #strings.toString(p.id)}">Portugal</option>
+                </select>
+                <p class="erro-campo" th:if="${erros.containsKey('paisId')}" th:text="${erros['paisId']}">Erro</p>
+            </div>
+
+            <div class="campo" th:classappend="${erros.containsKey('regiaoId')} ? 'com-erro'">
+                <label for="regiaoId">Região</label>
+                <select id="regiaoId" name="regiaoId">
+                    <th:block th:fragment="opcoesRegiao">
+                        <option value="">— sem região —</option>
+                        <option th:each="r : ${regioes}" th:value="${r.id}" th:text="${r.nome}"
+                                th:selected="${form.regiaoId == #strings.toString(r.id)}">Douro</option>
+                    </th:block>
+                </select>
+                <p class="erro-campo" th:if="${erros.containsKey('regiaoId')}" th:text="${erros['regiaoId']}">Erro</p>
+                <p class="ajuda">Só as regiões do país. Falta uma? Acrescenta-se à lista (SQL) antes — receita em <code>database/README.md</code>.</p>
+            </div>
+        </div>
+
+        <div class="grelha-2">
+            <div class="campo" th:classappend="${erros.containsKey('anoFundacao')} ? 'com-erro'">
+                <label for="anoFundacao">Ano de fundação</label>
+                <input id="anoFundacao" name="anoFundacao" type="text" inputmode="numeric" maxlength="4" th:value="${form.anoFundacao}" placeholder="1973">
+                <p class="erro-campo" th:if="${erros.containsKey('anoFundacao')}" th:text="${erros['anoFundacao']}">Erro</p>
+            </div>
+            <div class="campo">
+                <label for="permiteVisitas" class="linha">
+                    <input id="permiteVisitas" name="permiteVisitas" type="checkbox" value="true" th:checked="${form.permiteVisitas}">
+                    Recebe visitas
+                </label>
+            </div>
+        </div>
+
+        <div class="campo" th:classappend="${erros.containsKey('website')} ? 'com-erro'">
+            <label for="website">Website</label>
+            <input id="website" name="website" type="text" maxlength="255" th:value="${form.website}" placeholder="https://www.exemplo.pt">
+            <p class="erro-campo" th:if="${erros.containsKey('website')}" th:text="${erros['website']}">Erro</p>
+        </div>
+
+        <div class="campo" th:classappend="${erros.containsKey('imagem')} ? 'com-erro'">
+            <label for="imagem">Imagem (URL)</label>
+            <input id="imagem" name="imagem" type="text" maxlength="255" th:value="${form.imagem}" placeholder="https://…">
+            <p class="erro-campo" th:if="${erros.containsKey('imagem')}" th:text="${erros['imagem']}">Erro</p>
+            <p class="ajuda">Um endereço <code>https://</code> ou um caminho do backend (<code>/icones/…</code>). Ainda não há envio de ficheiros.</p>
+        </div>
+
+        <div class="campo" th:classappend="${erros.containsKey('morada')} ? 'com-erro'">
+            <label for="morada">Morada</label>
+            <input id="morada" name="morada" type="text" maxlength="300" th:value="${form.morada}" placeholder="Rua, código postal, localidade">
+            <p class="erro-campo" th:if="${erros.containsKey('morada')}" th:text="${erros['morada']}">Erro</p>
+        </div>
+
+        <div class="grelha-2">
+            <div class="campo" th:classappend="${erros.containsKey('latitude')} ? 'com-erro'">
+                <label for="latitude">Latitude</label>
+                <input id="latitude" name="latitude" type="text" inputmode="decimal" th:value="${form.latitude}" placeholder="41,1621">
+                <p class="erro-campo" th:if="${erros.containsKey('latitude')}" th:text="${erros['latitude']}">Erro</p>
+            </div>
+            <div class="campo" th:classappend="${erros.containsKey('longitude')} ? 'com-erro'">
+                <label for="longitude">Longitude</label>
+                <input id="longitude" name="longitude" type="text" inputmode="decimal" th:value="${form.longitude}" placeholder="-7,7891">
+                <p class="erro-campo" th:if="${erros.containsKey('longitude')}" th:text="${erros['longitude']}">Erro</p>
+            </div>
+        </div>
+        <p class="ajuda">Com coordenadas, o "Abrir no mapa" da app usa-as; sem elas, procura pela morada.</p>
+
+        <div class="campo" th:classappend="${erros.containsKey('historia')} ? 'com-erro'">
+            <label for="historia">História</label>
+            <textarea id="historia" name="historia" rows="10" th:text="${form.historia}"></textarea>
+            <p class="erro-campo" th:if="${erros.containsKey('historia')}" th:text="${erros['historia']}">Erro</p>
+        </div>
+
+        <div class="acoes">
+            <button type="submit" class="botao" th:text="${produtor == null} ? 'Criar produtor' : 'Guardar alterações'">Guardar</button>
+            <a th:href="@{/admin/produtores}">Cancelar</a>
+        </div>
+    </form>
+</main>
+</body>
+</html>

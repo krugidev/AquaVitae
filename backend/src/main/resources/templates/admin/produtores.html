@@ -2,7 +2,10 @@
 <html th:replace="~{admin/layout :: pagina('Produtores', 'produtores', ~{::main})}" xmlns:th="http://www.thymeleaf.org">
 <body>
 <main class="conteudo">
-    <h1>Produtores</h1>
+    <div class="cabecalho-pagina">
+        <h1>Produtores</h1>
+        <a class="botao" th:href="@{/admin/produtores/novo}">Novo produtor</a>
+    </div>
 
     <form class="filtros" action="/admin/produtores" method="get"
           hx-get="/admin/produtores" hx-trigger="input delay:300ms, change" hx-target="#resultado" hx-swap="outerHTML"
@@ -33,7 +36,7 @@
                         <img th:if="${p.imagemUrl != null}" th:src="${p.imagemUrl}" alt="" width="48" height="36" loading="lazy" referrerpolicy="no-referrer">
                     </td>
                     <td>
-                        <span class="nome" th:text="${p.nome} ?: '(sem nome)'">Herdade do Esporão</span>
+                        <a class="nome" th:href="@{/admin/produtores/{id}(id=${p.id})}" th:text="${p.nome} ?: '(sem nome)'">Herdade do Esporão</a>
                         <small class="detalhe" th:if="${p.anoFundacao != null}" th:text="|desde ${p.anoFundacao}|">desde 1973</small>
                     </td>
                     <td th:text="${p.pais} ?: '—'">Portugal</td>

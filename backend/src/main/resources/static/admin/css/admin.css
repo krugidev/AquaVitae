@@ -89,3 +89,26 @@ td.aviso { color: var(--aviso); font-weight: 600; }
     .topo { flex-wrap: wrap; gap: .5rem 1rem; padding: .75rem 1rem; }
     .conteudo { padding: 1rem; }
 }
+
+/* Formulários (fatia 2) */
+.cabecalho-pagina { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+.cabecalho-pagina h1 { margin: 0; }
+a.botao { display: inline-block; text-decoration: none; }
+a.botao:hover { text-decoration: none; }
+.estreito { max-width: 760px; }
+.migalhas { margin: 0 0 .5rem; font-size: .9rem; }
+.formulario { background: #fff; border: 1px solid var(--linha); border-radius: 10px; padding: 1.25rem; }
+.campo { margin-bottom: 1rem; }
+.campo label { display: block; font-size: .85rem; color: var(--suave); margin-bottom: .25rem; }
+.campo label.linha { display: flex; align-items: center; gap: .5rem; color: var(--tinta); font-size: 1rem; margin-top: 1.5rem; }
+.campo input[type=text], .campo select, .campo textarea { width: 100%; }
+.campo input[type=checkbox] { width: 1.1rem; height: 1.1rem; accent-color: var(--grena); }
+textarea { font: inherit; padding: .5rem .65rem; border: 1px solid var(--linha); border-radius: 8px; resize: vertical; }
+textarea:focus { outline: 2px solid var(--grena-claro); border-color: var(--grena); }
+.grelha-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1rem; }
+.com-erro input, .com-erro select, .com-erro textarea { border-color: var(--aviso); }
+.erro-campo { color: var(--aviso); font-size: .85rem; margin: .25rem 0 0; }
+.formulario .ajuda { margin: .25rem 0 0; font-size: .82rem; }
+.acoes { display: flex; align-items: center; gap: 1rem; margin-top: 1.25rem; }
+code { background: var(--grena-claro); padding: 0 .3rem; border-radius: 4px; font-size: .85em; }
+@media (max-width: 720px) { .grelha-2 { grid-template-columns: 1fr; } }

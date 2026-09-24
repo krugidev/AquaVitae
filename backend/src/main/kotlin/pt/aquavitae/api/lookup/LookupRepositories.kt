@@ -40,6 +40,9 @@ interface UtilizadorAvatarRepository : JpaRepository<UtilizadorAvatar, Long> {
 
 interface RegiaoRepository : JpaRepository<Regiao, Long> {
 
+    // Todas as regiões de um país (o painel de administração, ao escolher a região de um produtor).
+    fun findByPais_Id(paisId: Long): List<Regiao>
+
     // As pílulas de "Origem" do filtro: só as regiões do país que têm pelo menos uma bebida (senão uma pílula dava
     // 0 resultados). Adicionar uma região à tabela `regiao` não a mostra até haver um produto dela.
     @Query(
