@@ -32,6 +32,13 @@ aquavitae:
       falhas-para-desativar: 2   # noites seguidas com link inválido antes de o desativar
       intervalo-ms: 1000   # espaçamento mínimo entre pedidos ao mesmo retalhista
 
+  compra:
+    # O inquérito "Compraste?" depois de um clique num link de compra (briefing, secção 4: janela de 24-72h). Só se pergunta
+    # por cliques com mais de `pergunta-apos-minutos` (quem volta segundos depois quase de certeza não comprou) e com menos de
+    # `pergunta-ate-horas` (passado esse tempo já ninguém se lembra).
+    pergunta-apos-minutos: 2
+    pergunta-ate-horas: 72
+
   mail:
     # Quem aparece como remetente dos emails. O endereço tem de ser um que o servidor SMTP deixe usar (em geral, o do
     # domínio/conta que se criou). Em produção: AQUAVITAE_MAIL_FROM_ADDRESS e AQUAVITAE_MAIL_FROM_NAME.

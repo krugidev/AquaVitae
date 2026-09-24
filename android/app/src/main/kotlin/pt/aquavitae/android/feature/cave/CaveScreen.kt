@@ -33,6 +33,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -73,6 +74,9 @@ import pt.aquavitae.android.ui.theme.RoseBorder
 @Composable
 fun CaveScreen(onVerProvadas: () -> Unit = {}, onVerProdutor: (Long) -> Unit = {}, viewModel: CaveViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsState()
+    // Uma garrafa pode ter entrado na cave por fora deste ecrã (o inquérito "Compraste?" abre o "Adicionar à cave" por cima de
+    // qualquer ecrã): ao entrar, volta a pedir as caves e o detalhe da atual, sem repor a seleção nem o ecrã de carregamento.
+    LaunchedEffect(Unit) { viewModel.atualizarAposGuardar() }
     // O detalhe de uma bebida é sempre um popup (também "nas caves", ver BebidaCard) — falhava aqui, apanhado a
     // testar o bloqueio da review (2026-09-23): as linhas de garrafa nunca tinham ficado ligadas.
     var bebidaSelecionadaId by remember { mutableStateOf<Long?>(null) }

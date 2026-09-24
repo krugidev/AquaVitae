@@ -13,10 +13,12 @@ import pt.aquavitae.android.data.model.CaveConsumoResponse
 import pt.aquavitae.android.data.model.CaveDetailResponse
 import pt.aquavitae.android.data.model.CaveRequest
 import pt.aquavitae.android.data.model.CaveResponse
+import pt.aquavitae.android.data.model.CliquePendente
 import pt.aquavitae.android.data.model.Casta
 import pt.aquavitae.android.data.model.LoginRequest
 import pt.aquavitae.android.data.model.LookupItem
 import pt.aquavitae.android.data.model.Nacionalidade
+import pt.aquavitae.android.data.model.OfertaCompra
 import pt.aquavitae.android.data.model.PageResponse
 import pt.aquavitae.android.data.model.PreferenciaRequest
 import pt.aquavitae.android.data.model.PreferenciaResponse
@@ -24,6 +26,7 @@ import pt.aquavitae.android.data.model.ProdutorDetail
 import pt.aquavitae.android.data.model.RecuperarPasswordRequest
 import pt.aquavitae.android.data.model.RedefinirPasswordRequest
 import pt.aquavitae.android.data.model.RegisterRequest
+import pt.aquavitae.android.data.model.RespostaCliqueRequest
 import pt.aquavitae.android.data.model.ReviewRequest
 import pt.aquavitae.android.data.model.ReviewResponse
 import pt.aquavitae.android.data.model.ReviewsResponse
@@ -119,6 +122,23 @@ interface AquaVitaeApi {
 
     @GET("api/bebidas/{id}")
     suspend fun getBebidaDetail(@Path("id") id: Long): BebidaDetail
+
+    // --- Comprar (ofertas dos retalhistas, cliques nos links de afiliado, inquérito "Compraste?") ---
+
+    /** Todas as ofertas de uma bebida: disponíveis primeiro (mais barata primeiro), indisponíveis no fim. */
+    @GET("api/bebidas/{bebidaId}/links-compra")
+    suspend fun getLinksCompra(@Path("bebidaId") bebidaId: Long): List<OfertaCompra>
+
+    /** Regista o clique do utilizador num link (204). 409 se o link já não está disponível. */
+    @POST("api/bebidas/{bebidaId}/links-compra/{linkId}/clique")
+    suspend fun registarCliqueCompra(@Path("bebidaId") bebidaId: Long, @Path("linkId") linkId: Long)
+
+    /** Cliques por perguntar ("Compraste X?"): mais de 2 min e menos de 72 h, o mais recente de cada bebida. */
+    @GET("api/users/me/cliques-compra/pendentes")
+    suspend fun getCliquesPendentes(): List<CliquePendente>
+
+    @POST("api/users/me/cliques-compra/{id}/resposta")
+    suspend fun responderCliqueCompra(@Path("id") id: Long, @Body request: RespostaCliqueRequest)
 
     // --- Produtores ---
 

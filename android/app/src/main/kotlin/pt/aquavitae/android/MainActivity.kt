@@ -12,6 +12,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import dagger.hilt.android.AndroidEntryPoint
+import pt.aquavitae.android.feature.compra.CompraPromptHost
 import pt.aquavitae.android.navigation.AppNavHost
 import pt.aquavitae.android.ui.theme.AquaVitaeTheme
 
@@ -41,6 +42,8 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background,
                 ) {
                     AppNavHost()
+                    // O "Compraste?" de depois de um clique em "Comprar": por cima de tudo, sempre que a app volta ao primeiro plano.
+                    CompraPromptHost()
                 }
             }
         }

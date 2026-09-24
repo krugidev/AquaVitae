@@ -10,9 +10,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import pt.aquavitae.android.data.model.BebidaDetail
 import pt.aquavitae.android.data.model.LookupState
+import pt.aquavitae.android.data.model.OfertaCompra
 import pt.aquavitae.android.data.model.ReviewsResponse
 import pt.aquavitae.android.data.network.toUserMessage
 import pt.aquavitae.android.data.repository.BebidaRepository
+import pt.aquavitae.android.data.repository.CompraRepository
 import pt.aquavitae.android.data.repository.FavoritoRepository
 import pt.aquavitae.android.data.repository.ReviewRepository
 import pt.aquavitae.android.data.repository.WishlistRepository
@@ -28,6 +30,8 @@ sealed interface BebidaDetalheUiState {
         val bebida: BebidaDetail,
         val tab: DetalheTab = DetalheTab.DETALHES,
         val reviews: LookupState<ReviewsResponse> = LookupState.Loading,
+        // "Onde comprar": todas as ofertas dos retalhistas (a mais barata também é o botão principal do cabeçalho).
+        val ofertas: LookupState<List<OfertaCompra>> = LookupState.Loading,
         // Espelham bebida.isFavorito/isWishlist mas atualizam-se logo ao tocar (otimista), sem esperar pela resposta.
         val isFavorito: Boolean = false,
         val isWishlist: Boolean = false,
@@ -52,6 +56,7 @@ class BebidaDetalheViewModel @Inject constructor(
     private val reviewRepository: ReviewRepository,
     private val favoritoRepository: FavoritoRepository,
     private val wishlistRepository: WishlistRepository,
+    private val compraRepository: CompraRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<BebidaDetalheUiState>(BebidaDetalheUiState.Loading)
@@ -73,6 +78,7 @@ class BebidaDetalheViewModel @Inject constructor(
                         minhaEstrelas = bebida.notaPropria ?: 0.0,
                     )
                     carregarReviews()
+                    carregarOfertas()
                 }
                 .onFailure { _state.value = BebidaDetalheUiState.Error(it.toUserMessage()) }
         }
@@ -87,6 +93,24 @@ class BebidaDetalheViewModel @Inject constructor(
                 .onSuccess { atualizarPronto { copy(reviews = LookupState.Ready(it)) } }
                 .onFailure { atualizarPronto { copy(reviews = LookupState.Error(it.toUserMessage())) } }
         }
+    }
+
+    private fun carregarOfertas() {
+        atualizarPronto { copy(ofertas = LookupState.Loading) }
+        viewModelScope.launch {
+            compraRepository.getOfertas(bebidaId)
+                .onSuccess { atualizarPronto { copy(ofertas = LookupState.Ready(it)) } }
+                .onFailure { atualizarPronto { copy(ofertas = LookupState.Error(it.toUserMessage())) } }
+        }
+    }
+
+    /**
+     * O utilizador tocou num botão "Comprar": regista o clique (para a comissão e para o inquérito "Compraste?" ao voltar à
+     * app). O ecrã abre a loja **antes** de chamar isto e não espera pela resposta — falhar (sem rede, 409 se o link ficou
+     * indisponível) nunca pode impedir de comprar.
+     */
+    fun registarClique(linkId: Long) {
+        viewModelScope.launch { compraRepository.registarClique(bebidaId, linkId) }
     }
 
     fun alternarFavorito() {

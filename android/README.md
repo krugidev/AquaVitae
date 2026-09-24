@@ -22,6 +22,7 @@ O frontend constrói-se em **fatias verticais**, cada uma um fluxo de ecrãs des
 | 4 | Favoritos e Wishlist a sério (filtros/ordenação, nota própria vs. média, "Comprar"/"Para a cave") | ✅ feita (2026-09-24) |
 | 5 | perfil: ver/editar dados e preferências, escolher avatar, terminar sessão | ✅ feita (2026-09-24) |
 | 6 | página do produtor (imagem, rating geral, história, mapa, garrafas) + catálogo só desse produtor | ✅ feita (2026-09-24) |
+| 7 | comprar: a pílula do preço e "COMPRAR" abrem a loja e registam o clique, "Onde comprar", "Compraste?" ao voltar do browser, "Comprar em X" da wishlist | ✅ feita (2026-09-24) |
 
 Os ecrãs `detail` e `reviews` continuam **placeholders do esqueleto** (esqueleto morto, por limpar — ver abaixo): estão
 embrulhados em `LegacyScreen` (`navigation/AppNavHost.kt`), que dá o espaço das barras do sistema. Ao redesenhar um,
@@ -155,6 +156,8 @@ android/
 | `feature/perfil/EscolherAvatarSheet` | o popup "Escolher avatar" do perfil: pílulas "Todos"/categorias + `AvatarTileGrid`; só confirma localmente (`onConfirmar`) — quem grava é o "Guardar" do `EditarPerfilScreen` |
 | `feature/perfil/EditarPreferenciasSheet` | o popup "Editar preferências" do perfil: as mesmas do onboarding (tipos de bebida, acidez/doçura, castas), aqui em pílulas horizontais compactas (`RangePillRow` reutilizado tal e qual) em vez das listas paginadas do onboarding |
 | `feature/produtor/HistoriaProdutorSheet` | o popup "Ler a história completa" da página do produtor: nome no topo, texto a deslizar, parágrafos da BD preservados |
+| `feature/compra/CompraPromptHost` | o inquérito "Compraste?": vive na `MainActivity`, por cima do grafo de navegação; ao voltar ao primeiro plano (`ON_RESUME`) pede `GET /users/me/cliques-compra/pendentes` e mostra "Compraste esta bebida?" (Sim → "Adicionar à cave" com o preço do link; Não comprei; Mais tarde) |
+| `ui/util/abrirLink` | `Context.abrirLink(url)`: abre um URL fora da app (browser/app da loja/site do produtor/mapas); devolve `false` se não houver nada que o abra |
 
 **Tokens novos da homepage/catálogo** (`ui/theme/Color.kt`/`Type.kt`): `WineDark` (cartão do produtor em destaque), `RoseBorder`
 (contorno das caixas de estatística e das pílulas de filtro removíveis); `AquaText.SectionSerif`/`SectionSerifAccent`/`GreetingSerif`/
@@ -185,6 +188,7 @@ android/
 | `produtor/{id}` | `feature/produtor/ProdutorScreen.kt` (+ `ProdutorViewModel`) | ✅ | `GET /produtores/{id}`, `/produtores/{id}/bebidas?size=6` |
 | `produtor/{id}/catalogo` | `feature/catalog/CatalogScreen.kt` (+ `CatalogViewModel`, **o mesmo ecrã do catálogo**, fixo num produtor: lê o id do argumento de navegação) | ✅ | `GET /produtores/{id}`, `GET /bebidas?produtorId=` |
 | *(popup, sem rota)* | `feature/produtor/HistoriaProdutorSheet.kt` | ✅ | — (usa a `historia` do produtor) |
+| *(popup global, sem rota)* | `feature/compra/CompraPromptHost.kt` (+ `CompraPromptViewModel`) | ✅ | `GET /users/me/cliques-compra/pendentes`, `POST .../{id}/resposta`, `GET /bebidas/{id}` |
 
 Depois do login/onboarding vai-se para `home` (antes ia para `catalog`); só quem acabou de se registar passa pelo onboarding. A
 recuperação de password volta ao login com o popup "Password alterada!" (o login recebe o aviso pelo `savedStateHandle`, ver
@@ -199,9 +203,9 @@ código como esqueleto morto, por limpar numa fatia futura.
 
 ## Testes
 
-Unitários (JVM), **72**: `AuthValidationTest` (10, validação do registo), `RecoveryRulesTest` (10, email tapado, password nova),
+Unitários (JVM), **82**: `AuthValidationTest` (10, validação do registo), `RecoveryRulesTest` (10, email tapado, password nova),
 `OnboardingRulesTest` (12, ordem dos ecrãs, montagem dos pedidos de perfil e preferências), `FlagEmojiTest` (3), `ImageUrlsTest` (4),
-`AvatarBadgeTest` (6, iniciais do avatar), `BebidaFormatacaoTest` (8, a fórmula de `linhaAtributos()` e a extração do ano do nome). `ProdutorFormatacaoTest` (14, domínio do site, URL, coordenadas, morada, URI `geo:` por coordenadas ou por morada com o nome escapado, singular/plural) e `ProdutorUiStateTest` (5, 3 garrafas de início, "CARREGAR MAIS N", nunca mais de 6).
+`AvatarBadgeTest` (6, iniciais do avatar), `BebidaFormatacaoTest` (8, a fórmula de `linhaAtributos()` e a extração do ano do nome). `ProdutorFormatacaoTest` (14, domínio do site, URL, coordenadas, morada, URI `geo:` por coordenadas ou por morada com o nome escapado, singular/plural) e `ProdutorUiStateTest` (5, 3 garrafas de início, "CARREGAR MAIS N", nunca mais de 6). `CompraFormatacaoTest` (10, a oferta principal é a mais barata das disponíveis com link, "MAIS BARATO" só com comparação, "há N min/horas/dias", "atualizado hoje").
 Ainda **sem** testes de ViewModels nem de UI (pede `kotlinx-coroutines-test`; fica para quando compensar) — `HomeViewModel` e
 `CatalogViewModel` também ainda não têm testes (o `RangePillRow` e a lógica de intervalo do popup de filtros também só validados ao
 vivo, não têm teste unitário). `descricaoJanela` (`HomeScreen.kt`) continua `private`, sem teste. Os fluxos validam-se ao vivo no
@@ -230,16 +234,19 @@ emulador (compilar → instalar → `adb shell input tap/text` → screenshot), 
   (falta ordenar por preço, que pede trabalho no backend); o `RangeSlider` do preço nunca foi testado com dados a sério; a
   review só aceita estrelas inteiras (sem as meias-estrelas do mockup); `DetailScreen`/`ReviewsScreen` (esqueleto antigo)
   ficam como código morto, por limpar; falta trocar `AquaVitaeLogo` (texto Inter) pelo wordmark real (`ic_wordmark_home`) nos
-  outros ecrãs de auth; **Favoritos/Wishlist ficam sem 5 detalhes do mockup** (link de compra completo para "Comprar" abrir o
-  browser e registar o clique, "ATUALIZADA HOJE"/"MENOR DE N RETALHISTAS", "N NA CAVE", "PROVADA EM \<mês\>") — pedem campos
-  novos no `BebidaSummaryDto`, adiados a pedido do utilizador (ver `PLANO.md`, "Por fazer depois"); a deteção de descidas de
-  preço da wishlist foi pedida para ficar de fora por agora.
+  outros ecrãs de auth; **Favoritos/Wishlist ficam sem 4 detalhes do mockup** ("ATUALIZADA HOJE"/"MENOR DE N RETALHISTAS",
+  "N NA CAVE", "PROVADA EM \<mês\>", e o link no próprio `BebidaSummaryDto`) — pedem campos novos no `BebidaSummaryDto`, adiados
+  a pedido do utilizador (ver `PLANO.md`, "Por fazer depois"); o "Comprar em X" já abre a loja sem esse campo (pede as ofertas
+  ao tocar, ver "Comprar"); a deteção de descidas de preço da wishlist foi pedida para ficar de fora por agora.
 - **Perfil (fatia 5), feito:** ver `design/README.md`, "Perfil", para a lista completa — em resumo: "As minhas reviews" e
   "Conta e segurança" ainda sem destino (mockups por chegar); o email aparece como texto simples por baixo da bio em vez da
   linha "Email e password" do mockup (também à espera do mockup de "Conta e segurança"); o suporte de emojis na bio não foi
   validado ao vivo (o `adb shell input text` não consegue enviar emoji, uma limitação da própria ferramenta — por código,
   o campo não restringe o tipo de teclado e o Android troca sozinho para a fonte de emoji do sistema quando a Inter não
   tem o glifo, o comportamento por omissão da plataforma).
+- **Comprar (ponto 1 depois da fatia 6), feito:** ver `design/README.md`, "Comprar". Em resumo: sem mockup (decisões minhas, registadas lá);
+  o "Compraste?" só pergunta por cliques com mais de 2 min e menos de 72 h; **falta testar com um link de afiliado real** (todos os
+  testes usaram `example.com`); "Comprar em X" da wishlist faz um pedido extra ao tocar (não usa os 5 campos adiados).
 - **Produtor (fatia 6), feito:** ver `design/README.md`, "Produtor", para a lista completa — em resumo: **sem mapa embebido** (o Maps
   SDK é grátis mas pede projeto Google Cloud com faturação e chave) — a página mostra a **morada em texto** (`produtor_morada`,
   patch `14`) e "Abrir no mapa" abre a app de mapas (pelas coordenadas, se houver; senão pela morada); o **catálogo do produtor é

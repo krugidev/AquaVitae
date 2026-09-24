@@ -99,6 +99,10 @@ interface CaveRepository : JpaRepository<Cave, Long> {
 interface CaveBebidaRepository : JpaRepository<CaveBebida, Long> {
     fun findByIdAndCave_Id(id: Long, caveId: Long): CaveBebida?
 
+    // "Já adicionaste esta bebida a uma cave desde esse dia?" — o inquérito "Compraste?" não repete a pergunta a quem já
+    // o fez por outro caminho (fatia "Comprar", 2026-09-24).
+    fun existsByCave_Utilizador_IdAndBebida_IdAndDataAquisicaoGreaterThanEqual(utilizadorId: Long, bebidaId: Long, data: java.time.LocalDate): Boolean
+
     // Consumir uma garrafa lê a quantidade e escreve-a de volta: sem bloqueio, dois pedidos quase em
     // simultâneo (duplo toque no botão) liam ambos "2", gravavam ambos "1" e criavam duas linhas consumidas.
     @Lock(LockModeType.PESSIMISTIC_WRITE)

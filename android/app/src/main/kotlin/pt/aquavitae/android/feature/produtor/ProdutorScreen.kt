@@ -1,9 +1,6 @@
 package pt.aquavitae.android.feature.produtor
 
-import android.content.ActivityNotFoundException
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -84,6 +81,7 @@ import pt.aquavitae.android.ui.theme.Ink
 import pt.aquavitae.android.ui.theme.MutedInk
 import pt.aquavitae.android.ui.theme.Paper
 import pt.aquavitae.android.ui.theme.RoseBorder
+import pt.aquavitae.android.ui.util.abrirLink
 
 private val AlturaImagem = 210.dp
 private val SobreposicaoConteudo = 28.dp
@@ -263,7 +261,7 @@ private fun Pilulas(produtor: ProdutorDetail) {
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (produtor.permiteVisitas) Pilula("RECEBE VISITAS")
         produtor.websiteParaMostrar()?.let { site ->
-            Pilula(site.uppercase(LocalePt), onClick = produtor.websiteUrl()?.let { url -> { context.abrirUrl(url) } })
+            Pilula(site.uppercase(LocalePt), onClick = produtor.websiteUrl()?.let { url -> { context.abrirLink(url) } })
         }
         Pilula(garrafasTexto(produtor.totalProdutos).uppercase(LocalePt))
     }
@@ -433,22 +431,10 @@ private fun RatingDaGarrafa(bebida: BebidaSummary) {
     )
 }
 
-// --- Abrir o browser / a app de mapas (sem nenhuma dependência nova: intents do sistema) ---
-
-private fun Context.abrirUrl(url: String) {
-    try {
-        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-    } catch (_: ActivityNotFoundException) {
-        // Sem browser instalado não há nada a fazer.
-    }
-}
+// --- A app de mapas (intent do sistema; abrir URLs é o `abrirLink` partilhado de `ui/util`) ---
 
 /** Abre a app de mapas no ponto do produtor; se não houver nenhuma, cai para o Google Maps no browser. */
 private fun Context.abrirMapa(produtor: ProdutorDetail) {
     val geo = produtor.geoUri() ?: return
-    try {
-        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(geo)))
-    } catch (_: ActivityNotFoundException) {
-        produtor.mapaWebUrl()?.let { abrirUrl(it) }
-    }
+    if (!abrirLink(geo)) produtor.mapaWebUrl()?.let { abrirLink(it) }
 }

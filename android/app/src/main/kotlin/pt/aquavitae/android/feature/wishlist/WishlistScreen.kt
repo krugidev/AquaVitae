@@ -40,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.buildAnnotatedString
@@ -70,6 +71,7 @@ import pt.aquavitae.android.ui.theme.CardGray
 import pt.aquavitae.android.ui.theme.MutedInk
 import pt.aquavitae.android.ui.theme.Paper
 import pt.aquavitae.android.ui.theme.RoseBorder
+import pt.aquavitae.android.ui.util.abrirLink
 import java.time.Instant
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
@@ -78,9 +80,9 @@ import java.time.format.TextStyle as JavaTextStyle
 /**
  * "A minha wishlist" (`android/design/favoritos-wishlist/01-wishlist.png`): ordenar por recentes/preço/rating,
  * "Comprar em X" e "Para a cave". "MENOR DE N RETALHISTAS"/"ATUALIZADA HOJE" e a deteção de descidas de preço do
- * mockup ficam por fazer — pedem campos novos no `BebidaSummaryDto` (o link de compra completo, a data de
- * verificação, quantas ofertas ativas), adiado a pedido do utilizador (ver `PLANO.md`, "Por fazer depois"); por
- * agora "Comprar em X" abre o popup de detalhe da bebida em vez do link do retalhista.
+ * mockup ficam por fazer — pedem campos novos no `BebidaSummaryDto` (a data de verificação, quantas ofertas ativas),
+ * adiado a pedido do utilizador (ver `PLANO.md`, "Por fazer depois"). "Comprar em X" abre a loja (a oferta mais barata
+ * disponível, pedida no momento do toque) e regista o clique; sem nenhuma oferta disponível abre o popup de detalhe.
  */
 @Composable
 fun WishlistScreen(onVerPerfil: () -> Unit = {}, onVerProdutor: (Long) -> Unit = {}, viewModel: WishlistViewModel = hiltViewModel()) {
@@ -90,6 +92,7 @@ fun WishlistScreen(onVerPerfil: () -> Unit = {}, onVerProdutor: (Long) -> Unit =
 
     var bebidaSelecionadaId by remember { mutableStateOf<Long?>(null) }
     var bebidaParaAdicionarACave by remember { mutableStateOf<BebidaDetail?>(null) }
+    val context = LocalContext.current
 
     Box(Modifier.fillMaxSize().background(Paper).statusBarsPadding()) {
         when (val state = uiState) {
@@ -109,6 +112,7 @@ fun WishlistScreen(onVerPerfil: () -> Unit = {}, onVerProdutor: (Long) -> Unit =
                 state = state,
                 viewModel = viewModel,
                 onBebidaClick = { bebidaSelecionadaId = it },
+                onComprar = { id -> viewModel.comprar(id, aoAbrir = { url -> context.abrirLink(url) }, semOferta = { bebidaSelecionadaId = id }) },
                 onParaCave = { id -> viewModel.prepararParaCave(id) { detalhe -> bebidaParaAdicionarACave = detalhe } },
                 onVerPerfil = onVerPerfil,
             )
@@ -138,6 +142,7 @@ private fun WishlistContent(
     viewModel: WishlistViewModel,
     onBebidaClick: (Long) -> Unit,
     onParaCave: (Long) -> Unit,
+    onComprar: (Long) -> Unit,
     onVerPerfil: () -> Unit,
 ) {
     LazyColumn(
@@ -181,7 +186,7 @@ private fun WishlistContent(
                         aAbrirCave = state.aAbrirCaveId == relacao.bebida.id,
                         onClick = { onBebidaClick(relacao.bebida.id) },
                         onRemover = { viewModel.remover(relacao.bebida.id) },
-                        onComprar = { onBebidaClick(relacao.bebida.id) },
+                        onComprar = { onComprar(relacao.bebida.id) },
                         onParaCave = { onParaCave(relacao.bebida.id) },
                     )
                     HorizontalDivider(color = RoseBorder)

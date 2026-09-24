@@ -703,3 +703,52 @@ o caso "com todos os dados" — os estados sem imagem/site/história/morada fora
 Nenhum produtor real tem ainda história, morada, coordenadas nem imagem: **é dado a preencher à mão** (SQL), como os
 outros atributos de conteúdo, quando o utilizador os tiver. Dívida antiga vista de passagem: o cartão de bebida diz "1
 reviews" (sem singular) no catálogo/cave/home e as linhas de `ProvadasScreen` não abrem o popup de detalhe.
+
+## Comprar (ponto 1 a seguir à fatia 6, feito e validado ao vivo — 2026-09-24)
+
+**Sem mockup** — pedido pelo utilizador em conversa ("o botão de comprar ainda não faz nada" era o ajuste mais importante:
+o dinheiro do projeto vem dos links de afiliado). As decisões abaixo são minhas, para rever.
+
+**O que ficou feito:**
+- **A pílula do preço no popup de detalhe** ("175,00€ CONTINENTE ONLINE ›") é o botão "Comprar" principal: abre a **oferta
+  mais barata das disponíveis** (a que a API já devolve em `BebidaDetail.linkCompra`) no browser e regista o clique. Ganhou
+  uma seta para se perceber que se toca.
+- **"ONDE COMPRAR"** (tab "Detalhes", por cima do cartão do produtor), **só quando há mais de uma oferta** (com uma só, a pílula
+  já é essa oferta): uma linha por retalhista, do mais barato para o mais caro — nome, "atualizado hoje / há N dias" (a data do
+  último preço), preço e um botão "COMPRAR"; a mais barata leva o selo **"MAIS BARATO"** (só com mais de uma disponível). As
+  **indisponíveis** ficam esbatidas, sem botão, com o motivo ("Sem stock" / "Página indisponível") e o último preço riscado.
+- **"Comprar em X" da wishlist** abre a loja: como a lista só tem `BebidaSummary` (sem o link), pede as ofertas da bebida ao
+  tocar e abre a mais barata das disponíveis (um duplo toque não abre duas vezes); sem nenhuma oferta disponível abre o popup de
+  detalhe. Não precisou dos 5 campos adiados na fatia 4.
+- **O clique é registado em segundo plano** (`POST .../links-compra/{linkId}/clique`) **depois de a loja abrir**; se falhar
+  (sem rede, 409 se o link ficou indisponível) nunca impede de comprar. **Nada se abre sem toque do utilizador.**
+- **"Compraste esta bebida?"** (`CompraPromptHost`, na `MainActivity`, por cima de tudo — o briefing pedia "popup pós-clique,
+  janela 24-72h"): ao voltar ao primeiro plano, se há um clique **com mais de 2 minutos** e **menos de 72 horas** ainda por
+  perguntar, aparece o popup com a bebida, "Tocaste em "Comprar" (Retalhista) há N min." e três saídas: **"Sim, adicionar à
+  cave"** (regista `COMPREI` e abre o "Adicionar à cave" com o **preço do link já preenchido**), **"NÃO COMPREI"** (regista
+  `NAO_COMPREI` e nunca mais pergunta) e **"MAIS TARDE"** (não regista nada; não volta a perguntar **neste arranque da app**,
+  mas reaparece no seguinte, dentro das 72 h). Os 2 minutos: quem volta segundos depois do clique quase de certeza não
+  comprou. Fica de fora a bebida que o utilizador já adicionou a uma cave desde o dia do clique. A frase não leva artigo
+  ("na Continente" / "no Continente" dependia do género da loja).
+- A `CaveScreen` passou a voltar a pedir as caves ao entrar (a garrafa pode ter entrado por fora, pelo "Compraste?").
+
+**Testes:** +10 Android (`CompraFormatacaoTest`) — 82 no total; +3 backend (`CliquePerguntaTest`) — 96.
+
+**Validado ao vivo** (emulador `Pixel_8` + API real, `demo_user2`): como a BD só tinha 2 links, ambos `PLACEHOLDER`, montei
+**dados de teste temporários** (uma 2.ª oferta no Continente a 175 €, uma oferta indisponível numa loja de teste, e os URLs
+trocados por `https://example.com/...` — **nenhum link de afiliado real foi aberto**) — **já revertidos e conferidos**.
+Confirmado: a pílula mostra a mais barata e abre o Chrome em `example.com/continente`; "Onde comprar" com "MAIS BARATO", "atualizado
+há 3 dias / há 11 dias" e a indisponível riscada; cada "COMPRAR" abre a sua loja e grava o clique (`clique_compra`); voltar de
+imediato **não** pergunta; com o clique "envelhecido" 5 minutos, ao voltar aparece "Compraste esta bebida?" ("há 7 min");
+**Sim** → `COMPREI`, `is_perguntado=1`, o "Adicionar à cave" abre com **175,00** e a garrafa entra na cave; **Mais tarde** → não
+volta a perguntar no mesmo arranque e **volta** depois de fechar e reabrir a app; **Não comprei** → `NAO_COMPREI` e nunca
+mais; "Comprar em Continente Online" da wishlist abre a loja e regista o clique.
+Um erro meu apanhado a meio: o controlador novo do backend não chegou a ser criado (um `&&` a seguir a um script falhado
+saltou-o) — só se viu porque o `GET .../pendentes` deu 404; ficou corrigido e testado.
+
+**Em aberto / por fazer:**
+- **Ainda nunca se abriu um link de afiliado real** (todos os testes usaram `example.com`): quando houver o 1.º lote com links
+  a sério, confirmar que o tracking sobrevive (o app abre o URL tal como está na BD).
+- O preço sugerido no "Compraste?" é o do link **agora** (pode ter mudado desde o clique).
+- Sem "voltar a perguntar mais tarde no mesmo dia": "Mais tarde" só volta no arranque seguinte da app.
+- O "Compraste?" só corre ao voltar ao primeiro plano; não há notificação (nem se pede a permissão).

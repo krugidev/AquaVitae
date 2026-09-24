@@ -209,8 +209,8 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
   qualquer ecrã; sem `SavedStateHandle`, usa `hiltViewModel(key = "bebida-detalhe-$id")` (ver `android/README.md`, "Convenções"). **O cartão do produtor no fim do popup abre a página do produtor** (fatia 6) por um parâmetro `onVerProdutor` do `BebidaDetalheSheet` — cada ecrã que o usa tem de o receber do `AppNavHost` e passá-lo; `null` (o valor por omissão) tira o atalho, e é o que as páginas do próprio produtor fazem.
   **`DatePicker`/`DatePickerDialog` do Material3** (`AdicionarACaveSheet`, fatia 3b) são `@ExperimentalMaterial3Api` — precisam de
   `@OptIn`, já usados pela 1.ª vez neste projeto (a "data de aquisição" do popup "Adicionar à cave").
-  Testes unitários: `gradle.bat -p android testDebugUnitTest --console=plain` (68: registo, recuperar password, onboarding,
-  bandeiras, URLs, iniciais do avatar, formatação de bebida, formatação e estado do produtor).
+  Testes unitários: `gradle.bat -p android testDebugUnitTest --console=plain` (82: registo, recuperar password, onboarding,
+  bandeiras, URLs, iniciais do avatar, formatação de bebida, formatação e estado do produtor, ofertas de compra).
 - **Um `Row`/`Column` de altura fixa com texto de comprimento variável perde conteúdo sem erro nenhum (apanhado no `BebidaCard`,
   2026-09-23):** o cartão de bebida tem `height(108.dp)` fixo; ao acrescentar `tipo`/`tanino` à linha de atributos, algumas bebidas
   passaram a ter uma linha com 3 segmentos que quebrava para 2 linhas — sem `maxLines`, isso empurrava o preço (a `Row` seguinte) para
@@ -304,6 +304,18 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
   modo produtor (sem "ORIGEM", categoria "Todas" = `null`) e vice-versa. **Um botão flutuante "≡" do emulador (menu de acessibilidade)
   pode aparecer por cima do canto superior esquerdo e engolir os toques na seta de voltar** — não é da app: tocar na parte livre ou
   usar `adb shell input keyevent 4`.
+- **Testar "Comprar" (2026-09-24): nunca tocar num link de afiliado real.** Um toque em "COMPRAR"/na pílula do preço/"Comprar em X"
+  abre o URL de `bebida_link_compra` no browser **e conta como clique** (comissão). A BD de dev só tem 2 links, ambos `PLACEHOLDER`; para
+  ver o fluxo (Chrome a abrir, `clique_compra` a gravar, "Compraste?") trocar temporariamente o `bebida_link_compra_url` por
+  `https://example.com/...` (e acrescentar 1-2 ofertas de teste), **guardar o URL original e escrever já o SQL de reversão**, e
+  reverter no fim (incluindo `DELETE FROM clique_compra` e as garrafas que o "Sim, adicionar à cave" tenha criado). Para "envelhecer"
+  um clique (o inquérito só pergunta passados 2 minutos): `UPDATE clique_compra SET clique_compra_data = clique_compra_data - INTERVAL '5'
+  MINUTE WHERE clique_compra_is_perguntado = 0`, depois `input keyevent 3` (home) e `am start` para forçar o `ON_RESUME`. **O "Compraste?"
+  vive na `MainActivity` (`CompraPromptHost`), não num ecrã**: aparece por cima de qualquer ecrã ao voltar ao primeiro plano.
+- **Um script que falha a meio não deve encadear com `&&` a criação de outro ficheiro** (apanhado 2026-09-24): `perl script.pl && cat >
+  Ficheiro.kt <<'EOF' ...` — o perl falhou e o `Ficheiro.kt` (um controlador) **nunca foi criado**, sem aviso; os testes e o `bootRun` passaram
+  na mesma (só faltava a rota) e só se viu por um 404 ao vivo. Criar ficheiros novos com a ferramenta de escrita, à parte, e conferir com
+  `ls`. O `perl -0pi` com padrões multi-linha e caracteres especiais falha em silêncio (nada muda) — confirmar sempre com um `grep`.
 - **Android Studio (AI-261):** abre `android/` e o sync corre; usa como Gradle JDK um JBR 21 que ele próprio descarregou
   (`~/.jdks/jbr-21.0.11`, guardado em `android/.gradle/config.properties`, ignorado pelo git). Acrescentou uma linha
   (`org.gradle.tooling.parallel=true`) ao `android/gradle.properties` — não vale a pena commitá-la. Recusar o *AGP Upgrade

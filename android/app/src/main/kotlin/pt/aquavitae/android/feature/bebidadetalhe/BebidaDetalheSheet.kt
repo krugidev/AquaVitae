@@ -28,6 +28,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Close
@@ -51,7 +52,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -64,6 +67,11 @@ import pt.aquavitae.android.data.model.Avatar
 import pt.aquavitae.android.data.model.BebidaDetail
 import pt.aquavitae.android.data.model.LocalePt
 import pt.aquavitae.android.data.model.LookupState
+import pt.aquavitae.android.data.model.OfertaCompra
+import pt.aquavitae.android.data.model.atualizadoTexto
+import pt.aquavitae.android.data.model.maisBarataDisponivel
+import pt.aquavitae.android.data.model.temComparacao
+import pt.aquavitae.android.data.model.temLink
 import pt.aquavitae.android.data.model.ReviewResponse
 import pt.aquavitae.android.data.model.ReviewsResponse
 import pt.aquavitae.android.data.network.resolveImageUrl
@@ -80,9 +88,11 @@ import pt.aquavitae.android.ui.theme.Burgundy
 import pt.aquavitae.android.ui.theme.BurgundyTint
 import pt.aquavitae.android.ui.theme.ButtonShape
 import pt.aquavitae.android.ui.theme.CardGray
+import pt.aquavitae.android.ui.theme.Ink
 import pt.aquavitae.android.ui.theme.MutedInk
 import pt.aquavitae.android.ui.theme.Paper
 import pt.aquavitae.android.ui.theme.WineDark
+import pt.aquavitae.android.ui.util.abrirLink
 
 private val EstiloSeccao = AquaText.Footer.copy(color = MutedInk, fontSize = 11.sp, fontWeight = FontWeight.Bold)
 private val FormaFolha = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
@@ -149,6 +159,11 @@ private fun ColumnScope.BebidaDetalheConteudo(
     val bebida = state.bebida
     // Fecha o popup antes de navegar, senão ele ficaria por cima da página do produtor.
     val verProdutor: ((Long) -> Unit)? = onVerProdutor?.let { ver -> { id: Long -> onDismiss(); ver(id) } }
+    // Comprar: abre a loja (o link de afiliado) no mesmo toque e regista o clique em segundo plano — nunca espera por ele.
+    val context = LocalContext.current
+    val comprar: (Long, String?) -> Unit = { linkId, url ->
+        if (!url.isNullOrBlank() && context.abrirLink(url)) viewModel.registarClique(linkId)
+    }
     Box(Modifier.fillMaxWidth().padding(top = 4.dp)) {
         IconButton(onClick = onDismiss, modifier = Modifier.align(Alignment.TopEnd).padding(end = 8.dp)) {
             Icon(Icons.Filled.Close, contentDescription = "Fechar", tint = MutedInk)
@@ -157,12 +172,12 @@ private fun ColumnScope.BebidaDetalheConteudo(
     Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp)) {
         CabecalhoBebida(bebida)
         Spacer(Modifier.height(14.dp))
-        LinhaAcoes(bebida, state, viewModel, onAdicionarACave)
+        LinhaAcoes(bebida, state, viewModel, onAdicionarACave, comprar)
         Spacer(Modifier.height(16.dp))
         TabsDetalhe(state, viewModel)
         Spacer(Modifier.height(16.dp))
         when (state.tab) {
-            DetalheTab.DETALHES -> TabDetalhes(bebida, verProdutor)
+            DetalheTab.DETALHES -> TabDetalhes(bebida, state.ofertas, comprar, verProdutor)
             DetalheTab.REVIEWS -> TabReviews(state, viewModel)
         }
         Spacer(Modifier.height(24.dp))
@@ -197,12 +212,25 @@ private fun CabecalhoBebida(bebida: BebidaDetail) {
 }
 
 @Composable
-private fun LinhaAcoes(bebida: BebidaDetail, state: BebidaDetalheUiState.Ready, viewModel: BebidaDetalheViewModel, onAdicionarACave: (BebidaDetail) -> Unit) {
+private fun LinhaAcoes(
+    bebida: BebidaDetail,
+    state: BebidaDetalheUiState.Ready,
+    viewModel: BebidaDetalheViewModel,
+    onAdicionarACave: (BebidaDetail) -> Unit,
+    onComprar: (Long, String?) -> Unit,
+) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         val link = bebida.linkCompra
         if (link != null) {
+            // A oferta mais barata é o botão "Comprar" principal: o toque abre a loja e regista o clique.
             Row(
-                modifier = Modifier.weight(1f).height(40.dp).clip(RoundedCornerShape(50)).background(Burgundy).padding(horizontal = 16.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(40.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(Burgundy)
+                    .clickable(enabled = !link.url.isNullOrBlank()) { onComprar(link.id, link.url) }
+                    .padding(start = 16.dp, end = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 link.preco?.let { Text(text = formatarPrecoPt(it), style = AquaText.Label.copy(color = Color.White, fontSize = 14.sp)) }
@@ -212,7 +240,9 @@ private fun LinhaAcoes(bebida: BebidaDetail, state: BebidaDetalheUiState.Ready, 
                     style = AquaText.Footer.copy(color = Color.White.copy(alpha = 0.85f), fontSize = 9.sp),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
                 )
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Comprar", tint = Color.White, modifier = Modifier.size(20.dp))
             }
         } else {
             Spacer(Modifier.weight(1f))
@@ -265,7 +295,12 @@ private fun AbaTexto(texto: String, selecionado: Boolean, onClick: () -> Unit) {
 // --- Tab "Detalhes" ---
 
 @Composable
-private fun TabDetalhes(bebida: BebidaDetail, onVerProdutor: ((Long) -> Unit)?) {
+private fun TabDetalhes(
+    bebida: BebidaDetail,
+    ofertas: LookupState<List<OfertaCompra>>,
+    onComprar: (Long, String?) -> Unit,
+    onVerProdutor: ((Long) -> Unit)?,
+) {
     Column {
         Row(Modifier.fillMaxWidth()) {
             CampoInfo("Teor alcoólico", bebida.teorAlcoolico?.let { String.format(LocalePt, "%.1f%% vol", it) }, Modifier.weight(1f))
@@ -306,6 +341,12 @@ private fun TabDetalhes(bebida: BebidaDetail, onVerProdutor: ((Long) -> Unit)?) 
                 }
             }
         }
+        // "Onde comprar": só quando há mais do que uma oferta (com uma só, o botão do cabeçalho já é essa oferta).
+        val listaOfertas = (ofertas as? LookupState.Ready)?.data.orEmpty()
+        if (listaOfertas.size > 1) {
+            Spacer(Modifier.height(20.dp))
+            SeccaoOndeComprar(listaOfertas, onComprar)
+        }
         val produtor = bebida.produtorResumo
         if (produtor != null) {
             Spacer(Modifier.height(20.dp))
@@ -330,6 +371,71 @@ private fun TabDetalhes(bebida: BebidaDetail, onVerProdutor: ((Long) -> Unit)?) 
                 if (onVerProdutor != null) {
                     Spacer(Modifier.height(12.dp))
                     Text(text = "VER PRODUTOR →", style = AquaText.Footer.copy(color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold))
+                }
+            }
+        }
+    }
+}
+
+/**
+ * "Onde comprar": todas as ofertas dos retalhistas, a mais barata assinalada quando há mais do que uma disponível. Cada
+ * oferta disponível tem o seu botão "COMPRAR" (abre a loja e regista o clique); as indisponíveis ficam esbatidas, com o
+ * motivo ("Sem stock", "Página indisponível") e o último preço conhecido riscado, e sem botão.
+ */
+@Composable
+private fun SeccaoOndeComprar(ofertas: List<OfertaCompra>, onComprar: (Long, String?) -> Unit) {
+    val maisBarata = ofertas.maisBarataDisponivel()
+    Column(Modifier.fillMaxWidth()) {
+        Text(text = "ONDE COMPRAR", style = EstiloSeccao)
+        Spacer(Modifier.height(10.dp))
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            ofertas.forEach { oferta ->
+                val utilizavel = oferta.disponivel && oferta.temLink
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(if (oferta.disponivel) CardGray else Color.Transparent)
+                        .border(1.dp, if (oferta.disponivel) Color.Transparent else BurgundyTint, RoundedCornerShape(12.dp))
+                        .clickable(enabled = utilizavel) { onComprar(oferta.id, oferta.url) }
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        // O selo vai por cima do nome (ao lado, o preço e o botão não deixavam lugar e o nome ficava truncado).
+                        if (oferta.id == maisBarata?.id && ofertas.temComparacao) {
+                            Text(
+                                text = "MAIS BARATO",
+                                style = AquaText.Footer.copy(color = Burgundy, fontSize = 8.sp, fontWeight = FontWeight.Bold),
+                                modifier = Modifier.clip(RoundedCornerShape(50)).background(BurgundyTint).padding(horizontal = 8.dp, vertical = 3.dp),
+                            )
+                            Spacer(Modifier.height(4.dp))
+                        }
+                        Text(
+                            text = oferta.retalhistaNome.orEmpty(),
+                            style = AquaText.Label.copy(fontSize = 14.sp, color = if (oferta.disponivel) Burgundy else MutedInk),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        val subtitulo = if (oferta.disponivel) oferta.atualizadoTexto() else oferta.motivoIndisponivel ?: "Indisponível"
+                        subtitulo?.let { Text(text = it, style = AquaText.Footer.copy(color = MutedInk, fontSize = 10.sp)) }
+                    }
+                    oferta.preco?.let {
+                        Spacer(Modifier.width(10.dp))
+                        Text(
+                            text = formatarPrecoPt(it),
+                            style = AquaText.Label.copy(fontSize = 15.sp, color = if (oferta.disponivel) Ink else MutedInk),
+                            textDecoration = if (oferta.disponivel) null else TextDecoration.LineThrough,
+                        )
+                    }
+                    if (utilizavel) {
+                        Spacer(Modifier.width(10.dp))
+                        Text(
+                            text = "COMPRAR",
+                            style = AquaText.Footer.copy(color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold),
+                            modifier = Modifier.clip(RoundedCornerShape(50)).background(Burgundy).padding(horizontal = 12.dp, vertical = 7.dp),
+                        )
+                    }
                 }
             }
         }

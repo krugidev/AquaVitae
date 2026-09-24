@@ -52,9 +52,16 @@ class AdicionarACaveViewModel @Inject constructor(
 
     private var bebidaId: Long = 0
 
-    /** Chamado uma vez ao abrir (`LaunchedEffect` no ecrã) — ver `BebidaDetalheViewModel` para o mesmo padrão. */
-    fun carregar(bebidaId: Long) {
+    // O preço que já vem escrito em "Preço pago" (ex.: o do link em que o utilizador clicou, no "Compraste?"); em branco por omissão.
+    private var precoInicial: String = ""
+
+    /**
+     * Chamado uma vez ao abrir (`LaunchedEffect` no ecrã) — ver `BebidaDetalheViewModel` para o mesmo padrão.
+     * `precoSugerido` preenche o "Preço pago" (o utilizador pode alterá-lo): só o inquérito "Compraste?" o passa.
+     */
+    fun carregar(bebidaId: Long, precoSugerido: Double? = null) {
         this.bebidaId = bebidaId
+        precoInicial = precoSugerido?.let { String.format(java.util.Locale.US, "%.2f", it).replace('.', ',') }.orEmpty()
         _state.value = AdicionarACaveUiState.Loading
         recarregarCaves()
     }
@@ -65,7 +72,7 @@ class AdicionarACaveViewModel @Inject constructor(
                 .onSuccess { caves ->
                     val atual = _state.value as? AdicionarACaveUiState.Ready
                     val novaSelecao = selecionarId ?: atual?.caveSelecionadaId ?: caves.firstOrNull()?.id
-                    _state.value = (atual ?: AdicionarACaveUiState.Ready()).copy(
+                    _state.value = (atual ?: AdicionarACaveUiState.Ready(precoPago = precoInicial)).copy(
                         caves = caves,
                         caveSelecionadaId = novaSelecao,
                         mostrarNovaCave = false,

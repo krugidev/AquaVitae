@@ -12,7 +12,9 @@ import pt.aquavitae.android.data.model.Avatar
 import pt.aquavitae.android.data.model.BebidaDetail
 import pt.aquavitae.android.data.model.BebidaRelacao
 import pt.aquavitae.android.data.network.toUserMessage
+import pt.aquavitae.android.data.model.maisBarataDisponivel
 import pt.aquavitae.android.data.repository.BebidaRepository
+import pt.aquavitae.android.data.repository.CompraRepository
 import pt.aquavitae.android.data.repository.UserRepository
 import pt.aquavitae.android.data.repository.WishlistRepository
 import pt.aquavitae.android.ui.components.iniciaisDe
@@ -54,6 +56,7 @@ class WishlistViewModel @Inject constructor(
     private val wishlistRepository: WishlistRepository,
     private val userRepository: UserRepository,
     private val bebidaRepository: BebidaRepository,
+    private val compraRepository: CompraRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<WishlistUiState>(WishlistUiState.Loading)
@@ -97,6 +100,28 @@ class WishlistViewModel @Inject constructor(
                     onPronto(detalhe)
                 }
                 .onFailure { atualizarPronto { copy(aAbrirCaveId = null) } }
+        }
+    }
+
+    // Os "Comprar" em curso (um duplo toque não abre a loja duas vezes nem regista dois cliques).
+    private val aComprar = mutableSetOf<Long>()
+
+    /**
+     * "Comprar em X": a lista só tem `BebidaSummary` (sem o link), por isso vai buscar as ofertas da bebida, abre a mais barata
+     * das disponíveis (`aoAbrir` devolve `false` se não houver browser) e regista o clique. Sem nenhuma oferta disponível
+     * (o preço da lista pode ter ficado para trás) chama `semOferta`, que abre o popup de detalhe.
+     */
+    fun comprar(bebidaId: Long, aoAbrir: (String) -> Boolean, semOferta: () -> Unit) {
+        if (!aComprar.add(bebidaId)) return
+        viewModelScope.launch {
+            val oferta = compraRepository.getOfertas(bebidaId).getOrNull()?.maisBarataDisponivel()
+            aComprar.remove(bebidaId)
+            val url = oferta?.url
+            if (oferta != null && url != null && aoAbrir(url)) {
+                compraRepository.registarClique(bebidaId, oferta.id)
+            } else {
+                semOferta()
+            }
         }
     }
 

@@ -99,9 +99,10 @@ fun AdicionarACaveSheet(
     bebida: BebidaDetail,
     onDismiss: () -> Unit,
     onGuardado: () -> Unit,
+    precoSugerido: Double? = null,
     viewModel: AdicionarACaveViewModel = hiltViewModel(key = "adicionar-cave-${bebida.id}"),
 ) {
-    LaunchedEffect(bebida.id) { viewModel.carregar(bebida.id) }
+    LaunchedEffect(bebida.id) { viewModel.carregar(bebida.id, precoSugerido) }
     val state by viewModel.state.collectAsState()
     val alturaBarraNavegacao = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 16.dp
 

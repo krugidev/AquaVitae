@@ -3,7 +3,7 @@
 Roadmap vivo do MVP. Atualizar isto no fim de cada sessão de trabalho relevante — é o que uma sessão
 nova do Claude Code (ou tu, ao voltares passado um tempo) deve ler primeiro para saber onde ficámos.
 
-## ▶ Retomar aqui (última atualização: 2026-09-24, fatias 1 a 6 do Android feitas — a seguir: ronda de bugs e os lotes de bebidas)
+## ▶ Retomar aqui (última atualização: 2026-09-24, fatias 1 a 6 + "Comprar" feitas — a seguir: sessão, pesquisa sem acentos e painel web)
 
 **Numa sessão nova, ler por esta ordem:** `CLAUDE.md` (convenções e ferramentas desta máquina) → esta secção → `android/README.md`
 (estado do frontend, estrutura, mapa de ecrãs) → `android/design/README.md` (os prints e **o que o utilizador pediu para cada ecrã**,
@@ -27,29 +27,38 @@ da 1.ª visita mesmo com o modelo certo (detalhe completo em `backend/API_ENDPOI
 (favoritar, avaliar — só se já provada —, adicionar à cave) → cave (consumir, criar, ver já provadas) → favoritos/wishlist (a
 sério) → perfil (dados, preferências, avatar, terminar sessão) → página do produtor (a partir do cartão em destaque da home
 e do popup de detalhe de uma bebida). **Já não há nenhum destino da app sem forma de lá chegar**, exceto "As minhas reviews" e
-"Conta e segurança" do perfil (mockups por chegar). **O utilizador combinou o que vem a seguir (2026-09-24):** uma **ronda de
-bugs** e, só depois, começar a meter **bebidas reais por lotes vindas dos afiliados — da ordem de 100 por semana** (o fluxo
-abaixo, "Como entram as bebidas", foi desenhado para ~30 por lote: rever o que muda com 100/semana) — ver "Próximos passos".
+"Conta e segurança" do perfil (o utilizador está a preparar os mockups). **O ponto "Comprar" está feito** (a pílula do preço e
+os botões "COMPRAR" abrem a loja e registam o clique; "Onde comprar" com todas as ofertas; "Compraste?" ao voltar do browser;
+"Comprar em X" da wishlist a funcionar) — antes disto **a app não tinha nenhuma forma de comprar**. **O utilizador combinou o
+que vem a seguir (2026-09-24):** os pontos 2 e 3 do que sugeri — **a sessão** (o token expira aos 60 min, sem renovação nem
+tratamento de 401) e **a pesquisa sem acentos** (com o escape do `%`/`_`) — e **começar já o painel web de administração**
+(páginas no próprio backend, Thymeleaf + HTMX; ver "Próximos passos"); depois a **ronda de bugs** e, só então, as **bebidas
+reais por lotes vindas dos afiliados — da ordem de 100 por semana** (o fluxo abaixo, "Como entram as bebidas", foi desenhado
+para ~30 por lote: rever o que muda com 100/semana). A Auchan (na Awin) já foi pedida pelo utilizador; está a explorar outras
+garrafeiras. **Nota de continuidade:** se o limite de uso do utilizador acabar a meio, ele continua noutra conta ou na semana
+seguinte — por isso este `PLANO.md` e os READMEs ficam atualizados a cada ponto.
 
 **Git:** duas branches. **`feature/api-endpoints-design`** = PR #1 (backend v1): já fundido/enviado. **`feature/android-app`** =
 criada a partir dela em 2026-09-21 para o Android, com [PR #2](https://github.com/krugidev/AquaVitae/pull/2) aberto (para `main`,
-ainda não fundido) — leva tudo desde a fatia 1a até à fatia 5 (incluindo a correção pós-3c; a 5 é o commit `d33d440`),
-commitado por área/fatia (ver o próprio PR para a lista). **A fatia 6 (produtor) já está feita mas ainda não commitada nem
-enviada** — `git status` mostra só os ficheiros dela: **backend** `ProdutorDetailDto.kt`, `ProdutorService.kt`,
-`BebidaRepository.kt` (2 queries novas + o filtro `produtorId`), `BebidaService.kt`/`BebidaController.kt`/`BebidaDtos.kt` (o `produtorId`), `Produtor.kt` (a `morada`), `ProdutorRating.kt` (novo) + `ProdutorRatingTest.kt` (novo);
-**BD** `ddl/01_tables.sql`, `ddl/14_patch_produtor_morada.sql` (novo), `database/README.md`; **Android**
-`feature/produtor/` (novo, 3 ficheiros), `ui/components/ContagemEOrdenacao.kt` (novo), `data/model/ProdutorFormatacao.kt`
-(novo) e alterações a `ProdutorModels.kt`, `AquaVitaeApi.kt`, `BebidaRepository.kt` (Android), `BebidaDetalheSheet.kt`,
-`CatalogScreen.kt`/`CatalogViewModel.kt`/`FiltrosSheet.kt`/`CatalogFiltro.kt` (o catálogo também serve um só produtor; usa o `ContagemEOrdenacao` partilhado), `HomeScreen.kt`/`CaveScreen.kt`/`FavoritosScreen.kt`/`WishlistScreen.kt`
-(o `onVerProdutor`), `AppDestinations.kt`, `AppNavHost.kt`; 2 testes novos em `android/app/src/test/`;
-`android/design/produtor/` (novo, o mockup); `android/README.md`, `android/design/README.md`, `backend/API_ENDPOINTS.md`,
-`CLAUDE.md` e este `PLANO.md` também têm alterações da fatia 6. **Ficam de fora dos commits, de propósito** (regra do `CLAUDE.md`): as notas do utilizador —
+ainda não fundido) — leva tudo desde a fatia 1a até à fatia 6 (a 5 é o commit `d33d440`, a 6 — com a morada e o filtro por
+produtor — o `ff75aa2`), commitado por área/fatia (ver o próprio PR para a lista). **O ponto "Comprar" está feito mas ainda não
+commitado nem enviado** — `git status` mostra só os ficheiros dele: **backend** `CliqueCompra.kt` (mapeia `is_perguntado`/
+`resposta`), `CliqueCompraController.kt`, `CliquePergunta.kt` (novos) + `CliquePerguntaTest.kt`, `CompraService.kt`,
+`CompraDtos.kt`, `Cave.kt` (uma query `exists`), `application.yml`; **Android** `feature/compra/` (novo: `CompraPromptHost`,
+`CompraPromptViewModel`), `data/model/CompraModels.kt`/`CompraFormatacao.kt`, `data/repository/CompraRepository.kt`,
+`ui/util/ExternalLinks.kt` (novos) + `CompraFormatacaoTest.kt`, e alterações a `AquaVitaeApi.kt`, `BebidaDetalheViewModel.kt`/
+`BebidaDetalheSheet.kt` (pílula clicável + "Onde comprar"), `WishlistScreen.kt`/`WishlistViewModel.kt` ("Comprar em X"),
+`AdicionarACaveSheet.kt`/`AdicionarACaveViewModel.kt` (preço sugerido), `CaveScreen.kt`, `MainActivity.kt`, `ProdutorScreen.kt`
+(usa o `abrirLink` partilhado); `android/README.md`, `android/design/README.md`, `backend/API_ENDPOINTS.md`, `CLAUDE.md` e este
+`PLANO.md` também têm alterações. **Ficam de fora dos commits, de propósito** (regra do `CLAUDE.md`): as notas do utilizador —
 `android/AQUAVITAESEEDS-NOTES` e, na raiz, `—--------------- DADOS A INSERIR NA.txt`, `REGIÕES A AJUSTAR (...).txt` e
 `NOVOSDADOS.txt` (este último parece um relatório de incidentes sem ligação ao projeto — vale a pena o utilizador confirmar se
-foi parar ali por engano). Ao commitar, usar `git commit <caminhos explícitos>`, nunca `git add -A`. A `main` só tem a landing
-page em `docs/`.
+foi parar ali por engano). Ao commitar, usar `git commit <caminhos explícitos>`, nunca `git add -A`. **O utilizador autorizou,
+2026-09-24, gravar e enviar (commit + push) pontos completos e validados para não perder trabalho se o limite de uso acabar a
+meio** — por isso cada ponto (Comprar, sessão, pesquisa, painel) termina com um commit e um push. A `main` só tem a landing page
+em `docs/`.
 
-**Ambiente no fim da sessão:** BD de dev migrada até ao patch `14` (`produtor_morada`); contentor `aquavitae-oracle-xe` a correr; **API a correr**, perfil
+**Ambiente no fim da sessão:** BD de dev migrada até ao patch `14` (`produtor_morada`); contentor `aquavitae-oracle-xe` a correr; **API parada** (foi parada para correr os testes; arrancar com o `bootRun` abaixo), perfil
 `dev` (sem `mailpit`), com as credenciais do Gmail carregadas e já a servir `tipo`/`tanino`/`produtorRegiao`/`temBebida` e, desde a fatia 6, o
 `ratingMedio`/`totalReviews`/`categorias` do produtor — se
 reiniciar, ver `CLAUDE.md`, "Email de recuperação — Gmail", para voltar a carregar `backend/.env.mail` antes do `bootRun`; contentor
@@ -64,8 +73,8 @@ Barca Velha 2015 em guarda até 2035) e "Brancos frescos" (id 23, vazia) — **f
 contínuo; termos repostos a `NULL` no fim desta sessão (a fatia 6 também os aceitou ao testar). **Os dados de teste temporários
 da fatia 6** (história/morada/coordenadas/imagem nos produtores 1 e 8 e 7 bebidas movidas para o 1) **já foram revertidos** — a
 BD de dev ficou como estava (nenhum produtor tem história, morada, coordenadas nem imagem; ver "Android — fatia 6"). Testes:
-backend `.\gradlew.bat test` em `backend/` (**93**, sem BD, +5 do `ProdutorRatingTest`, corridos nesta sessão); Android
-`testDebugUnitTest` (**72**, +19: `ProdutorFormatacaoTest` e `ProdutorUiStateTest`, ver `android/README.md`). Corri o
+backend `.\gradlew.bat test` em `backend/` (**96**, sem BD, +5 do `ProdutorRatingTest` e +3 do `CliquePerguntaTest`, corridos nesta sessão); Android
+`testDebugUnitTest` (**82**, +29 nesta sessão: `ProdutorFormatacaoTest`, `ProdutorUiStateTest` e `CompraFormatacaoTest`, ver `android/README.md`). Corri o
 `database/verify/rebuild-check.sh` depois do patch `14` (`produtor_morada`): "reconstrução igual à dev". **Landing page (GitHub
 Pages):** já está ativa em `https://krugidev.github.io/AquaVitae/` (fonte `main:/docs`, HTTPS, sem domínio próprio; HTTP 200
 verificado em 2026-09-24) — serve de "website" nos pedidos a outras redes de afiliados; continua a não se mexer no repo/domínio.
@@ -77,11 +86,45 @@ verificado em 2026-09-24) — serve de "website" nos pedidos a outras redes de a
 no `CLAUDE.md` o que fazer se o Docker Desktop crashar.
 
 **Próximos passos, por ordem:**
+
+**Combinado com o utilizador em 2026-09-24 e em curso (um ponto de cada vez; commit + push no fim de cada):**
+- **A1. Comprar — ✅ feito** (ver "Android — Comprar"). Falta só, quando houver o 1.º lote, confirmar com um link de afiliado
+  **real** que o tracking sobrevive (todos os testes usaram `example.com`).
+- **A2. Sessão — a fazer.** O JWT expira aos **60 min** (`jwt.expiration-minutes`), **não há renovação** e uma resposta 401 a
+  meio da utilização não leva ao login: passada 1 hora a app mostra erros sem explicação. Desenho sugerido: **refresh token**
+  (tabela nova `utilizador_refresh_token` com o hash, validade longa e rotação; patch `15`) + `POST /api/auth/refresh` e
+  `POST /api/auth/logout` a revogar; na app, um `Authenticator` do OkHttp que renova **uma só vez** por 401 (pedidos em
+  simultâneo esperam pela mesma renovação), repete o pedido e, se a renovação falhar, limpa a sessão e leva ao login. Em produção
+  o `JWT_SECRET` tem de ser definido (hoje há um valor de desenvolvimento por omissão).
+- **A3. Pesquisa sem acentos — a fazer.** Hoje "esporao"/"meao"/"beirao" não encontram nada (só "Esporão"…) e um `%` ou `_`
+  escrito na pesquisa é um curinga do `LIKE` (devolve tudo). Desenho: `TRANSLATE(UPPER(coluna), 'ÁÀÂÃ…', 'AAAA…')` do lado da
+  BD (`function('translate', …)` no HQL, só no `search`, sem `NLS_COMP` global — que mexeria em todas as comparações) e o mesmo
+  mapa aplicado ao termo no Kotlin, mais `LIKE … ESCAPE '!'` a escapar `%`, `_` e `!`; testes para o mapa e para o escape. A app
+  tem 3 pesquisas locais de castas com `contains(ignoreCase)` (popup de filtros, preferências, onboarding) que também têm de
+  ignorar acentos.
+- **A4. Painel web de administração — começar.** Decidido: **web, dentro do backend** (`/admin`, Thymeleaf + HTMX, sem build de
+  front-end, atrás de login `ROLE_ADMIN`), **não na app** (única administradora, trabalho de secretária, sem ciclos de
+  publicação, e poderes de escrita fora de um app instalado em milhares de telemóveis). **Muda a decisão antiga de "conteúdo só
+  por SQL, sem endpoints de escrita"** (atualizar `CLAUDE.md`/`API_ENDPOINTS.md` quando a 1.ª escrita entrar). Fatias:
+  (1) base — login de administrador e listas com pesquisa e filtros de qualidade ("sem imagem", "sem produtor", "sem
+  atributos": o script de verificação do catálogo aprovado, agora como ecrã); (2) **produtores** — formulário completo (país e
+  região em listas, morada, coordenadas, história, visitas, imagem); (3) **bebidas** — formulário por categoria (vinho com
+  castas e %; as outras só com os campos gerais até haver subtypes), EAN validado, imagem e links de compra (retalhista, URL
+  de afiliado, URL de verificação, preço); (4) **importador de feed** — CSV/XML (Awin ou Google Shopping) → tabela de revisão
+  editável com duplicados por EAN → aprovar em bloco (só quando houver um feed real); (5) rotinas — "verificar links" e
+  atualização diária de preço/stock. **Imagens:** guardá-las nós (redimensionadas, miniatura para as listas) em armazenamento
+  de ficheiros com CDN (Cloudflare R2/Backblaze B2), o URL na BD como hoje (a app não muda); até haver alojamento, os URLs das
+  lojas (decisão de 2026-09-20). Confirmar os termos de cada programa/produtor antes de copiar imagens.
+- **A5. Ecrãs à espera de mockups do utilizador:** "As minhas reviews" e "Conta e segurança" (esta inclui **apagar conta**, exigido
+  pela Google Play a apps com registo — [regra](https://support.google.com/googleplay/android-developer/answer/13327111?hl=en)).
+
+**Ideias do utilizador, por decidir:** secção "Produtor" (pesquisa + chips) no popup do catálogo geral — só com centenas de
+produtores; a 2.ª versão com leitura de fotos de refeições (ver "Ideia do utilizador para a versão 2", abaixo).
+
 1. **Ronda de bugs (combinada com o utilizador em 2026-09-24, a seguir à fatia 6)**, antes de começar a meter bebidas reais.
    Candidatos já conhecidos, para não os perder: o cartão de bebida diz "1 reviews" (sem singular) no catálogo/cave/home;
    as linhas de `ProvadasScreen` não abrem o popup de detalhe (`combinedClickable` nunca foi ligado lá, o mesmo tipo de
-   falha da `CaveScreen`, ver `CLAUDE.md`); uma resposta 401 a meio da utilização ainda não leva ao login; o emoji na bio
-   nunca foi testado ao vivo; "Comprar em X" da wishlist ainda só abre o popup (falta o link real, ver item 7). O
+   falha da `CaveScreen`, ver `CLAUDE.md`); o emoji na bio nunca foi testado ao vivo. O
    utilizador vai testar por conta própria (a conta pessoal) e devolver o que encontrar, como fez depois da 3c.
    **"As minhas reviews" e "Conta e segurança"** do perfil ficam para quando o utilizador enviar os mockups.
 2. **Preparar os lotes de ~100 bebidas por semana** (o utilizador disse "por exemplo, irmos adicionando 100 bebidas por
@@ -233,6 +276,10 @@ domain" nas definições do Pages** (aconteceu por engano uma vez e desviou o si
   catálogo, com pesquisa e filtros, via `produtorId` em `GET /api/bebidas`). Acessível pelo cartão do produtor em destaque (home) e pelo do popup de
   detalhe de uma bebida. Ver "Android — fatia 6", em "Em curso". **Com isto não há nenhum destino da app sem forma de lá chegar**
   (fora "As minhas reviews"/"Conta e segurança" do perfil, à espera de mockups).
+- **Comprar (2026-09-24, a seguir à fatia 6)** — a pílula do preço no popup de detalhe e cada "COMPRAR" da secção "Onde comprar" abrem a
+  loja (link de afiliado, **só por toque do utilizador**) e registam o clique; o "Comprar em X" da wishlist também; ao voltar do
+  browser, o popup **"Compraste esta bebida?"** (Sim → "Adicionar à cave" com o preço; Não comprei; Mais tarde). Backend: 2
+  endpoints novos para o inquérito. Antes disto a app não tinha nenhuma forma de comprar. Ver "Android — Comprar", em "Em curso".
 - Os restantes ecrãs (`detail`, `reviews`) continuam os placeholders do esqueleto (esqueleto morto, por limpar).
 
 ## Em curso 🔜
@@ -820,6 +867,35 @@ dos outros, só compilado).
 quando o utilizador o tiver; a secção "Produtor" (pesquisa + chips) no popup do catálogo **geral** — só com centenas de
 produtores; `regiaoId` do produtor por usar; a dívida vista de passagem ("1 reviews", `ProvadasScreen` sem popup) está na
 "Ronda de bugs" dos próximos passos.
+
+### Android — Comprar (ponto 1 a seguir à fatia 6, feito e validado ao vivo, 2026-09-24)
+
+Pedido pelo utilizador ("faz os pontos 1, 2 e 3", depois de eu apontar que **o botão de comprar não fazia nada** — a pílula do
+preço só mostrava informação e a app nunca chamava o `POST .../clique` que o backend já tinha). Sem mockup; decisões minhas
+registadas em `android/design/README.md`, "Comprar".
+
+**Backend:** `CliqueCompra` passou a mapear `clique_compra_is_perguntado`/`resposta` (as colunas já existiam no schema desde o
+início, sem patch); `GET /api/users/me/cliques-compra/pendentes` (cliques por perguntar, **mais de 2 minutos e menos de 72 h**, o
+mais recente de cada bebida, sem a bebida que o utilizador já adicionou a uma cave desde esse dia) e `POST .../{id}/resposta`
+(`COMPREI`/`NAO_COMPREI`; responde a todos os cliques por perguntar da mesma bebida). Janela em `aquavitae.compra.*`
+(`application.yml`). `CliquePergunta.janela` é a lógica pura (3 testes).
+
+**Android:** `CompraRepository`, `OfertaCompra`/`CliquePendente`; `Context.abrirLink` partilhado (também usado pelo site e pelo
+mapa do produtor); no popup de detalhe a **pílula é o botão "Comprar" principal** (a oferta mais barata das disponíveis) e há a
+secção **"ONDE COMPRAR"** quando há mais de uma oferta (mais barato assinalado, "atualizado há N dias", indisponíveis riscadas e sem
+botão); **"Comprar em X" da wishlist** pede as ofertas ao tocar e abre a mais barata (sem os 5 campos adiados); o
+**`CompraPromptHost`** na `MainActivity` (por cima do grafo de navegação) pergunta "Compraste?" ao voltar ao primeiro plano;
+`AdicionarACaveSheet` ganhou `precoSugerido`; a `CaveScreen` volta a pedir as caves ao entrar. **Testes:** +10 Android (82),
++3 backend (96).
+
+**Validado ao vivo** com dados temporários (2.ª oferta a 175 €, uma indisponível, URLs `https://example.com/...` — **nenhum link de
+afiliado real aberto**; **já revertidos e conferidos**): pílula e "COMPRAR" abrem o Chrome e gravam o clique; voltar logo não
+pergunta; com o clique "envelhecido" 5 min aparece "Compraste esta bebida?"; Sim → `COMPREI` + cave com 175,00 preenchido; Mais tarde
+→ não repete no mesmo arranque e volta no seguinte; Não comprei → `NAO_COMPREI`; wishlist "Comprar em X". **Um erro meu apanhado ao testar:**
+o controlador novo não chegou a ser criado (um `&&` a seguir a um script falhado saltou-o) — o `GET .../pendentes` deu 404.
+
+**Em aberto:** confirmar com um link de afiliado **real** que o tracking sobrevive; o preço sugerido no "Compraste?" é o de agora;
+"Mais tarde" só volta no arranque seguinte; sem notificações.
 
 ### Desenho dos endpoints (concluído, 2026-09-17)
 

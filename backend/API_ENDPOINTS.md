@@ -165,6 +165,18 @@ whisky é o de origem da bebida; um whisky de um país sem regiões na lista fic
 - `CompraService.cheapestByBebidaIds()` — usado em lote pelo `BebidaSummaryAssembler` (não faz 1 query por
   bebida na listagem). **Só considera links disponíveis**: `precoDesde`, `linkCompra` do detalhe e os
   filtros `precoMin/Max` ignoram os indisponíveis; uma bebida sem nenhum fica sem preço/botão de compra.
+- **Inquérito "Compraste?" (2026-09-24, briefing secção 4: janela de 24-72h)** — as colunas `clique_compra_is_perguntado`/
+  `clique_compra_resposta` (já no schema desde o início) passam a estar mapeadas em `CliqueCompra` (`isPerguntado`,
+  `resposta`). Dois endpoints novos, ambos **autenticados**:
+  - `GET /api/users/me/cliques-compra/pendentes` → `[{ id, bebidaId, bebidaNome, bebidaImagePath, retalhistaNome, preco,
+    dataClique }]`: os cliques do utilizador **por perguntar**, com **mais de 2 minutos** (quem volta segundos depois quase
+    de certeza não comprou) e **menos de 72 horas**, o mais recente de cada bebida, do mais recente para o mais antigo. Fica
+    de fora a bebida que o utilizador já adicionou a uma cave desde o dia do clique. `preco` é o do link agora (a app usa-o
+    para sugerir o "preço pago"). Janela configurável: `aquavitae.compra.pergunta-apos-minutos` (2) e `pergunta-ate-horas` (72).
+  - `POST /api/users/me/cliques-compra/{id}/resposta` com `{ "resposta": "COMPREI" | "NAO_COMPREI" }` → 204. Marca o clique
+    como perguntado **e todos os outros por perguntar do mesmo utilizador na mesma bebida** (a pergunta não volta por cada
+    clique antigo). 404 se o clique não é do utilizador; um valor fora do enum é 400. Fechar o popup sem responder ("Mais
+    tarde") não chama nada: o clique continua por perguntar.
 - `Retalhista` só mapeia `nome`/`pathLogo`/`isAtivo`/`redeAfiliados` — campos de negócio do afiliado
   (código/comissão) não são expostos pela API, o `bebida_link_compra_url` já é o link de afiliado final
   definido pelo admin.
@@ -549,6 +561,13 @@ Já corrigido no fim do dia: a pesquisa do catálogo não tinha `ORDER BY` (pagi
   `produtor_morada`, patch `14` — a página mostra a morada em texto em vez de um mapa desenhado; "Abrir no mapa" usa as
   coordenadas se houver, senão pesquisa pela morada) e o filtro **`produtorId` em `GET /api/bebidas`** (o catálogo do
   produtor passa a ser o `CatalogScreen` da app, com pesquisa e filtros, em vez do ecrã simples da 1.ª versão da fatia 6).
+- ✅ **Feito na app em 2026-09-24 (ponto "Comprar", a seguir à fatia 6)** — `GET /api/bebidas/{id}/links-compra` e `POST
+  .../links-compra/{linkId}/clique` (já existiam, nunca tinham sido usados pela app) e os 2 endpoints novos do inquérito
+  "Compraste?" (ver "Compra / afiliados"): `getLinksCompra`, `registarCliqueCompra`, `getCliquesPendentes`,
+  `responderCliqueCompra`. A pílula do preço no popup de detalhe, cada botão "COMPRAR" da secção "Onde comprar" e o "Comprar
+  em X" da wishlist abrem o link de afiliado **por toque do utilizador** e registam o clique em segundo plano (falhar nunca
+  impede de abrir a loja). **Os 5 campos adiados na fatia 4 continuam adiados** — o "Comprar em X" da wishlist não os
+  precisou: vai buscar as ofertas da bebida ao tocar e abre a mais barata das disponíveis.
 - Imagens: `imagePath` pode ser um URL absoluto (`https://...`) além de um caminho relativo — resolver conforme a regra da
   secção "Imagens" (já resolvido pela app, `resolveImageUrl`, para os campos que já sincronizou)
 - Produtores: `GET /api/produtores/{id}/bebidas` já usado na app desde a fatia 6 (página e catálogo do produtor).
