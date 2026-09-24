@@ -125,6 +125,14 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
   `backend/src/main/resources/legal/termos.txt` (`# ` = título de secção; parágrafos por linha em branco) e serve-se em dois formatos
   a partir daí — `GET /api/legal/termos` (JSON, o popup `TermsSheet` da app) e `GET /legal/termos.html` (a página pública). **Hoje é um
   texto de exemplo (Lorem ipsum)**: o texto final é do utilizador — substitui-se só o `.txt`, sem mexer no backend nem na app.
+- **Pesquisa de texto sem acentos (2026-09-24):** `GET /api/bebidas?search=` ignora **acentos e maiúsculas** (nome da bebida, do produtor e
+  das castas) e trata `%`, `_` e `!` como texto. Faz-se com `CAST(FUNCTION('translate', UPPER(coluna), COM_ACENTO, SEM_ACENTO) AS String)
+  LIKE :searchPattern ESCAPE '!'` — **o `CAST … AS String` é obrigatório** (o Hibernate 6 não conhece o tipo de um `FUNCTION()` e recusa o
+  `LIKE` com "Operand of 'like' is of type Object"; o `HqlQueriesTest` apanha-o sem BD) — e o **mesmo mapa** normaliza o termo no Kotlin
+  (`bebida/PesquisaTexto.kt`, a única fonte: as duas constantes entram na query por interpolação). **Não usar `NLS_COMP=LINGUISTIC`/
+  `NLS_SORT=BINARY_AI`** (mexeria em todas as comparações de texto da BD). Um alfabeto novo (ł, ő, ž) acrescenta-se às duas constantes,
+  com o mesmo comprimento (o `PesquisaTextoTest` confere-as). Na app, as pesquisas **locais** de castas usam `String.contemSemAcentos()`
+  (`data/model/TextoSemAcentos.kt`), nunca `contains(ignoreCase = true)`.
 - **Login e unicidade (2026-09-21):** `POST /api/auth/login` recebe `{ identificador, password }` — `identificador` é o username OU o
   email, **sem distinguir maiúsculas** e com `trim` (o teclado do telemóvel capitaliza e deixa espaços). A unicidade de username e email
   no registo também ignora maiúsculas (senão "Ana" e "ana" seriam duas contas e o login ficava ambíguo). **A recuperação de password
@@ -209,8 +217,9 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
   qualquer ecrã; sem `SavedStateHandle`, usa `hiltViewModel(key = "bebida-detalhe-$id")` (ver `android/README.md`, "Convenções"). **O cartão do produtor no fim do popup abre a página do produtor** (fatia 6) por um parâmetro `onVerProdutor` do `BebidaDetalheSheet` — cada ecrã que o usa tem de o receber do `AppNavHost` e passá-lo; `null` (o valor por omissão) tira o atalho, e é o que as páginas do próprio produtor fazem.
   **`DatePicker`/`DatePickerDialog` do Material3** (`AdicionarACaveSheet`, fatia 3b) são `@ExperimentalMaterial3Api` — precisam de
   `@OptIn`, já usados pela 1.ª vez neste projeto (a "data de aquisição" do popup "Adicionar à cave").
-  Testes unitários: `gradle.bat -p android testDebugUnitTest --console=plain` (82: registo, recuperar password, onboarding,
-  bandeiras, URLs, iniciais do avatar, formatação de bebida, formatação e estado do produtor, ofertas de compra).
+  Testes unitários: `gradle.bat -p android testDebugUnitTest --console=plain` (97: registo, recuperar password, onboarding,
+  bandeiras, URLs, iniciais do avatar, formatação de bebida, formatação e estado do produtor, ofertas de compra, renovação de sessão
+  contra um `MockWebServer`, texto sem acentos).
 - **Um `Row`/`Column` de altura fixa com texto de comprimento variável perde conteúdo sem erro nenhum (apanhado no `BebidaCard`,
   2026-09-23):** o cartão de bebida tem `height(108.dp)` fixo; ao acrescentar `tipo`/`tanino` à linha de atributos, algumas bebidas
   passaram a ter uma linha com 3 segmentos que quebrava para 2 linhas — sem `maxLines`, isso empurrava o preço (a `Row` seguinte) para

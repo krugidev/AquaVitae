@@ -24,6 +24,7 @@ O frontend constrói-se em **fatias verticais**, cada uma um fluxo de ecrãs des
 | 6 | página do produtor (imagem, rating geral, história, mapa, garrafas) + catálogo só desse produtor | ✅ feita (2026-09-24) |
 | 7 | comprar: a pílula do preço e "COMPRAR" abrem a loja e registam o clique, "Onde comprar", "Compraste?" ao voltar do browser, "Comprar em X" da wishlist | ✅ feita (2026-09-24) |
 | 8 | sessão renovável: o token de acesso expirava aos 60 min sem renovação nem tratamento de 401 — agora renova-se sozinho (refresh token) | ✅ feita (2026-09-24) |
+| 9 | pesquisa sem distinguir acentos (catálogo no backend; as castas na app) e sem os curingas `%`/`_` do `LIKE` | ✅ feita (2026-09-24) |
 
 Os ecrãs `detail` e `reviews` continuam **placeholders do esqueleto** (esqueleto morto, por limpar — ver abaixo): estão
 embrulhados em `LegacyScreen` (`navigation/AppNavHost.kt`), que dá o espaço das barras do sistema. Ao redesenhar um,
@@ -206,9 +207,9 @@ código como esqueleto morto, por limpar numa fatia futura.
 
 ## Testes
 
-Unitários (JVM), **92**: `AuthValidationTest` (10, validação do registo), `RecoveryRulesTest` (10, email tapado, password nova),
+Unitários (JVM), **97**: `AuthValidationTest` (10, validação do registo), `RecoveryRulesTest` (10, email tapado, password nova),
 `OnboardingRulesTest` (12, ordem dos ecrãs, montagem dos pedidos de perfil e preferências), `FlagEmojiTest` (3), `ImageUrlsTest` (4),
-`AvatarBadgeTest` (6, iniciais do avatar), `BebidaFormatacaoTest` (8, a fórmula de `linhaAtributos()` e a extração do ano do nome). `ProdutorFormatacaoTest` (14, domínio do site, URL, coordenadas, morada, URI `geo:` por coordenadas ou por morada com o nome escapado, singular/plural) e `ProdutorUiStateTest` (5, 3 garrafas de início, "CARREGAR MAIS N", nunca mais de 6). `CompraFormatacaoTest` (10, a oferta principal é a mais barata das disponíveis com link, "MAIS BARATO" só com comparação, "há N min/horas/dias", "atualizado hoje"). `TokenAuthenticatorTest` (10, contra um `MockWebServer` local: renova e repete com o token novo, renovação recusada apaga a sessão e avisa, sem rede/5xx a sessão mantém-se, pedido anónimo e `/api/auth/` não renovam, outro pedido já renovou, sessão antiga sem refresh token, nunca renova duas vezes o mesmo pedido).
+`AvatarBadgeTest` (6, iniciais do avatar), `BebidaFormatacaoTest` (8, a fórmula de `linhaAtributos()` e a extração do ano do nome). `ProdutorFormatacaoTest` (14, domínio do site, URL, coordenadas, morada, URI `geo:` por coordenadas ou por morada com o nome escapado, singular/plural) e `ProdutorUiStateTest` (5, 3 garrafas de início, "CARREGAR MAIS N", nunca mais de 6). `CompraFormatacaoTest` (10, a oferta principal é a mais barata das disponíveis com link, "MAIS BARATO" só com comparação, "há N min/horas/dias", "atualizado hoje"). `TokenAuthenticatorTest` (10, contra um `MockWebServer` local: renova e repete com o token novo, renovação recusada apaga a sessão e avisa, sem rede/5xx a sessão mantém-se, pedido anónimo e `/api/auth/` não renovam, outro pedido já renovou, sessão antiga sem refresh token, nunca renova duas vezes o mesmo pedido). `TextoSemAcentosTest` (5, `semAcentos()`/`contemSemAcentos()`, as pesquisas locais de castas).
 Ainda **sem** testes de ViewModels nem de UI (pede `kotlinx-coroutines-test`; fica para quando compensar) — `HomeViewModel` e
 `CatalogViewModel` também ainda não têm testes (o `RangePillRow` e a lógica de intervalo do popup de filtros também só validados ao
 vivo, não têm teste unitário). `descricaoJanela` (`HomeScreen.kt`) continua `private`, sem teste. Os fluxos validam-se ao vivo no

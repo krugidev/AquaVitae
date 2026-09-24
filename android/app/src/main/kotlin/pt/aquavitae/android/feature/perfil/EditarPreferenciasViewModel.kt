@@ -12,6 +12,7 @@ import pt.aquavitae.android.data.model.Casta
 import pt.aquavitae.android.data.model.LookupItem
 import pt.aquavitae.android.data.model.PreferenciaRequest
 import pt.aquavitae.android.data.model.PreferenciaResponse
+import pt.aquavitae.android.data.model.contemSemAcentos
 import pt.aquavitae.android.data.network.toUserMessage
 import pt.aquavitae.android.data.repository.LookupRepository
 import pt.aquavitae.android.data.repository.PreferenciaRepository
@@ -42,7 +43,7 @@ sealed interface EditarPreferenciasUiState {
             get() = if (castaBusca.isBlank()) {
                 emptyList()
             } else {
-                castas.filter { it.id !in castaIds && it.nome?.contains(castaBusca, ignoreCase = true) == true }
+                castas.filter { it.id !in castaIds && it.nome?.contemSemAcentos(castaBusca) == true }
                     .take(MAX_CASTAS_SUGERIDAS)
             }
     }

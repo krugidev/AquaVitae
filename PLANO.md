@@ -3,7 +3,7 @@
 Roadmap vivo do MVP. Atualizar isto no fim de cada sessão de trabalho relevante — é o que uma sessão
 nova do Claude Code (ou tu, ao voltares passado um tempo) deve ler primeiro para saber onde ficámos.
 
-## ▶ Retomar aqui (última atualização: 2026-09-24, fatias 1 a 6 + "Comprar" + sessão renovável feitas — a seguir: pesquisa sem acentos e painel web)
+## ▶ Retomar aqui (última atualização: 2026-09-24, fatias 1 a 6 + "Comprar" + sessão renovável + pesquisa sem acentos feitas — a seguir: painel web de administração)
 
 **Numa sessão nova, ler por esta ordem:** `CLAUDE.md` (convenções e ferramentas desta máquina) → esta secção → `android/README.md`
 (estado do frontend, estrutura, mapa de ecrãs) → `android/design/README.md` (os prints e **o que o utilizador pediu para cada ecrã**,
@@ -30,8 +30,8 @@ e do popup de detalhe de uma bebida). **Já não há nenhum destino da app sem f
 "Conta e segurança" do perfil (o utilizador está a preparar os mockups). **O ponto "Comprar" está feito** (a pílula do preço e
 os botões "COMPRAR" abrem a loja e registam o clique; "Onde comprar" com todas as ofertas; "Compraste?" ao voltar do browser;
 "Comprar em X" da wishlist a funcionar) — antes disto **a app não tinha nenhuma forma de comprar**. **O utilizador combinou o
-que vem a seguir (2026-09-24):** os pontos 2 e 3 do que sugeri — **a sessão** (o token expira aos 60 min, sem renovação nem
-tratamento de 401) e **a pesquisa sem acentos** (com o escape do `%`/`_`) — e **começar já o painel web de administração**
+que vem a seguir (2026-09-24):** os pontos 2 e 3 do que sugeri — **a sessão** (o token expirava aos 60 min, sem renovação nem
+tratamento de 401) e **a pesquisa sem acentos** (com o escape do `%`/`_`), **ambos já feitos** — e **começar já o painel web de administração**
 (páginas no próprio backend, Thymeleaf + HTMX; ver "Próximos passos"); depois a **ronda de bugs** e, só então, as **bebidas
 reais por lotes vindas dos afiliados — da ordem de 100 por semana** (o fluxo abaixo, "Como entram as bebidas", foi desenhado
 para ~30 por lote: rever o que muda com 100/semana). A Auchan (na Awin) já foi pedida pelo utilizador; está a explorar outras
@@ -41,14 +41,7 @@ seguinte — por isso este `PLANO.md` e os READMEs ficam atualizados a cada pont
 **Git:** duas branches. **`feature/api-endpoints-design`** = PR #1 (backend v1): já fundido/enviado. **`feature/android-app`** =
 criada a partir dela em 2026-09-21 para o Android, com [PR #2](https://github.com/krugidev/AquaVitae/pull/2) aberto (para `main`,
 ainda não fundido) — leva tudo desde a fatia 1a até à fatia 6 (a 5 é o commit `d33d440`, a 6 — com a morada e o filtro por
-produtor — o `ff75aa2`), commitado por área/fatia (ver o próprio PR para a lista). **O ponto "Comprar" é o commit `6ae8ec8`; a sessão renovável está feita mas ainda não commitada nem enviada** — `git status` mostra só os
-ficheiros dela: **BD** `ddl/01_tables.sql`, `ddl/02_constraints.sql`, `ddl/15_patch_refresh_token.sql` (novo), `database/README.md`;
-**backend** `auth/RefreshToken.kt`, `RefreshTokenRegras.kt`, `RefreshTokenService.kt` (novos) + `RefreshTokenRegrasTest.kt`,
-`AuthService.kt`, `AuthController.kt`, `PasswordResetService.kt`, `AuthDtos.kt`, `application.yml`; **Android** `data/network/`
-`TokenAuthenticator.kt`, `AuthRefreshApi.kt`, `SessionEvents.kt` (novos) + `TokenAuthenticatorTest.kt`, `feature/auth/`
-`SessaoEventosViewModel.kt` (novo), e alterações a `NetworkModule.kt`, `AquaVitaeApi.kt`, `AuthRepository.kt`, `AuthModels.kt`,
-`TokenDataStore.kt`, `LoginScreen.kt`, `AppNavHost.kt`, `libs.versions.toml`/`build.gradle.kts` (o `MockWebServer` de teste); os READMEs,
-`CLAUDE.md` e este `PLANO.md`. **Ficam de fora dos commits, de propósito** (regra do `CLAUDE.md`): as notas do utilizador —
+produtor — o `ff75aa2`), commitado por área/fatia (ver o próprio PR para a lista). **O ponto "Comprar" é o commit `6ae8ec8` e a sessão renovável o `32b31b1`** (ambos enviados); **a pesquisa sem acentos está feita mas ainda não commitada nem enviada** (até ao commit, `git status` mostra só os ficheiros dela: backend `bebida/PesquisaTexto.kt` (novo) + `PesquisaTextoTest.kt` (novo), `BebidaRepository.kt`, `BebidaService.kt`; Android `data/model/TextoSemAcentos.kt` (novo) + `TextoSemAcentosTest.kt` (novo), `CatalogViewModel.kt`, `EditarPreferenciasViewModel.kt`; e os READMEs, `CLAUDE.md`, `API_ENDPOINTS.md` e este `PLANO.md`). **Ficam de fora dos commits, de propósito** (regra do `CLAUDE.md`): as notas do utilizador —
 `android/AQUAVITAESEEDS-NOTES` e, na raiz, `—--------------- DADOS A INSERIR NA.txt`, `REGIÕES A AJUSTAR (...).txt` e
 `NOVOSDADOS.txt` (este último parece um relatório de incidentes sem ligação ao projeto — vale a pena o utilizador confirmar se
 foi parar ali por engano). Ao commitar, usar `git commit <caminhos explícitos>`, nunca `git add -A`. **O utilizador autorizou,
@@ -56,7 +49,7 @@ foi parar ali por engano). Ao commitar, usar `git commit <caminhos explícitos>`
 meio** — por isso cada ponto (Comprar, sessão, pesquisa, painel) termina com um commit e um push. A `main` só tem a landing page
 em `docs/`.
 
-**Ambiente no fim da sessão:** BD de dev migrada até ao patch `15` (`utilizador_refresh_token`); contentor `aquavitae-oracle-xe` a correr; **API parada** (foi parada para correr os testes; arrancar com o `bootRun` abaixo), perfil
+**Ambiente no fim da sessão:** BD de dev migrada até ao patch `15` (`utilizador_refresh_token`); contentor `aquavitae-oracle-xe` a correr; **API a correr** (arrancada em background, em modo normal — token de 60 min, sem overrides —, a servir a pesquisa sem acentos; se reiniciar, ver "Arrancar tudo"), perfil
 `dev` (sem `mailpit`), com as credenciais do Gmail carregadas e já a servir `tipo`/`tanino`/`produtorRegiao`/`temBebida` e, desde a fatia 6, o
 `ratingMedio`/`totalReviews`/`categorias` do produtor — se
 reiniciar, ver `CLAUDE.md`, "Email de recuperação — Gmail", para voltar a carregar `backend/.env.mail` antes do `bootRun`; contentor
@@ -71,8 +64,8 @@ Barca Velha 2015 em guarda até 2035) e "Brancos frescos" (id 23, vazia) — **f
 contínuo; termos repostos a `NULL` no fim desta sessão (a fatia 6 também os aceitou ao testar). **Os dados de teste temporários
 da fatia 6** (história/morada/coordenadas/imagem nos produtores 1 e 8 e 7 bebidas movidas para o 1) **já foram revertidos** — a
 BD de dev ficou como estava (nenhum produtor tem história, morada, coordenadas nem imagem; ver "Android — fatia 6"). Testes:
-backend `.\gradlew.bat test` em `backend/` (**105**, sem BD, corridos nesta sessão); Android
-`testDebugUnitTest` (**92**, ver `android/README.md`). Corri o
+backend `.\gradlew.bat test` em `backend/` (**114**, sem BD, corridos nesta sessão); Android
+`testDebugUnitTest` (**97**, ver `android/README.md`). Corri o
 `database/verify/rebuild-check.sh` depois do patch `14` (`produtor_morada`): "reconstrução igual à dev". **Landing page (GitHub
 Pages):** já está ativa em `https://krugidev.github.io/AquaVitae/` (fonte `main:/docs`, HTTPS, sem domínio próprio; HTTP 200
 verificado em 2026-09-24) — serve de "website" nos pedidos a outras redes de afiliados; continua a não se mexer no repo/domínio.
@@ -92,13 +85,10 @@ no `CLAUDE.md` o que fazer se o Docker Desktop crashar.
   `/logout`, e um `TokenAuthenticator` na app que renova sozinho a cada 401 e, se a renovação for recusada, leva ao login com aviso.
   Fica em aberto: renovar **antes** de expirar (um pedido a um endpoint público com o token expirado vem como anónimo) e, em produção,
   definir o `JWT_SECRET`.
-- **A3. Pesquisa sem acentos — a fazer.** Hoje "esporao"/"meao"/"beirao" não encontram nada (só "Esporão"…) e um `%` ou `_`
-  escrito na pesquisa é um curinga do `LIKE` (devolve tudo). Desenho: `TRANSLATE(UPPER(coluna), 'ÁÀÂÃ…', 'AAAA…')` do lado da
-  BD (`function('translate', …)` no HQL, só no `search`, sem `NLS_COMP` global — que mexeria em todas as comparações) e o mesmo
-  mapa aplicado ao termo no Kotlin, mais `LIKE … ESCAPE '!'` a escapar `%`, `_` e `!`; testes para o mapa e para o escape. A app
-  tem 3 pesquisas locais de castas com `contains(ignoreCase)` (popup de filtros, preferências, onboarding) que também têm de
-  ignorar acentos.
-- **A4. Painel web de administração — começar.** Decidido: **web, dentro do backend** (`/admin`, Thymeleaf + HTMX, sem build de
+- **A3. Pesquisa sem acentos — ✅ feito** (ver "Android — Pesquisa sem acentos"): `TRANSLATE(UPPER(coluna), …)` na BD (dentro de um `CAST … AS String`),
+  o mesmo mapa aplicado ao termo no Kotlin (`PesquisaTexto`), `LIKE … ESCAPE '!'` a escapar `%`, `_` e `!`; as pesquisas locais de castas da
+  app usam `contemSemAcentos()`. Fica em aberto só o alfabeto (o mapa cobre o latim ocidental).
+- **A4. Painel web de administração — a fazer a seguir.** Decidido: **web, dentro do backend** (`/admin`, Thymeleaf + HTMX, sem build de
   front-end, atrás de login `ROLE_ADMIN`), **não na app** (única administradora, trabalho de secretária, sem ciclos de
   publicação, e poderes de escrita fora de um app instalado em milhares de telemóveis). **Muda a decisão antiga de "conteúdo só
   por SQL, sem endpoints de escrita"** (atualizar `CLAUDE.md`/`API_ENDPOINTS.md` quando a 1.ª escrita entrar). Fatias:
@@ -155,7 +145,7 @@ produtores; a 2.ª versão com leitura de fotos de refeições (ver "Ideia do ut
 7. **Adiado — "Por fazer depois":** decidido em 2026-09-21 que se trabalha nessa lista **quando a 1.ª versão da app estiver
    pronta**. Inclui os subtypes das outras categorias (**nota:** se o 1.º lote trouxer gins/whiskies, o detalhe só mostra os
    campos gerais da bebida, sem os atributos da categoria), a pesquisa de produtores à parte, o `Page<...>` como DTO próprio, os
-   testes com BD, a pesquisa sem distinção de acentos, o CI/Dockerfile, a migração da toolchain do Android e o temporizador do código
+   testes com BD, o CI/Dockerfile, a migração da toolchain do Android e o temporizador do código
    de recuperação com "pedir novo" (`expiraEm` na resposta — o intervalo mínimo entre pedidos já está feito). **Acrescentado na
    fatia 4 (2026-09-24, combinado com o utilizador):** 5 campos que o mockup de Favoritos/Wishlist pede e o `BebidaSummaryDto`
    não tem — `linkCompraId`/`linkCompraUrl` (para "Comprar em X" abrir o browser do retalhista e registar o clique em
@@ -279,6 +269,9 @@ domain" nas definições do Pages** (aconteceu por engano uma vez e desviou o si
 - **Sessão renovável (2026-09-24)** — o token de acesso (60 min) passou a renovar-se sozinho com um refresh token (30 dias, rodado, só o
   hash na BD, patch `15`): backend `POST /api/auth/refresh` e `/logout`; app com um `TokenAuthenticator` (OkHttp). Uma sessão expirada
   leva ao login com "A tua sessão expirou". Ver "Android — Sessão renovável", em "Em curso".
+- **Pesquisa sem acentos (2026-09-24)** — "esporao"/"meao"/"beirao" passaram a encontrar "Esporão"/"Meão"/"Beirão" (nome da bebida, do produtor e
+  das castas), e um `%`/`_` escrito na pesquisa deixou de ser um curinga do `LIKE`. Backend `PesquisaTexto` + `TRANSLATE` na query; app
+  `String.contemSemAcentos()` nas pesquisas locais de castas. Ver "Android — Pesquisa sem acentos", em "Em curso".
 - Os restantes ecrãs (`detail`, `reviews`) continuam os placeholders do esqueleto (esqueleto morto, por limpar).
 
 ## Em curso 🔜
@@ -919,6 +912,25 @@ revogada → login com aviso, "Terminar sessão" → `LOGOUT`, reutilização de
 truncado; o `rebuild-check.sh` apanhou-o (agora `CLAUDE.md` avisa).
 
 **Em aberto:** renovar antes de expirar; sessões antigas voltam ao login uma vez; sem lista/fim de outras sessões; `JWT_SECRET` em produção.
+
+### Android — Pesquisa sem acentos (ponto 3 a seguir à fatia 6, feito e validado ao vivo, 2026-09-24)
+
+Pergunta do utilizador ("consigo adicionar pontuação, ex. ~, ^?") que revelou o problema: sem acento não se encontrava nada ("esporao",
+"meao", "beirao"). Sem mockup. Detalhe em `android/design/README.md`, "Pesquisa sem acentos" — aqui o resumo.
+
+**Backend:** `PesquisaTexto` (`COM_ACENTO`/`SEM_ACENTO`, 27 letras latinas; `normalizar`, `escaparLike`, `padraoContem`); `BebidaRepository.search`
+compara `CAST(FUNCTION('translate', UPPER(coluna), …) AS String) LIKE :searchPattern ESCAPE '!'` no nome da bebida, do produtor e das castas
+(o `CAST` é obrigatório: o Hibernate não conhece o tipo de um `FUNCTION()` e recusa o `LIKE`, apanhado pelo `HqlQueriesTest`). **Decisão:** não
+se usou `NLS_COMP=LINGUISTIC`/`NLS_SORT=BINARY_AI` — mexia em todas as comparações de texto da BD (logins, unicidade, seeds). **+9 testes**
+(114 no total; um deles confere cada letra do mapa com a decomposição Unicode).
+
+**Android:** `String.semAcentos()`/`contemSemAcentos()` (`data/model/TextoSemAcentos.kt`, Unicode NFD) nas 2 pesquisas locais de castas (filtros do
+catálogo, "Editar preferências"). **+5 testes** (97 no total).
+
+**Validado ao vivo** (API + emulador): "esporao"/"Esporão"/"ESPORÃO" → Esporão; "meao" → Vale Meão; produtor e casta também; `%`, `_`, `~`, `^`,
+`!` → 0 resultados; espaços nas pontas ignorados; sem texto → as 16 bebidas.
+
+**Em aberto:** letras fora do latim ocidental ("ł", "ő", "ž") não se normalizam; a pesquisa é "contém", sem tolerância a gralhas nem relevância.
 
 ### Desenho dos endpoints (concluído, 2026-09-17)
 

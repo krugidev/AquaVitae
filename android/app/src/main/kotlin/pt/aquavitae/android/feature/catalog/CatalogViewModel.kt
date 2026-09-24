@@ -16,6 +16,7 @@ import pt.aquavitae.android.data.model.Casta
 import pt.aquavitae.android.data.model.CatalogFiltro
 import pt.aquavitae.android.data.model.LookupItem
 import pt.aquavitae.android.data.model.LookupState
+import pt.aquavitae.android.data.model.contemSemAcentos
 import pt.aquavitae.android.data.model.ProdutorDetail
 import pt.aquavitae.android.data.network.toUserMessage
 import pt.aquavitae.android.data.repository.BebidaRepository
@@ -69,7 +70,7 @@ sealed interface CatalogUiState {
             get() {
                 val todas = (castas as? LookupState.Ready)?.data.orEmpty()
                 val escolhidasIds = rascunho.castaIds
-                val porNome = if (castaBusca.isBlank()) todas else todas.filter { it.nome?.contains(castaBusca, ignoreCase = true) == true }
+                val porNome = if (castaBusca.isBlank()) todas else todas.filter { it.nome?.contemSemAcentos(castaBusca) == true }
                 return porNome.filter { it.id !in escolhidasIds }.take(30)
             }
     }

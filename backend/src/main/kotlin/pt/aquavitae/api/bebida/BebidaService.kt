@@ -42,7 +42,7 @@ class BebidaService(
     fun search(filtro: BebidaFiltro, pedido: Pageable, utilizador: Utilizador?): Page<BebidaSummaryDto> {
         val pageable = pedido.comOrdenacaoPadraoDeBebidas()
         val page = bebidaRepository.search(
-            search = filtro.search?.trim()?.ifBlank { null },
+            searchPattern = PesquisaTexto.padraoContem(filtro.search),
             categoriaIds = filtro.categoriaIds?.ifEmpty { null },
             produtorId = filtro.produtorId,
             paisId = filtro.paisId,
@@ -71,7 +71,7 @@ class BebidaService(
         val categoriaIds = categoriaPreferidaRepository.findByUtilizador_Id(utilizador.id).mapNotNull { it.categoria?.id }
 
         val page = bebidaRepository.search(
-            search = null,
+            searchPattern = null,
             categoriaIds = categoriaIds.ifEmpty { null },
             produtorId = null,
             paisId = null,

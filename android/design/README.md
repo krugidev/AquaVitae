@@ -799,3 +799,36 @@ o `rebuild-check.sh` apontou "BEBIDA_LINK_COMPRA: mesmo nº de linhas mas texto 
 - Sessões **de antes desta versão** (sem refresh token) acabam ao primeiro 401 e voltam ao login uma vez.
 - Sem "terminar as outras sessões" (nem lista de dispositivos) — a coluna e a tabela já o permitiriam.
 - Em produção o `JWT_SECRET` tem de ser definido (hoje há um valor de desenvolvimento por omissão).
+
+## Pesquisa sem acentos (ponto 3 a seguir à fatia 6, feito e validado ao vivo — 2026-09-24)
+
+**Sem mockup** — pergunta do utilizador ("consigo adicionar pontuação, ex. ~, ^?") que revelou o problema: escrever **com** acento
+funcionava ("Esporão", "meão"), **sem** acento não encontrava nada ("esporao", "meao", "beirao" → 0 resultados), e é assim que a
+maioria escreve no telemóvel. Estava no "Por fazer depois" do `PLANO.md`; foi antecipado antes dos lotes de bebidas (nomes como
+Esporão, Régua e Beirão vão ser a norma).
+
+**O que ficou feito:**
+- **Backend (`GET /api/bebidas?search=`)**: a pesquisa passou a ignorar **acentos e maiúsculas** no nome da bebida, no do produtor e no
+  das castas. Na BD, `TRANSLATE(UPPER(coluna), 'ÁÀÂÃ…', 'AAAA…')` (dentro de um `CAST(... AS String)`: o Hibernate não sabe o tipo de
+  um `FUNCTION()` e recusa o `LIKE`); no Kotlin, `PesquisaTexto.normalizar` aplica **o mesmo mapa** ao termo — o mapa vive numa só
+  constante que a query usa por interpolação (`PesquisaTexto.COM_ACENTO`/`SEM_ACENTO`, 27 caracteres latinos). **Não se usou
+  `NLS_COMP=LINGUISTIC`/`NLS_SORT=BINARY_AI`** (o modo "insensível a acentos" do Oracle): mudava todas as comparações de texto da BD
+  (logins, unicidade, seeds), não só a pesquisa.
+- **`%`, `_` e `!` escritos na pesquisa são texto**, não curingas do `LIKE` (`LIKE … ESCAPE '!'`, com esses três escapados): antes, um `%`
+  ou `_` devolvia o catálogo todo. **`~`, `^` e o resto da pontuação** já eram tratados como letras e continuam a não dar erro.
+  Espaços nas pontas não contam (o teclado deixa-os); texto em branco = sem filtro.
+- **App:** as 2 pesquisas **locais** de castas (popup de filtros do catálogo e "Editar preferências") usavam `contains(ignoreCase)` e
+  também não ignoravam acentos: agora `String.contemSemAcentos()` (`data/model/TextoSemAcentos.kt`, Unicode NFD). A pesquisa do
+  catálogo, da homepage e de "Já provadas" vai toda pelo backend.
+
+**Testes:** +9 backend (`PesquisaTextoTest`: os dois mapas têm o mesmo tamanho, **cada letra base confere com a decomposição Unicode**,
+normalização, escape, padrão, `~`/`^`/`%`/`_`, texto em branco; **114** no total; o `HqlQueriesTest` apanhou o `LIKE` sem `CAST` antes
+de chegar ao ao vivo) e +5 Android (`TextoSemAcentosTest`; **97**).
+
+**Validado ao vivo** (API real): "esporao", "Esporão" e "ESPORÃO" → Esporão Reserva Tinto 2018; "meao" → Vale Meão; "beirao" → Licor
+Beirão; um produtor ("ferreirinha") e uma casta ("aragonez", 5 bebidas; "alvarinho") também; `%`, `_`, `~`, `^` e `!` → 0; espaços nas
+pontas ignorados; sem texto → as 16; "gin 44" e "44°" → Gin 44°. Na app, "meao" no catálogo → "1 BEBIDA: Vale Meão Tinto 2016".
+
+**Em aberto:** o mapa cobre o latim (português, espanhol, francês, alemão, italiano): letras como "ł", "ő" ou "ž" (polaco, húngaro,
+checo) não se normalizam — acrescentam-se às duas constantes (e o teste confere-as); a pesquisa continua a ser "contém" (sem
+tolerância a gralhas nem ordenação por relevância — o resultado sai por rating).

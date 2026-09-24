@@ -17,7 +17,7 @@ interface BebidaRepository : JpaRepository<Bebida, Long> {
     // precoMin/Max é "existe um link ativo dentro do intervalo" — aproximação
     // aceitável para o MVP (poucos links por bebida); não garante que É o link
     // mais barato que cai no intervalo se houver vários retalhistas.
-    // `search` casa com o nome da bebida, o nome do produtor ou o nome de uma das castas (barra de pesquisa
+    // `searchPattern` (ver PesquisaTexto: sem acentos, maiúsculas, curingas escapados) casa com o nome da bebida, o nome do produtor ou o nome de uma das castas (barra de pesquisa
     // do mockup) e, como tudo o resto, combina em AND com os filtros aplicados.
     // Produtor e região vão em EXISTS com `b.produtor.id` (a FK, sem join): navegar `b.produtor.regiao` no
     // WHERE criaria um INNER JOIN implícito que tirava da pesquisa toda a bebida sem produtor, mesmo sem filtro.
@@ -26,12 +26,12 @@ interface BebidaRepository : JpaRepository<Bebida, Long> {
     @Query(
         """
         SELECT b FROM Bebida b LEFT JOIN Vinho v ON v.bebidaId = b.id
-        WHERE (:search IS NULL
-                OR UPPER(b.nome) LIKE UPPER(CONCAT('%', :search, '%'))
+        WHERE (:searchPattern IS NULL
+                OR CAST(FUNCTION('translate', UPPER(b.nome), '${PesquisaTexto.COM_ACENTO}', '${PesquisaTexto.SEM_ACENTO}') AS String) LIKE :searchPattern ESCAPE '!'
                 OR EXISTS (SELECT 1 FROM Produtor p WHERE p.id = b.produtor.id
-                             AND UPPER(p.nome) LIKE UPPER(CONCAT('%', :search, '%')))
+                             AND CAST(FUNCTION('translate', UPPER(p.nome), '${PesquisaTexto.COM_ACENTO}', '${PesquisaTexto.SEM_ACENTO}') AS String) LIKE :searchPattern ESCAPE '!')
                 OR EXISTS (SELECT 1 FROM VinhoCasta vc WHERE vc.vinho = v
-                             AND UPPER(vc.casta.name) LIKE UPPER(CONCAT('%', :search, '%'))))
+                             AND CAST(FUNCTION('translate', UPPER(vc.casta.name), '${PesquisaTexto.COM_ACENTO}', '${PesquisaTexto.SEM_ACENTO}') AS String) LIKE :searchPattern ESCAPE '!'))
           AND (:categoriaIds IS NULL OR b.categoria.id IN :categoriaIds)
           AND (:produtorId IS NULL OR b.produtor.id = :produtorId)
           AND (:paisId IS NULL OR b.paisOrigem.id = :paisId)
@@ -54,7 +54,7 @@ interface BebidaRepository : JpaRepository<Bebida, Long> {
         """,
     )
     fun search(
-        @Param("search") search: String?,
+        @Param("searchPattern") searchPattern: String?,
         @Param("categoriaIds") categoriaIds: List<Long>?,
         @Param("produtorId") produtorId: Long?,
         @Param("paisId") paisId: Long?,
