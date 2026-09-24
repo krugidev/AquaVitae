@@ -42,7 +42,7 @@ seguinte — por isso este `PLANO.md` e os READMEs ficam atualizados a cada pont
 **Git:** duas branches. **`feature/api-endpoints-design`** = PR #1 (backend v1): já fundido/enviado. **`feature/android-app`** =
 criada a partir dela em 2026-09-21 para o Android, com [PR #2](https://github.com/krugidev/AquaVitae/pull/2) aberto (para `main`,
 ainda não fundido) — leva tudo desde a fatia 1a até à fatia 6 (a 5 é o commit `d33d440`, a 6 — com a morada e o filtro por
-produtor — o `ff75aa2`), commitado por área/fatia (ver o próprio PR para a lista). **O ponto "Comprar" é o commit `6ae8ec8` e a sessão renovável o `32b31b1`** (ambos enviados); **a pesquisa sem acentos é o `4d81eef`** (enviado); **a fatia 1 do painel web é o `fd6cd63`** (enviado); **a fatia 2 (formulário de produtores) é o commit seguinte** (`git log`): `admin/ProdutorFormulario.kt`, `AdminProdutorService.kt`, `AdminProdutorFormController.kt`, `AdminExceptionHandler.kt`, os templates `produtor-form`/`erro`, o CSS, `AdminRepositories.kt`, `RegiaoRepository`, os testes e os docs. **Ficam de fora dos commits, de propósito** (regra do `CLAUDE.md`): as notas do utilizador —
+produtor — o `ff75aa2`), commitado por área/fatia (ver o próprio PR para a lista). **O ponto "Comprar" é o commit `6ae8ec8` e a sessão renovável o `32b31b1`** (ambos enviados); **a pesquisa sem acentos é o `4d81eef`** (enviado); **a fatia 1 do painel web é o `fd6cd63`** (enviado); **a fatia 2 (formulário de produtores) é o `9998fe8`** (enviado; leva: `admin/ProdutorFormulario.kt`, `AdminProdutorService.kt`, `AdminProdutorFormController.kt`, `AdminExceptionHandler.kt`, os templates `produtor-form`/`erro`, o CSS, `AdminRepositories.kt`, `RegiaoRepository`, os testes e os docs). **Ficam de fora dos commits, de propósito** (regra do `CLAUDE.md`): as notas do utilizador —
 `android/AQUAVITAESEEDS-NOTES` e, na raiz, `—--------------- DADOS A INSERIR NA.txt`, `REGIÕES A AJUSTAR (...).txt` e
 `NOVOSDADOS.txt` (este último parece um relatório de incidentes sem ligação ao projeto — vale a pena o utilizador confirmar se
 foi parar ali por engano). Ao commitar, usar `git commit <caminhos explícitos>`, nunca `git add -A`. **O utilizador autorizou,
@@ -102,6 +102,15 @@ no `CLAUDE.md` o que fazer se o Docker Desktop crashar.
   atualização diária de preço/stock. **Imagens:** guardá-las nós (redimensionadas, miniatura para as listas) em armazenamento
   de ficheiros com CDN (Cloudflare R2/Backblaze B2), o URL na BD como hoje (a app não muda); até haver alojamento, os URLs das
   lojas (decisão de 2026-09-20). Confirmar os termos de cada programa/produtor antes de copiar imagens.
+  **Para decidir com o utilizador antes da fatia 3 (a que mais importa para os lotes) — a minha recomendação em cada:**
+  (a) **âmbito do 1.º corte:** campos gerais da bebida (nome, categoria, produtor, país, ano, teor, volume, EAN, imagem) + **vinho completo**
+  (tipo, corpo, tanino, acidez, doçura, castas com %) + **links de compra** (retalhista, URL, URL de afiliado/verificação, preço); whisky, gin,
+  licor, vodka e aguardente ficam com os campos gerais até haver entidades para os seus subtypes (5 entidades novas — fatia à parte). *Recomendo
+  este corte*: é o que os lotes precisam já (o vinho é o que tem atributos na app). (b) **retalhistas**: hoje só por SQL; um formulário simples
+  ao lado dos links poupa `INSERT`s — recomendo incluí-lo na fatia 3 se os lotes trouxerem retalhistas novos (a Auchan, por exemplo).
+  (c) **duplicado por EAN**: ao criar, se o EAN já existe, o painel diz qual é a bebida e propõe **só acrescentar o link** (regra do `CLAUDE.md`).
+  (d) **imagens**: continuar com o URL da loja até haver alojamento (o campo já aceita as duas formas). (e) **mini-página de regiões/países**
+  (hoje `INSERT`s à mão): só se os lotes pedirem regiões novas com frequência.
 - **A5. Ecrãs à espera de mockups do utilizador:** "As minhas reviews" e "Conta e segurança" (esta inclui **apagar conta**, exigido
   pela Google Play a apps com registo — [regra](https://support.google.com/googleplay/android-developer/answer/13327111?hl=en)).
 
