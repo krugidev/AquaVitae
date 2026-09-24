@@ -3,7 +3,18 @@
 Roadmap vivo do MVP. Atualizar isto no fim de cada sessão de trabalho relevante — é o que uma sessão
 nova do Claude Code (ou tu, ao voltares passado um tempo) deve ler primeiro para saber onde ficámos.
 
-## ▶ Retomar aqui (última atualização: 2026-09-24, fatias 1 a 4 do Android feitas — fluxo principal do MVP completo, com Favoritos/Wishlist a sério)
+## ▶ Retomar aqui (última atualização: 2026-09-24 à noite, fatias 1 a 4 do Android feitas — a seguir: perfil + página do produtor)
+
+**Pedido verbal do utilizador para a próxima sessão (sem mockups ainda, só descrito em texto — pedir os prints antes de
+construir, como sempre):** tocar no avatar do canto superior direito (hoje sem destino em nenhum ecrã) abre o ecrã de
+**perfil** — ver/editar os dados do utilizador e **editar as preferências do onboarding** (o que afeta "Escolhido para ti" na
+homepage); e a **página do produtor** ("VER PRODUTOR" no popup de detalhe da bebida, também sem destino desde a fatia 3a).
+**O backend das duas já existe, validado, nada por fazer aí para começar:** perfil = `GET/PUT /api/users/me`,
+`GET/PUT /api/users/me/preferencias` (só o `GET` ainda não está na app); produtor = `GET /api/produtores/{id}` (com
+`totalProdutos`) e `GET /api/produtores/{id}/bebidas?categoriaId=&page=&size=` (`Page<BebidaSummaryDto>`, os mesmos cartões do
+catálogo). Não há pasta `feature/perfil`/`feature/produtor` ainda — são ecrãs novos de raiz, não placeholders do esqueleto.
+Ligar `onVerProdutor` (já existe como parâmetro em `HomeScreen`/`AppNavHost`, hoje `{}`) e o avatar de `HomeScreen`/
+`FavoritosScreen`/`WishlistScreen` (repetido nos 3 cabeçalhos) ao ecrã de perfil.
 
 **Numa sessão nova, ler por esta ordem:** `CLAUDE.md` (convenções e ferramentas desta máquina) → esta secção → `android/README.md`
 (estado do frontend, estrutura, mapa de ecrãs) → `android/design/README.md` (os prints e **o que o utilizador pediu para cada ecrã**,
@@ -63,14 +74,16 @@ backend); Android `testDebugUnitTest` (**53**, sem alterações à suite — a f
 no `CLAUDE.md` o que fazer se o Docker Desktop crashar.
 
 **Próximos passos, por ordem:**
-1. **O utilizador testa o fluxo todo no emulador, incluindo a fatia 4** (Favoritos/Wishlist a sério: filtros, ordenação,
-   "Comprar em X"/"Para a cave") **e dá feedback** — em especial as **diferenças conscientes** listadas em
-   `android/design/README.md` ("14.", "15.", "16.", "Favoritos e Wishlist"): a serifa aproximada, "ORDENAR" só com 2 opções no
-   catálogo, os 7 tipos de vinho mostrados (o mockup só tinha 4), o preço nunca testado com dados a sério, a review só com
-   estrelas inteiras, o toque curto a abrir o mesmo popup do premido, a pílula "Vinho 2025" da cave (não modelada — o que
-   representa?), "Ver as N garrafas" sem destino (só informativo), e os 5 campos da API adiados na fatia 4 (ver item 6).
-2. **Página do produtor:** "VER PRODUTOR" do popup de detalhe continua sem destino — fica para a fatia 6 do plano original.
-3. **Depois:** perfil; editar uma garrafa já na cave (o `PATCH` já existe na API e no repositório Android, sem UI); limpar o
+1. **Fatia 5 (pedida verbalmente, 2026-09-24 à noite): perfil (avatar → ver/editar dados + preferências) e página do
+   produtor.** Ver a nota completa em "Retomar aqui", no topo — **pedir os mockups ao utilizador antes de construir**, ele
+   ainda só descreveu em texto. Backend já pronto para as duas (só falta ligar `GET /api/users/me/preferencias` na app).
+2. **O utilizador ainda pode dar feedback da fatia 4** (Favoritos/Wishlist: filtros, ordenação, "Comprar em X"/"Para a
+   cave") e das anteriores — em especial as **diferenças conscientes** listadas em `android/design/README.md` ("14.",
+   "15.", "16.", "Favoritos e Wishlist"): a serifa aproximada, "ORDENAR" só com 2 opções no catálogo, os 7 tipos de vinho
+   mostrados (o mockup só tinha 4), o preço nunca testado com dados a sério, a review só com estrelas inteiras, o toque
+   curto a abrir o mesmo popup do premido, a pílula "Vinho 2025" da cave (não modelada — o que representa?), "Ver as N
+   garrafas" sem destino (só informativo), e os 5 campos da API adiados na fatia 4 (ver item 6).
+3. **Depois:** editar uma garrafa já na cave (o `PATCH` já existe na API e no repositório Android, sem UI); limpar o
    esqueleto morto (`feature/detail`, `feature/reviews`, as rotas `detail/{id}`/`reviews/{id}`, já sem forma de lá chegar por
    toque desde a fatia 3a).
 4. **1.º lote de ~30 bebidas da Awin** (em paralelo com o Android; não depende dele) — fluxo em "Como entram as bebidas"
