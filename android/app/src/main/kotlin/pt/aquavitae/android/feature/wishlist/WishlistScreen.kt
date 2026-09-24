@@ -83,7 +83,7 @@ import java.time.format.TextStyle as JavaTextStyle
  * agora "Comprar em X" abre o popup de detalhe da bebida em vez do link do retalhista.
  */
 @Composable
-fun WishlistScreen(viewModel: WishlistViewModel = hiltViewModel()) {
+fun WishlistScreen(onVerPerfil: () -> Unit = {}, viewModel: WishlistViewModel = hiltViewModel()) {
     val uiState by viewModel.state.collectAsState()
     // Ver o comentário equivalente em FavoritosScreen: sem isto, o ecrã ficava preso ao resultado da 1.ª visita.
     LaunchedEffect(Unit) { viewModel.carregar() }
@@ -110,6 +110,7 @@ fun WishlistScreen(viewModel: WishlistViewModel = hiltViewModel()) {
                 viewModel = viewModel,
                 onBebidaClick = { bebidaSelecionadaId = it },
                 onParaCave = { id -> viewModel.prepararParaCave(id) { detalhe -> bebidaParaAdicionarACave = detalhe } },
+                onVerPerfil = onVerPerfil,
             )
         }
     }
@@ -136,6 +137,7 @@ private fun WishlistContent(
     viewModel: WishlistViewModel,
     onBebidaClick: (Long) -> Unit,
     onParaCave: (Long) -> Unit,
+    onVerPerfil: () -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -146,7 +148,7 @@ private fun WishlistContent(
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Image(painter = painterResource(R.drawable.ic_wordmark_home), contentDescription = "AquaVitae", modifier = Modifier.height(20.dp))
                 Spacer(Modifier.weight(1f))
-                AvatarBadge(avatar = state.avatar, iniciais = state.iniciais)
+                AvatarBadge(avatar = state.avatar, iniciais = state.iniciais, onClick = onVerPerfil)
             }
         }
         item {

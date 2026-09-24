@@ -21,10 +21,13 @@ object AppDestinations {
     const val DETAIL_ROUTE = "detail/{$ARG_BEBIDA_ID}"
     const val REVIEWS_ROUTE = "reviews/{$ARG_BEBIDA_ID}"
     const val CAVE = "cave"
-    /** "Já provadas": alcança-se a partir da Cave ("Carregar mais antigas" da secção) ou, no futuro, do perfil. */
+    /** "Já provadas": alcança-se a partir da Cave ("Carregar mais antigas" da secção) ou do perfil ("Histórico de provadas"). */
     const val PROVADAS = "provadas"
     const val WISHLIST = "wishlist"
     const val FAVORITOS = "favoritos"
+    /** Perfil (fatia 5): alcança-se tocando no avatar em qualquer um dos 3 cabeçalhos que o mostram. */
+    const val PERFIL = "perfil"
+    const val PERFIL_EDITAR = "perfil/editar"
 
     fun detail(bebidaId: Long) = "detail/$bebidaId"
     fun reviews(bebidaId: Long) = "reviews/$bebidaId"

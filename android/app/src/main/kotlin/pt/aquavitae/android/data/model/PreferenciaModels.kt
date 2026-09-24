@@ -15,3 +15,14 @@ data class PreferenciaRequest(
     val categoriaIds: List<Long> = emptyList(),
     val castaIds: List<Long> = emptyList(),
 )
+
+/** `GET /api/users/me/preferencias` (fatia 5, ecrã de perfil) — mesma forma do pedido, com os valores atuais. */
+@JsonClass(generateAdapter = true)
+data class PreferenciaResponse(
+    val acidezMin: Int? = null,
+    val acidezMax: Int? = null,
+    val docuraMin: Int? = null,
+    val docuraMax: Int? = null,
+    val categoriaIds: List<Long> = emptyList(),
+    val castaIds: List<Long> = emptyList(),
+)

@@ -1,21 +1,16 @@
 package pt.aquavitae.android.feature.onboarding
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -35,7 +30,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.Role
@@ -44,21 +38,17 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import pt.aquavitae.android.data.model.Avatar
 import pt.aquavitae.android.data.model.Nacionalidade
-import pt.aquavitae.android.data.network.resolveImageUrl
+import pt.aquavitae.android.ui.components.AvatarGridPicker
 import pt.aquavitae.android.ui.components.FlagChip
 import pt.aquavitae.android.ui.components.FloatingLabel
 import pt.aquavitae.android.ui.components.LookupContent
 import pt.aquavitae.android.ui.components.NextButton
-import pt.aquavitae.android.ui.components.PillChip
 import pt.aquavitae.android.ui.components.PillCard
 import pt.aquavitae.android.ui.components.UnderlineField
 import pt.aquavitae.android.ui.components.flagEmoji
 import pt.aquavitae.android.ui.theme.AquaText
 import pt.aquavitae.android.ui.theme.Burgundy
-import pt.aquavitae.android.ui.theme.BurgundyTint
 
 /** Ecrã 7 — "QUAL É O TEU NOME ?": nome próprio e apelido (ambos opcionais). */
 @Composable
@@ -184,74 +174,26 @@ private fun DescriptionBox(value: String, onValueChange: (String) -> Unit) {
 
 /**
  * Ecrã 9 — "ESCOLHE UM AVATAR": pílulas de categoria (Castas, Garrafas, Copos) e a grelha de 3×3 avatares dessa categoria.
- * Os avatares são SVG servidos pela API. Tocar no escolhido outra vez tira-o.
+ * Os avatares são SVG servidos pela API. Tocar no escolhido outra vez tira-o. A grelha em si (`AvatarGridPicker`) é
+ * partilhada com o popup "Escolher avatar" do ecrã de perfil (fatia 5).
  */
 @Composable
 fun AvatarStep(state: OnboardingUiState, viewModel: OnboardingViewModel) {
     PillCard(title = "ESCOLHE UM AVATAR") {
         LookupContent(state.avatarCategorias, onRetry = viewModel::carregarLookups) { categorias ->
             val categoriaId = state.avatarCategoriaId ?: categorias.firstOrNull()?.id
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)) {
-                categorias.forEach { categoria ->
-                    PillChip(
-                        text = categoria.nome.orEmpty(),
-                        selected = categoria.id == categoriaId,
-                        onClick = { viewModel.onAvatarCategoria(categoria.id) },
-                    )
-                }
-            }
-            Spacer(Modifier.height(14.dp))
             LookupContent(state.avatares, onRetry = viewModel::carregarLookups) { avatares ->
-                AvatarGrid(
-                    avatares = avatares.filter { it.categoriaId == categoriaId },
-                    selectedId = state.avatarId,
+                AvatarGridPicker(
+                    categorias = categorias,
+                    avatares = avatares,
+                    categoriaId = categoriaId,
+                    avatarId = state.avatarId,
+                    onCategoria = viewModel::onAvatarCategoria,
                     onSelect = viewModel::onAvatar,
                 )
             }
         }
         Spacer(Modifier.height(8.dp))
         NextButton(onClick = viewModel::next)
-    }
-}
-
-@Composable
-private fun AvatarGrid(avatares: List<Avatar>, selectedId: Long?, onSelect: (Long) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        avatares.chunked(AVATARES_POR_LINHA).forEach { linha ->
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                linha.forEach { avatar ->
-                    AvatarTile(
-                        avatar = avatar,
-                        selected = avatar.id == selectedId,
-                        onClick = { onSelect(avatar.id) },
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-                // A última linha, se incompleta, mantém as casas do tamanho das outras.
-                repeat(AVATARES_POR_LINHA - linha.size) { Spacer(Modifier.weight(1f)) }
-            }
-        }
-    }
-}
-
-private const val AVATARES_POR_LINHA = 3
-
-@Composable
-private fun AvatarTile(avatar: Avatar, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val shape = RoundedCornerShape(16.dp)
-    Box(
-        modifier = modifier
-            .aspectRatio(1f)
-            .clip(shape)
-            .background(if (selected) BurgundyTint else Color.Transparent)
-            .border(if (selected) 3.dp else 1.5.dp, Burgundy, shape)
-            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        AsyncImage(
-            model = resolveImageUrl(avatar.path),
-            contentDescription = avatar.nome,
-            modifier = Modifier.fillMaxSize(0.66f),
-        )
     }
 }

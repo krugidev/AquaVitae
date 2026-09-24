@@ -34,12 +34,14 @@ data class UtilizadorMe(
 
 /**
  * `PUT /api/users/me`: só se envia o que o utilizador preencheu (o que vai a `null` não se altera). Tamanhos máximos da API:
- * nome 25, apelido 40, descrição 1000.
+ * nome 25, apelido 40, username 3–30, descrição 1000. `username` é único (sem distinguir maiúsculas, ver `CLAUDE.md`) — a API
+ * devolve 409 se já estiver em uso (a app não faz verificação ao vivo, sem endpoint próprio para isso; só ao gravar).
  */
 @JsonClass(generateAdapter = true)
 data class UtilizadorUpdateRequest(
     val firstName: String? = null,
     val lastName: String? = null,
+    val username: String? = null,
     val nationalityId: Long? = null,
     val bioDesc: String? = null,
     val avatarId: Long? = null,

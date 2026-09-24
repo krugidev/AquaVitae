@@ -1,6 +1,7 @@
 package pt.aquavitae.android.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -22,12 +23,15 @@ import pt.aquavitae.android.ui.theme.BurgundyTint
 
 /**
  * O avatar do utilizador (canto superior direito da homepage, e onde mais for preciso): o SVG escolhido no onboarding, ou,
- * sem avatar, as iniciais do nome (nome + apelido; sem apelido, as duas primeiras letras do username).
+ * sem avatar, as iniciais do nome (nome + apelido; sem apelido, as duas primeiras letras do username). Com `onClick`, abre
+ * o ecrã de perfil (fatia 5) — sem ele, fica só decorativo (nenhum ecrã hoje o deixa sem destino, mas o parâmetro é
+ * opcional para não obrigar todos os sítios que já o usavam a passá-lo).
  */
 @Composable
-fun AvatarBadge(avatar: Avatar?, iniciais: String, modifier: Modifier = Modifier, size: Dp = 40.dp) {
+fun AvatarBadge(avatar: Avatar?, iniciais: String, modifier: Modifier = Modifier, size: Dp = 40.dp, onClick: (() -> Unit)? = null) {
     Box(
-        modifier = modifier.size(size).clip(CircleShape).background(BurgundyTint),
+        modifier = modifier.size(size).clip(CircleShape).background(BurgundyTint)
+            .let { if (onClick != null) it.clickable(onClick = onClick) else it },
         contentAlignment = Alignment.Center,
     ) {
         if (avatar?.path != null) {

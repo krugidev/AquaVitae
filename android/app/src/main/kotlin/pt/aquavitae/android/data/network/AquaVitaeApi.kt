@@ -19,6 +19,7 @@ import pt.aquavitae.android.data.model.LookupItem
 import pt.aquavitae.android.data.model.Nacionalidade
 import pt.aquavitae.android.data.model.PageResponse
 import pt.aquavitae.android.data.model.PreferenciaRequest
+import pt.aquavitae.android.data.model.PreferenciaResponse
 import pt.aquavitae.android.data.model.ProdutorDetail
 import pt.aquavitae.android.data.model.RecuperarPasswordRequest
 import pt.aquavitae.android.data.model.RedefinirPasswordRequest
@@ -225,7 +226,10 @@ interface AquaVitaeApi {
         @Path("caveBebidaId") caveBebidaId: Long,
     )
 
-    // --- Preferências (onboarding) ---
+    // --- Preferências (onboarding + ecrã de perfil) ---
+
+    @GET("api/users/me/preferencias")
+    suspend fun getPreferencias(): PreferenciaResponse
 
     @PUT("api/users/me/preferencias")
     suspend fun updatePreferencias(@Body request: PreferenciaRequest)

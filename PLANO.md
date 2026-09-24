@@ -3,69 +3,59 @@
 Roadmap vivo do MVP. Atualizar isto no fim de cada sessão de trabalho relevante — é o que uma sessão
 nova do Claude Code (ou tu, ao voltares passado um tempo) deve ler primeiro para saber onde ficámos.
 
-## ▶ Retomar aqui (última atualização: 2026-09-24 à noite, fatias 1 a 4 do Android feitas — a seguir: perfil + página do produtor)
-
-**Pedido verbal do utilizador para a próxima sessão (sem mockups ainda, só descrito em texto — pedir os prints antes de
-construir, como sempre):** tocar no avatar do canto superior direito (hoje sem destino em nenhum ecrã) abre o ecrã de
-**perfil** — ver/editar os dados do utilizador e **editar as preferências do onboarding** (o que afeta "Escolhido para ti" na
-homepage); e a **página do produtor** ("VER PRODUTOR" no popup de detalhe da bebida, também sem destino desde a fatia 3a).
-**O backend das duas já existe, validado, nada por fazer aí para começar:** perfil = `GET/PUT /api/users/me`,
-`GET/PUT /api/users/me/preferencias` (só o `GET` ainda não está na app); produtor = `GET /api/produtores/{id}` (com
-`totalProdutos`) e `GET /api/produtores/{id}/bebidas?categoriaId=&page=&size=` (`Page<BebidaSummaryDto>`, os mesmos cartões do
-catálogo). Não há pasta `feature/perfil`/`feature/produtor` ainda — são ecrãs novos de raiz, não placeholders do esqueleto.
-Ligar `onVerProdutor` (já existe como parâmetro em `HomeScreen`/`AppNavHost`, hoje `{}`) e o avatar de `HomeScreen`/
-`FavoritosScreen`/`WishlistScreen` (repetido nos 3 cabeçalhos) ao ecrã de perfil.
+## ▶ Retomar aqui (última atualização: 2026-09-24, fatias 1 a 5 do Android feitas — falta só a página do produtor)
 
 **Numa sessão nova, ler por esta ordem:** `CLAUDE.md` (convenções e ferramentas desta máquina) → esta secção → `android/README.md`
 (estado do frontend, estrutura, mapa de ecrãs) → `android/design/README.md` (os prints e **o que o utilizador pediu para cada ecrã**,
-secções "14. Homepage", "15. Catálogo / Filtros", "16. Cave e popup de detalhe da bebida", "Ajustes de feedback + 'Já provadas'" e
-"Favoritos e Wishlist" têm o detalhe do que falta) → `backend/API_ENDPOINTS.md` (contrato). O frontend documenta-se nesses dois
-ficheiros do `android/`; o PLANO guarda o roadmap e as decisões.
+secções "14. Homepage", "15. Catálogo / Filtros", "16. Cave e popup de detalhe da bebida", "Ajustes de feedback + 'Já provadas'",
+"Favoritos e Wishlist" e "Perfil" têm o detalhe do que falta) → `backend/API_ENDPOINTS.md` (contrato). O frontend documenta-se
+nesses dois ficheiros do `android/`; o PLANO guarda o roadmap e as decisões.
 
 **Ponto da situação:** o backend da 1.ª versão está fechado. **Todas as fatias do Android até agora estão feitas e validadas ao
 vivo:** 1a/1b (auth, onboarding), 2a (homepage), 2b (catálogo/filtros), 3a (popup de detalhe de uma bebida, partilhado por toda a
 app), 3b (cave: lista, "Nova cave", "Adicionar à cave" com destaque de onde a bebida já está), 3c (ajustes de feedback: popup de
 confirmação ao duplicar numa cave, review a exigir "provada" em vez de a marcar sozinha, "Consumir" a marcar "provada", resumo e
-ecrã inteiro "Já provadas") e **4 (Favoritos e Wishlist a sério, a partir de um mockup do próprio utilizador — filtros/ordenação,
-nota própria vs. média da comunidade, "Comprar em X"/"Para a cave")**. Entre a 3c e a 4, o utilizador testou por conta própria (a
-sua conta pessoal, não a `demo_user2`) e apanhou 3 bugs, já corrigidos e validados ao vivo nessa mesma conta — Favoritos/Wishlist
-vazios/em erro (`getFavoritos`/`getWishlist` com o modelo errado), "INVESTIDOS"/"GARRAFAS" da Cave sem atualizar depois de guardar
-uma garrafa, e as duas telas presas ao resultado da 1.ª visita mesmo com o modelo certo (detalhe completo em
-`backend/API_ENDPOINTS.md`, "Sincronização pendente com o Android", "correção pós-3c"). Isto fecha o **fluxo principal do MVP**:
-login → homepage → catálogo (com filtros) → detalhe de uma bebida (favoritar, avaliar — só se já provada —, adicionar à cave) →
-cave (consumir, criar, ver já provadas) → favoritos/wishlist (a sério, com filtros/ordenação e ações). **Não há nenhuma fatia "a
-meio" neste momento** — o que falta são pontas soltas (página do produtor, perfil, 5 campos da API adiados de propósito na fatia 4
-— ver "Adiado — Por fazer depois") e polimento (ver "Próximos passos"). Boa altura para o utilizador rever tudo com calma antes
-de decidir o que vem a seguir.
+ecrã inteiro "Já provadas"), 4 (Favoritos e Wishlist a sério, a partir de um mockup do próprio utilizador — filtros/ordenação,
+nota própria vs. média da comunidade, "Comprar em X"/"Para a cave") e **5 (ecrã de perfil: ver/editar dados e preferências,
+escolher avatar, terminar sessão — a partir de um mockup do próprio utilizador)**. Entre a 3c e a 4, o utilizador testou por conta
+própria (a sua conta pessoal, não a `demo_user2`) e apanhou 3 bugs, já corrigidos e validados ao vivo — Favoritos/Wishlist
+vazios/em erro, "INVESTIDOS"/"GARRAFAS" da Cave sem atualizar depois de guardar uma garrafa, e as duas telas presas ao resultado
+da 1.ª visita mesmo com o modelo certo (detalhe completo em `backend/API_ENDPOINTS.md`, "Sincronização pendente com o Android",
+"correção pós-3c"). Isto fecha o **fluxo principal do MVP**: login → homepage → catálogo (com filtros) → detalhe de uma bebida
+(favoritar, avaliar — só se já provada —, adicionar à cave) → cave (consumir, criar, ver já provadas) → favoritos/wishlist (a
+sério) → perfil (dados, preferências, avatar, terminar sessão). **Só falta a página do produtor para fechar todos os destinos
+hoje sem forma de lá chegar** ("VER PRODUTOR" no popup de detalhe, sem mockup ainda) — ver "Próximos passos".
 
 **Git:** duas branches. **`feature/api-endpoints-design`** = PR #1 (backend v1): já fundido/enviado. **`feature/android-app`** =
 criada a partir dela em 2026-09-21 para o Android, com [PR #2](https://github.com/krugidev/AquaVitae/pull/2) aberto (para `main`,
-ainda não fundido) — leva tudo desde a fatia 1a até à correção pós-3c, em 8 commits agrupados por área (BD, backend, Android
-fundação/homepage+catálogo/detalhe+cave+provadas, design, docs — ver o próprio PR para a lista; não reproduz as fatias históricas
-exatas, combinado com o utilizador dado o volume acumulado nunca commitado até essa altura). **A fatia 4 (Favoritos/Wishlist) já
-está feita mas ainda não commitada nem enviada** — `git status` mostra só os ficheiros dela: `feature/favoritos/`,
-`feature/wishlist/`, `AppNavHost.kt` (tira o `LegacyScreen` das duas rotas), `android/design/favoritos-wishlist/` (novo, os 2
-mockups) e `android/design/caves/06-ja-provadas-popup.png` (a imagem 17 da fatia 3c, que entretanto apareceu em disco). **Ficam de
-fora dos commits, de propósito** (regra do `CLAUDE.md`): as notas do utilizador — `android/AQUAVITAESEEDS-NOTES` e, na raiz,
-`—--------------- DADOS A INSERIR NA.txt`, `REGIÕES A AJUSTAR (...).txt` e `NOVOSDADOS.txt` (este último parece um relatório de
-incidentes sem ligação ao projeto — vale a pena o utilizador confirmar se foi parar ali por engano). Ao commitar, usar
-`git commit <caminhos explícitos>`, nunca `git add -A`. A `main` só tem a landing page em `docs/`.
+ainda não fundido) — leva tudo desde a fatia 1a até à fatia 4 (incluindo a correção pós-3c), commitado por área/fatia (ver o
+próprio PR para a lista). **A fatia 5 (perfil) já está feita mas ainda não commitada nem enviada** — `git status` mostra só os
+ficheiros dela: `feature/perfil/` (novo, 6 ficheiros), `ui/components/AvatarGridPicker.kt` (novo) e as alterações a
+`AvatarBadge.kt`, `AppDestinations.kt`, `AppNavHost.kt`, `HomeScreen.kt`, `FavoritosScreen.kt`/`WishlistScreen.kt` (só o
+`onVerPerfil` do avatar), `PreferenciaModels.kt`/`UserModels.kt`/`AquaVitaeApi.kt`/`PreferenciaRepository.kt`,
+`ProfileSteps.kt` (onboarding, refatorado para o `AvatarGridPicker` partilhado); `android/design/perfil/` (novo, os 4
+mockups); `android/README.md`, `android/design/README.md`, `backend/API_ENDPOINTS.md` e este `PLANO.md` também têm alterações
+da fatia 5. **Ficam de fora dos commits, de propósito** (regra do `CLAUDE.md`): as notas do utilizador —
+`android/AQUAVITAESEEDS-NOTES` e, na raiz, `—--------------- DADOS A INSERIR NA.txt`, `REGIÕES A AJUSTAR (...).txt` e
+`NOVOSDADOS.txt` (este último parece um relatório de incidentes sem ligação ao projeto — vale a pena o utilizador confirmar se
+foi parar ali por engano). Ao commitar, usar `git commit <caminhos explícitos>`, nunca `git add -A`. A `main` só tem a landing
+page em `docs/`.
 
 **Ambiente no fim da sessão:** BD de dev migrada até ao patch `13`; contentor `aquavitae-oracle-xe` a correr; **API a correr**, perfil
 `dev` (sem `mailpit`), com as credenciais do Gmail carregadas e já a servir `tipo`/`tanino`/`produtorRegiao`/`temBebida` — se
 reiniciar, ver `CLAUDE.md`, "Email de recuperação — Gmail", para voltar a carregar `backend/.env.mail` antes do `bootRun`; contentor
 `aquavitae-mailpit` ainda a correr (não é preciso para o dia a dia — `docker compose -f backend/docker-compose.mail-dev.yml down`
-para parar). **Emulador `Pixel_8` ligado, com a build mais recente instalada, sessão ativa da conta pessoal do utilizador**
-(`miguelafsmcruz@gmail.com`, não a `demo_user2` — é a conta com que o utilizador tem testado por conta própria desde a correção
-pós-3c): tem as caves reais "Vinhos 2026" (4 garrafas, 208,00€) e "Gins 2026" (vazia/0,00€ — usada só para testar, sem dados
-falsos por remover); 2 favoritos ("Barca Velha 2015", com review 4,0★, e "Vinha Grande Tinto 2019", sem review) e 1 wishlist
-("Vinha Grande Tinto 2019") — todos dados reais do utilizador, **nenhum por reverter**. Conta de teste `demo2@aquavitae.local` /
-`password123` (username `demo_user2`, papel `Utilizador`) **continua com 3 caves de sessões anteriores**: "Adega Principal" (id
-21, 1 garrafa — Esporão Reserva Tinto 2018 ×1 em guarda), "Tintos de guarda" (id 22, 1 Barca Velha 2015 em guarda até 2035) e
-"Brancos frescos" (id 23, vazia) — **ficam na BD de propósito**, dado de teste contínuo; termos repostos a `NULL` numa sessão
-anterior. Testes: backend `.\gradlew.bat test` em `backend/` (**88**, sem BD, não corridos nesta sessão — sem mudanças no
-backend); Android `testDebugUnitTest` (**53**, sem alterações à suite — a fatia 4 não pediu testes novos, ver
-`android/README.md`). Não corri o `database/verify/rebuild-check.sh` nesta sessão (não mexi no schema).
+para parar). **Emulador `Pixel_8` ligado, com a build mais recente instalada.** A sessão ativa é a conta de teste
+`demo2@aquavitae.local` / `password123` (username `demo_user2`, papel `Utilizador`) — a sessão da **conta pessoal do
+utilizador** (`miguelafsmcruz@gmail.com`, usada até à fatia 4) expirou a meio da fatia 5 e não se voltou a entrar (nunca se pede a
+password real); os dados reais dessa conta (caves "Vinhos 2026"/"Gins 2026", 2 favoritos, 1 wishlist) continuam tal como
+ficaram, por reverter só na próxima vez que o utilizador lá entrar. A `demo_user2` **continua com 3 caves de sessões
+anteriores**: "Adega Principal" (id 21, 1 garrafa — Esporão Reserva Tinto 2018 ×1 em guarda), "Tintos de guarda" (id 22, 1
+Barca Velha 2015 em guarda até 2035) e "Brancos frescos" (id 23, vazia) — **ficam na BD de propósito**, dado de teste
+contínuo; termos repostos a `NULL` no fim desta sessão (a fatia 5 também os tinha aceitado a testar o popup). Testes: backend
+`.\gradlew.bat test` em `backend/` (**88**, sem BD, não corridos nesta sessão — sem mudanças no backend); Android
+`testDebugUnitTest` (**53**, sem alterações à suite — nem a fatia 4 nem a 5 pediram testes novos, ver `android/README.md`). Não
+corri o `database/verify/rebuild-check.sh` nesta sessão (não mexi no schema).
 
 **Arrancar tudo** (detalhes no `CLAUDE.md`): (1) `docker ps` — se o Oracle estiver parado, `docker compose up -d` em `database/`;
 (2) API: carregar `backend/.env.mail` (ver acima) e `.\gradlew.bat bootRun` em `backend/` (em background), confirmar com
@@ -74,15 +64,18 @@ backend); Android `testDebugUnitTest` (**53**, sem alterações à suite — a f
 no `CLAUDE.md` o que fazer se o Docker Desktop crashar.
 
 **Próximos passos, por ordem:**
-1. **Fatia 5 (pedida verbalmente, 2026-09-24 à noite): perfil (avatar → ver/editar dados + preferências) e página do
-   produtor.** Ver a nota completa em "Retomar aqui", no topo — **pedir os mockups ao utilizador antes de construir**, ele
-   ainda só descreveu em texto. Backend já pronto para as duas (só falta ligar `GET /api/users/me/preferencias` na app).
-2. **O utilizador ainda pode dar feedback da fatia 4** (Favoritos/Wishlist: filtros, ordenação, "Comprar em X"/"Para a
-   cave") e das anteriores — em especial as **diferenças conscientes** listadas em `android/design/README.md` ("14.",
-   "15.", "16.", "Favoritos e Wishlist"): a serifa aproximada, "ORDENAR" só com 2 opções no catálogo, os 7 tipos de vinho
-   mostrados (o mockup só tinha 4), o preço nunca testado com dados a sério, a review só com estrelas inteiras, o toque
-   curto a abrir o mesmo popup do premido, a pílula "Vinho 2025" da cave (não modelada — o que representa?), "Ver as N
-   garrafas" sem destino (só informativo), e os 5 campos da API adiados na fatia 4 (ver item 6).
+1. **Página do produtor** ("VER PRODUTOR" no popup de detalhe da bebida, sem destino desde a fatia 3a) — **pedir os mockups
+   ao utilizador antes de construir**, só descrito verbalmente até agora (ver `PLANO.md` de sessões anteriores). Backend já
+   pronto: `GET /api/produtores/{id}` (com `totalProdutos`) e `GET /api/produtores/{id}/bebidas?categoriaId=&page=&size=`
+   (`Page<BebidaSummaryDto>`, os mesmos cartões do catálogo). "As minhas reviews" e "Conta e segurança" do ecrã de perfil
+   também ficam para quando o utilizador enviar os mockups.
+2. **O utilizador ainda pode dar feedback das fatias 4 e 5** (Favoritos/Wishlist: filtros, ordenação, "Comprar em X"/"Para a
+   cave"; Perfil: dados, preferências, avatar) e das anteriores — em especial as **diferenças conscientes** listadas em
+   `android/design/README.md` ("14.", "15.", "16.", "Favoritos e Wishlist", "Perfil"): a serifa aproximada, "ORDENAR" só com 2
+   opções no catálogo, os 7 tipos de vinho mostrados (o mockup só tinha 4), o preço nunca testado com dados a sério, a review
+   só com estrelas inteiras, o toque curto a abrir o mesmo popup do premido, a pílula "Vinho 2025" da cave (não modelada — o
+   que representa?), "Ver as N garrafas" sem destino (só informativo), o email a mostrar-se sempre em "Editar perfil"
+   (contrariamente ao mockup), o emoji na bio nunca testado ao vivo, e os 5 campos da API adiados na fatia 4 (ver item 6).
 3. **Depois:** editar uma garrafa já na cave (o `PATCH` já existe na API e no repositório Android, sem UI); limpar o
    esqueleto morto (`feature/detail`, `feature/reviews`, as rotas `detail/{id}`/`reviews/{id}`, já sem forma de lá chegar por
    toque desde a fatia 3a).
@@ -186,6 +179,12 @@ domain" nas definições do Pages** (aconteceu por engano uma vez e desviou o si
   categoria e nota própria vs. média nos favoritos, ordenação por recentes/preço/rating na wishlist, "Comprar em X"/"Para a cave";
   5 campos do mockup adiados de propósito (ver "Adiado — Por fazer depois"). Ver "Android — fatia 4", em "Em curso". **Com isto,
   todos os ecrãs principais da barra de navegação têm o design final** (só faltam a página do produtor e o perfil).
+- **Fatia 5 (2026-09-24): ecrã de perfil** — desenhado a partir de um mockup do próprio utilizador: ver dados e estatísticas
+  (provadas/reviews/favoritos/wishlist/caves/garrafas), editar perfil (nome, apelido, username, nacionalidade, bio, avatar),
+  escolher avatar num popup à parte, editar preferências (tipos de bebida, doçura/acidez, castas) num popup que já afeta
+  "Escolhido para ti" na homepage, terminar sessão. Novo `GET /api/users/me/preferencias` ligado na app (já existia na API).
+  Avatar do cabeçalho (Home, Favoritos, Wishlist) passa a abrir este ecrã. Ver "Android — fatia 5", em "Em curso". **Com isto
+  fecham-se todos os destinos da app exceto a página do produtor.**
 - Os restantes ecrãs (`detail`, `reviews`) continuam os placeholders do esqueleto (esqueleto morto, por limpar).
 
 ## Em curso 🔜
@@ -662,6 +661,53 @@ adicionar o mesmo item da wishlist pelo marcador — a lista atualizou-se corret
 
 **Em aberto / por fazer:** os 5 campos da API adiados (ver "Adiado — Por fazer depois"); os antigos
 `DetailScreen`/`ReviewsScreen`/rotas continuam como código morto; a página do produtor e o perfil ficam para depois.
+
+### Android — fatia 5: ecrã de perfil (feita e validada ao vivo, 2026-09-24)
+
+O utilizador pediu para desenhar o ecrã de perfil a partir de 4 mockups próprios (`android/design/perfil/`): ver dados/editar
+perfil, editar detalhes do perfil, escolher avatar (popup) e editar preferências (popup). Detalhe completo em
+`android/design/README.md`, "Perfil" — aqui só o resumo.
+
+**Backend:** nenhuma mudança — tudo já existia e validado (`GET/PUT /api/users/me`, `GET/PUT /api/users/me/preferencias`, o
+`PUT` já aceitava `username`, validado e único sem distinguir maiúsculas, 409 se já em uso). Só faltava ligar o `GET` das
+preferências na app (nunca tinha sido usado desde a fatia 2a) e acrescentar `username` ao `UtilizadorUpdateRequest` do Android.
+
+**Android:**
+- **`feature/perfil/`** (novo, 6 ficheiros): `PerfilScreen` — avatar+nome+"@username"+nacionalidade·membro desde, bio, grelha
+  2×3 de estatísticas (provadas/reviews/favoritos/wishlist/caves/garrafas, tudo de `GET /users/me`), cartão de preferências
+  (tipos de bebida, intervalo de doçura/acidez, castas, "EDITAR"), navegação para "Histórico de provadas" (já existe) e "As
+  minhas caves" (já existe), "As minhas reviews"/"Conta e segurança" sem destino (mockups não enviados ainda), "Terminar
+  sessão".
+- **`EditarPerfilScreen`** — nome, apelido, username (com contador e aviso de unicidade), nacionalidade (dropdown com
+  bandeira), bio (com contador, suporta emoji por fallback de fonte do sistema, sem código extra), avatar (toca para abrir o
+  popup de escolha); **desvio combinado com o utilizador**: mostra o email associado por baixo da bio, ao contrário do mockup.
+- **`EscolherAvatarSheet`** (popup) — igual ao passo do onboarding, mais uma pílula "Todos"; só confirma a escolha localmente,
+  quem grava é o "Guardar" do ecrã de editar perfil. Componente `AvatarGridPicker`/`AvatarTileGrid` extraído para
+  `ui/components/` e reaproveitado pelo passo de avatar do onboarding (~50 linhas de duplicação removidas).
+  `nationalityId` (a API só devolve o nome) resolve-se do lado da app comparando o nome na lista de `GET
+  /api/lookup/nacionalidades` — seguro porque é uma lista curada sem nomes repetidos, não pediu mudança no backend.
+- **`EditarPreferenciasSheet`** (popup) — pílulas de tipos de bebida, `RangePillRow` reaproveitado do popup de filtros do
+  catálogo para doçura e acidez, busca+chips de castas (mesmo padrão do `FiltrosSheet`); guarda com `PUT
+  /users/me/preferencias` e já afeta "Escolhido para ti" na homepage (comportamento existente desde a fatia 2a).
+- Avatar do cabeçalho de `HomeScreen`/`FavoritosScreen`/`WishlistScreen` passa a abrir o perfil (`AvatarBadge` ganhou
+  `onClick` opcional); `HomeScreen` ganhou também `LaunchedEffect(Unit) { carregar() }` para mostrar avatar/nome atualizados
+  ao voltar da edição (mesmo padrão da correção pós-3c em Favoritos/Wishlist).
+- **Gotcha repetido (já em `CLAUDE.md`):** `Modifier.weight()` dentro do conteúdo de um `Dialog` só funciona se a função for
+  `ColumnScope.Conteudo(...)` — apanhado de novo em `EditarPreferenciasSheet.kt` e `EscolherAvatarSheet.kt`, corrigido da
+  mesma forma que no `BebidaDetalheSheet` (fatia 3a).
+- **Testes:** sem testes novos (mesma dívida do `kotlinx-coroutines-test`). `assembleDebug testDebugUnitTest` continua com 53.
+
+**Validado ao vivo** (emulador `Pixel_8`, conta `demo2@aquavitae.local` — a sessão da conta pessoal do utilizador tinha
+expirado a meio da sessão; nunca se pediu a password real, regra absoluta): as 6 estatísticas, cartão de preferências,
+`EditarPerfilScreen` com todos os campos pré-preenchidos (incluindo `nationalityId` resolvido por nome),
+`EscolherAvatarSheet` ("Todos" + filtro por categoria + seleção + confirmar), `EditarPreferenciasSheet` (pílulas, intervalo de
+doçura/acidez a estender corretamente nos dois lados, busca+seleção+remoção de castas), ida-e-volta de gravar e ver refletido
+de imediato no cartão de perfil (perfil e preferências), navegação para "Histórico de provadas", "Terminar sessão" (limpa a
+sessão e o backstack até ao login). Avatar a abrir o perfil a partir de Home, Favoritos e Wishlist, confirmado nos 3.
+
+**Em aberto / por fazer:** "As minhas reviews" e "Conta e segurança" (mockups ainda não enviados); emoji na bio só verificado
+por revisão de código, não ao vivo (`adb shell input text` não consegue injetar emoji — limitação da ferramenta de teste, não
+da app); a página do produtor fica para a próxima fatia.
 
 ### Desenho dos endpoints (concluído, 2026-09-17)
 

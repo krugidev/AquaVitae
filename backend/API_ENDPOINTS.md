@@ -516,6 +516,13 @@ Já corrigido no fim do dia: a pesquisa do catálogo não tinha `ORDER BY` (pagi
   CAVE") e `provadaEm` ("PROVADA EM \<mês\>"). Todos dariam para o mesmo padrão de enriquecimento em lote do
   `BebidaSummaryAssembler` (como `isFavorito`/`isWishlist`/`isProvada`/`notaPropria`) — ver `PLANO.md`, "Adiado — Por
   fazer depois", para o detalhe de cada um.
+- ✅ **Feito na app em 2026-09-24 (fatia 5: ecrã de perfil)** — `feature/perfil/` (novo): ver/editar o perfil e as
+  preferências, a partir de um mockup do utilizador. `PUT /api/users/me` já aceitava `username` no backend (validado,
+  3–30, único sem distinguir maiúsculas, 409 se já em uso) — só faltava no `UtilizadorUpdateRequest` do Android.
+  **Novo `GET /api/users/me/preferencias`** ligado na app (já existia na API desde 2026-09-17, nunca tinha sido usado —
+  ver "fatia 2a" acima). `GET /api/users/me` continua a não devolver o id da nacionalidade, só o nome
+  (`UtilizadorMeDto.nationality`) — a app resolve o id por nome na lista de `GET /api/lookup/nacionalidades` (funciona
+  porque é uma lista curada sem nomes repetidos; não pediu mudança no backend).
 - Imagens: `imagePath` pode ser um URL absoluto (`https://...`) além de um caminho relativo — resolver conforme a regra da
   secção "Imagens" (já resolvido pela app, `resolveImageUrl`, para os campos que já sincronizou)
 - Produtores: `GET /api/produtores/{id}/bebidas` ainda por usar na app (a página de um produtor é um ecrã por construir)

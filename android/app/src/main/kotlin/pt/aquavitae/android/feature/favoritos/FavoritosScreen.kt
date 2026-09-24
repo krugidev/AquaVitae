@@ -76,7 +76,7 @@ import pt.aquavitae.android.ui.theme.RoseBorder
  * pedido do utilizador (ver `PLANO.md`, "Por fazer depois").
  */
 @Composable
-fun FavoritosScreen(viewModel: FavoritosViewModel = hiltViewModel()) {
+fun FavoritosScreen(onVerPerfil: () -> Unit = {}, viewModel: FavoritosViewModel = hiltViewModel()) {
     val uiState by viewModel.state.collectAsState()
     // A barra de navegação preserva a ViewModel ao trocar de aba (saveState/restoreState) — sem isto, marcar um
     // favorito noutro ecrã e voltar aqui não se refletia (ver CLAUDE.md).
@@ -103,6 +103,7 @@ fun FavoritosScreen(viewModel: FavoritosViewModel = hiltViewModel()) {
                 state = state,
                 viewModel = viewModel,
                 onBebidaClick = { bebidaSelecionadaId = it },
+                onVerPerfil = onVerPerfil,
             )
         }
     }
@@ -124,7 +125,12 @@ fun FavoritosScreen(viewModel: FavoritosViewModel = hiltViewModel()) {
 }
 
 @Composable
-private fun FavoritosContent(state: FavoritosUiState.Ready, viewModel: FavoritosViewModel, onBebidaClick: (Long) -> Unit) {
+private fun FavoritosContent(
+    state: FavoritosUiState.Ready,
+    viewModel: FavoritosViewModel,
+    onBebidaClick: (Long) -> Unit,
+    onVerPerfil: () -> Unit,
+) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 18.dp, bottom = BottomNavContentPadding.calculateBottomPadding()),
@@ -134,7 +140,7 @@ private fun FavoritosContent(state: FavoritosUiState.Ready, viewModel: Favoritos
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Image(painter = painterResource(R.drawable.ic_wordmark_home), contentDescription = "AquaVitae", modifier = Modifier.height(20.dp))
                 Spacer(Modifier.weight(1f))
-                AvatarBadge(avatar = state.avatar, iniciais = state.iniciais)
+                AvatarBadge(avatar = state.avatar, iniciais = state.iniciais, onClick = onVerPerfil)
             }
         }
         item {

@@ -554,3 +554,59 @@ confirmado a reaparecer ao voltar a marcá-lo).
 
 **Em aberto / por fazer:** os 5 campos da API listados acima; os antigos `DetailScreen`/`ReviewsScreen`/rotas continuam
 como código morto.
+
+## Perfil (fatia 5, feita e validada ao vivo — 2026-09-24)
+
+Prints em `android/design/perfil/01-perfil.png` a `04-editar-preferencias.png` (mockups feitos pelo utilizador a partir
+da própria app, com notas escritas no chat, não no Figma original). Alcança-se tocando no avatar, repetido nos
+cabeçalhos da homepage, wishlist e favoritos — nenhum tinha destino até agora.
+
+**O que o mockup pede e o que ficou feito:**
+- **Imagem 1 (Detalhes do perfil):** avatar + nome + "@username" + "nacionalidade · membro desde \<mês\> de \<ano\>",
+  bio, 6 estatísticas (provadas/reviews/favoritos/wishlist/caves/garrafas — todas já vinham em `GET /users/me`), cartão
+  "As minhas preferências" com resumo (categorias, acidez/doçura, castas) e "EDITAR", nav rows ("Histórico de
+  provadas" → `ProvadasScreen`, fatia 3c; "As minhas reviews" e "Conta e segurança" → sem destino, mockups por chegar;
+  "As minhas caves" → `CaveScreen`, fatia 3b) e "Terminar sessão". **Feito.**
+- **Imagem 2 (Editar perfil):** "Cancelar"/"EDITAR PERFIL"/"Guardar" no topo, "Mudar avatar", nome/apelido, username
+  (com contador — sem verificação de disponibilidade ao vivo, a API não tem esse endpoint; só valida ao gravar, com
+  409 se já estiver em uso), nacionalidade (dropdown com bandeira, igual ao do onboarding), descrição/bio (com
+  contador). **Feito, com uma diferença combinada com o utilizador:** por agora mostra-se o email como texto simples
+  por baixo da bio, em vez da linha "Email e password" do mockup (essa linha pede o ecrã "Conta e segurança", ainda
+  sem mockup). **Suporte de emojis na bio:** pedido para aplicar-se aqui e no onboarding — por código, nenhum dos dois
+  campos restringe o tipo de teclado, e o Android troca sozinho para a fonte de emoji do sistema quando a Inter não
+  tem o glifo (comportamento por omissão da plataforma, não pede código à parte). **Não validado ao vivo**: o
+  `adb shell input text` não consegue enviar emoji (falha com `NullPointerException` mesmo para símbolos do plano
+  básico, um limite da própria ferramenta) — falta o utilizador confirmar no teclado a sério.
+- **Imagem 3 (Escolher avatar):** pílulas "Todos"/categorias + grelha 3×3, "SELECIONADO: \<nome\>" e "Usar este
+  avatar" — só confirma localmente, quem grava tudo é o "Guardar" da imagem 2. **Feito**, reaproveitando a grelha do
+  onboarding (`AvatarGridPicker` extraído para `ui/components/`, partilhado pelos dois — a pílula "Todos" é nova, só
+  aqui).
+- **Imagem 4 (Editar preferências):** as mesmas perguntas do onboarding (tipos de bebida, acidez/doçura, castas), num
+  popup só com pílulas horizontais em vez das listas paginadas do onboarding — `RangePillRow` (já existia para o
+  popup de filtros do catálogo) reaproveitado tal e qual para acidez/doçura; a pesquisa de castas espelha a do popup
+  de filtros (chips removíveis + sugeridas). **Feito.** Guardar aplica-se de imediato em "Escolhido para ti" na
+  homepage (mecanismo já existente, nada de novo aí).
+- **"Terminar sessão":** chama `AuthRepository.logout()` (já existia) e limpa toda a pilha de navegação até ao login
+  (`popUpTo(0)`). Sem popup de confirmação (o mockup não pede um, e é uma ação de baixo risco — voltar a entrar).
+
+**Nacionalidade sem id na resposta:** `GET /users/me` só devolve o nome da nacionalidade (`nationality`), não o id —
+resolve-se por nome na lista de `GET /lookup/nacionalidades` (uma lista curada, sem nomes repetidos), sem pedir
+mudança nenhuma ao backend.
+
+**Um gotcha já conhecido, repetido aqui:** os `Conteudo` dos dois popups novos (`EditarPreferenciasSheet`,
+`EscolherAvatarSheet`) precisaram de `ColumnScope.Conteudo(...)` para o `Modifier.weight()` funcionar — o mesmo
+"Unresolved reference: weight" já apanhado no popup de detalhe da bebida (fatia 3a), ver `CLAUDE.md`.
+
+**Testes:** sem testes novos (mesma dívida do `kotlinx-coroutines-test`). `assembleDebug testDebugUnitTest` continua a
+passar (53).
+
+**Validado ao vivo** (emulador `Pixel_8`, conta `demo2@aquavitae.local`): ecrã de perfil com as 6 estatísticas e o
+cartão de preferências corretos; "EDITAR PERFIL" com todos os campos pré-preenchidos (incluindo a nacionalidade
+resolvida por nome); "Mudar avatar" a escolher "Caneca" e a pré-visualização a atualizar-se de imediato; "Guardar" a
+persistir nome/avatar/bio e a voltar ao perfil já atualizado; "EDITAR" preferências a escolher Vinho + acidez 2 a 3 +
+doçura 4 a 4 + casta "Alvarinho" (pesquisada e confirmada) e "Guardar preferências" a refletir tudo no cartão de
+imediato; "Histórico de provadas" a abrir a `ProvadasScreen` certa; "Terminar sessão" a voltar ao login com a pilha
+limpa.
+
+**Em aberto / por fazer:** "As minhas reviews" e "Conta e segurança" sem destino (mockups por chegar); suporte de
+emojis por confirmar no teclado a sério; página do produtor (pedida antes da fatia 5, ainda por fazer).

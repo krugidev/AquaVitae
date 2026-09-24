@@ -24,6 +24,8 @@ import pt.aquavitae.android.feature.favoritos.FavoritosScreen
 import pt.aquavitae.android.feature.home.HomeScreen
 import pt.aquavitae.android.feature.loading.LoadingScreen
 import pt.aquavitae.android.feature.onboarding.OnboardingScreen
+import pt.aquavitae.android.feature.perfil.EditarPerfilScreen
+import pt.aquavitae.android.feature.perfil.PerfilScreen
 import pt.aquavitae.android.feature.recovery.RecoveryScreen
 import pt.aquavitae.android.feature.reviews.ReviewsScreen
 import pt.aquavitae.android.feature.wishlist.WishlistScreen
@@ -115,6 +117,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
                     onVerProdutor = {},
                     // Mesmo destino da pesquisa por agora: o catálogo a sério (com o filtro de categoria já aplicado) é a fatia 2b.
                     onVerSugestoes = { navController.navigate(AppDestinations.CATALOG) },
+                    onVerPerfil = { navController.navigate(AppDestinations.PERFIL) },
                 )
             }
         }
@@ -164,12 +167,37 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             ProvadasScreen(onVoltar = { navController.popBackStack() })
         }
 
-        // Wishlist e Favoritos: redesenhadas nesta fatia (já com systemBarsPadding próprio, sem o invólucro LegacyScreen).
+        // Wishlist e Favoritos: redesenhadas na fatia 4 (já com systemBarsPadding próprio, sem o invólucro LegacyScreen).
         composable(AppDestinations.WISHLIST) {
-            TabScreen(BottomNavItem.Wishlist, navController) { WishlistScreen() }
+            TabScreen(BottomNavItem.Wishlist, navController) {
+                WishlistScreen(onVerPerfil = { navController.navigate(AppDestinations.PERFIL) })
+            }
         }
         composable(AppDestinations.FAVORITOS) {
-            TabScreen(BottomNavItem.Favoritos, navController) { FavoritosScreen() }
+            TabScreen(BottomNavItem.Favoritos, navController) {
+                FavoritosScreen(onVerPerfil = { navController.navigate(AppDestinations.PERFIL) })
+            }
+        }
+
+        // Perfil (fatia 5): sem barra de navegação própria — alcança-se tocando no avatar em home/wishlist/favoritos.
+        composable(AppDestinations.PERFIL) {
+            PerfilScreen(
+                onVoltar = { navController.popBackStack() },
+                onEditarPerfil = { navController.navigate(AppDestinations.PERFIL_EDITAR) },
+                onVerProvadas = { navController.navigate(AppDestinations.PROVADAS) },
+                onVerCaves = { navController.navigate(AppDestinations.CAVE) },
+                onSessaoTerminada = {
+                    navController.navigate(AppDestinations.LOGIN) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+            )
+        }
+        composable(AppDestinations.PERFIL_EDITAR) {
+            EditarPerfilScreen(
+                onCancelar = { navController.popBackStack() },
+                onGuardado = { navController.popBackStack() },
+            )
         }
     }
 }

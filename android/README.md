@@ -20,6 +20,7 @@ O frontend constrói-se em **fatias verticais**, cada uma um fluxo de ecrãs des
 | 3c | ajustes de feedback: popup de confirmação ao duplicar numa cave, review a exigir "provada", "Consumir" a marcar provada, ecrã "Já provadas" | ✅ feita (2026-09-23) |
 | — | correção pós-3c: `getFavoritos`/`getWishlist` com o modelo errado, totais da cave sem atualizar após "Adicionar à cave", e as duas telas presas ao resultado da 1.ª visita à aba | ✅ feita (2026-09-23/24) |
 | 4 | Favoritos e Wishlist a sério (filtros/ordenação, nota própria vs. média, "Comprar"/"Para a cave") | ✅ feita (2026-09-24) |
+| 5 | perfil: ver/editar dados e preferências, escolher avatar, terminar sessão | ✅ feita (2026-09-24) |
 | 6 | página do produtor | ⏳ |
 
 Os ecrãs `detail` e `reviews` continuam **placeholders do esqueleto** (esqueleto morto, por limpar — ver abaixo): estão
@@ -142,13 +143,16 @@ android/
 | `Modifier.verticalScrollbar(listState)` | a barra de deslocamento fina do lado direito de uma lista |
 | `FloatingLabel` (em `UnderlineField.kt`) | o rótulo que sobe e encolhe, partilhado por campos que não são de escrever (nacionalidade) |
 | `BottomNavBar`, `BottomNavItem`, `BottomNavContentPadding` | a barra de navegação principal (5 destinos, "Home" elevado ao centro); os ícones são os PNG do utilizador, tingidos por `ColorFilter` |
-| `AvatarBadge`, `iniciaisDe(...)` | o avatar (SVG do onboarding, ou as iniciais do nome/username) — cabeçalho da homepage e autor de uma review |
+| `AvatarBadge`, `iniciaisDe(...)` | o avatar (SVG do onboarding, ou as iniciais do nome/username) — cabeçalho da homepage/wishlist/favoritos e autor de uma review; `onClick` opcional abre o perfil |
+| `AvatarGridPicker`, `AvatarTileGrid` | pílulas de categoria + grelha 3×3 de avatares (`AvatarGridPicker`, usado no onboarding) e só a grelha (`AvatarTileGrid`, pública, usada pelo `EscolherAvatarSheet` do perfil, que tem uma pílula "Todos" extra sem equivalente no onboarding) |
 | `BebidaCard` | o cartão de bebida (imagem, nome+ano, produtor•região, `linhaAtributos()`, rating, retalhista+preço) — homepage, catálogo; toque curto ou premido (`combinedClickable`) abrem o `BebidaDetalheSheet` |
 | `RangePillRow` | o seletor de intervalo 1–5 (acidez/doçura do popup de filtros): toque escolhe um nível, toque noutro estica o intervalo |
 | `feature/catalog/FiltrosSheet` | o popup "Filtros" do catálogo (sobe de baixo, sobre `Dialog` como o `TermsSheet`) — não é `ui/components/` por ter o `CatalogViewModel` próprio |
 | `feature/bebidadetalhe/BebidaDetalheSheet` | o popup de detalhe de uma bebida (partilhado por toda a app): tabs Detalhes/Reviews, favorito/wishlist otimistas, publicar review. Sem rota/`SavedStateHandle` — `hiltViewModel(key = "bebida-detalhe-$bebidaId")` + `carregar(bebidaId)` por `LaunchedEffect` (ver "Convenções") |
 | `feature/cave/NovaCaveSheet` | o popup "Nova cave" (nome + descrição) — reutilizado tal e qual dentro do `AdicionarACaveSheet` ("+ nova cave") |
 | `feature/cave/AdicionarACaveSheet` | o popup "Adicionar à cave" (aberto do "+" do popup de detalhe): pílulas de cave com destaque independente de "já tem esta bebida" (✓) e "escolhida para este adicionar" (cor); quantidade, preço, `DatePicker` do Material3, janela de consumo, notas; se a cave escolhida já tiver a bebida (✓), confirma antes de guardar (`AlertDialog`, "Adicionar na mesma"/"Cancelar") |
+| `feature/perfil/EscolherAvatarSheet` | o popup "Escolher avatar" do perfil: pílulas "Todos"/categorias + `AvatarTileGrid`; só confirma localmente (`onConfirmar`) — quem grava é o "Guardar" do `EditarPerfilScreen` |
+| `feature/perfil/EditarPreferenciasSheet` | o popup "Editar preferências" do perfil: as mesmas do onboarding (tipos de bebida, acidez/doçura, castas), aqui em pílulas horizontais compactas (`RangePillRow` reutilizado tal e qual) em vez das listas paginadas do onboarding |
 
 **Tokens novos da homepage/catálogo** (`ui/theme/Color.kt`/`Type.kt`): `WineDark` (cartão do produtor em destaque), `RoseBorder`
 (contorno das caixas de estatística e das pílulas de filtro removíveis); `AquaText.SectionSerif`/`SectionSerifAccent`/`GreetingSerif`/
@@ -170,15 +174,20 @@ android/
 | `provadas` | `feature/provadas/ProvadasScreen.kt` (+ `ProvadasViewModel`) | ✅ | `GET /users/me/provadas?categoriaId=&ano=`, `/lookup/categorias-bebida`, `GET /bebidas` (busca), `POST /bebidas/{id}/provada` |
 | `wishlist` | `feature/wishlist/WishlistScreen.kt` (+ `WishlistViewModel`) | ✅ | `GET /users/me/wishlist`, `GET /users/me`, `POST/DELETE .../wishlist`, `GET /bebidas/{id}` (para "Para a cave") |
 | `favoritos` | `feature/favoritos/FavoritosScreen.kt` (+ `FavoritosViewModel`) | ✅ | `GET /users/me/favoritos`, `GET /users/me`, `DELETE .../favorito` |
+| `perfil` | `feature/perfil/PerfilScreen.kt` (+ `PerfilViewModel`) | ✅ | `GET /users/me`, `/users/me/preferencias`, `/lookup/categorias-bebida`, `/lookup/castas` |
+| `perfil/editar` | `feature/perfil/EditarPerfilScreen.kt` (+ `EditarPerfilViewModel`) | ✅ | `GET /users/me`, `/lookup/nacionalidades`, `PUT /users/me` |
 | *(popup, sem rota)* | `feature/bebidadetalhe/BebidaDetalheSheet.kt` (+ `BebidaDetalheViewModel`) | ✅ | `GET /bebidas/{id}`, `/bebidas/{id}/reviews`, `POST/DELETE .../favorito`, `.../wishlist`, `POST .../reviews` (só se `isProvada == true`; já não marca "provada" sozinho, ver "3c") |
 | *(popup, sem rota)* | `feature/cave/AdicionarACaveSheet.kt` (+ `AdicionarACaveViewModel`) | ✅ | `GET /users/me/caves?bebidaId=`, `POST /caves/{id}/bebidas`, `POST /users/me/caves` |
+| *(popup, sem rota)* | `feature/perfil/EscolherAvatarSheet.kt` (+ `EscolherAvatarViewModel`) | ✅ | `GET /lookup/avatar-categorias`, `/lookup/avatares` |
+| *(popup, sem rota)* | `feature/perfil/EditarPreferenciasSheet.kt` (+ `EditarPreferenciasViewModel`) | ✅ | `GET /lookup/categorias-bebida`, `/lookup/castas`, `PUT /users/me/preferencias` |
 
 Depois do login/onboarding vai-se para `home` (antes ia para `catalog`); só quem acabou de se registar passa pelo onboarding. A
 recuperação de password volta ao login com o popup "Password alterada!" (o login recebe o aviso pelo `savedStateHandle`, ver
 `AppNavHost`). `home`, `catalog`, `cave`, `wishlist` e `favoritos` têm a `BottomNavBar` sobreposta ao fundo (`TabScreen` em
 `AppNavHost.kt`); trocar de separador preserva o estado de cada um (`saveState`/`restoreState`, o padrão de navegação por abas).
-`provadas` **não é uma das 5 abas** — alcança-se só a partir da Cave ("ABRIR MAIS" no resumo de "Já provadas"), sem
-`BottomNavBar` própria, tal como o popup de detalhe da bebida.
+`provadas` e `perfil`/`perfil/editar` **não são das 5 abas** — `provadas` alcança-se só a partir da Cave ("ABRIR MAIS" no
+resumo de "Já provadas"), `perfil` tocando no avatar (repetido nos cabeçalhos de `home`/`wishlist`/`favoritos`) e
+`perfil/editar` a partir do próprio `perfil` — nenhum tem `BottomNavBar` própria, tal como o popup de detalhe da bebida.
 **`detail/{id}`/`reviews/{id}` deixaram de se alcançar por toque** (fatia 3a: o detalhe de uma bebida é sempre o popup
 `BebidaDetalheSheet`, aberto de dentro do próprio ecrã) — as rotas e os ficheiros `feature/detail`/`feature/reviews` ficam no
 código como esqueleto morto, por limpar numa fatia futura.
@@ -221,6 +230,12 @@ emulador (compilar → instalar → `adb shell input tap/text` → screenshot), 
   browser e registar o clique, "ATUALIZADA HOJE"/"MENOR DE N RETALHISTAS", "N NA CAVE", "PROVADA EM \<mês\>") — pedem campos
   novos no `BebidaSummaryDto`, adiados a pedido do utilizador (ver `PLANO.md`, "Por fazer depois"); a deteção de descidas de
   preço da wishlist foi pedida para ficar de fora por agora.
+- **Perfil (fatia 5), feito:** ver `design/README.md`, "Perfil", para a lista completa — em resumo: "As minhas reviews" e
+  "Conta e segurança" ainda sem destino (mockups por chegar); o email aparece como texto simples por baixo da bio em vez da
+  linha "Email e password" do mockup (também à espera do mockup de "Conta e segurança"); o suporte de emojis na bio não foi
+  validado ao vivo (o `adb shell input text` não consegue enviar emoji, uma limitação da própria ferramenta — por código,
+  o campo não restringe o tipo de teclado e o Android troca sozinho para a fonte de emoji do sistema quando a Inter não
+  tem o glifo, o comportamento por omissão da plataforma).
 - **Recuperar password:** o código já chega por email (backend, 2026-09-22; testado com Mailpit local — ver `../CLAUDE.md`); o
   temporizador de validade com "pedir código novo" fica para depois (pede backend, ver `design/README.md`).
 - **Onboarding:** os pedidos só se enviam no último ecrã, por isso, se a app for fechada a meio, perde-se o que estava por guardar. O

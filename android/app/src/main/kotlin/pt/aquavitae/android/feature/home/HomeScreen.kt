@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -86,9 +87,14 @@ fun HomeScreen(
     onVerCaves: () -> Unit,
     onVerProdutor: (Long) -> Unit,
     onVerSugestoes: () -> Unit,
+    onVerPerfil: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    // Voltar do ecrã de perfil (nome/avatar podem ter mudado) desmonta e remonta este Composable — recarrega tudo,
+    // o mesmo padrão do FavoritosScreen/WishlistScreen (ver CLAUDE.md). Um pouco mais pesado do que só atualizar o
+    // avatar, mas simples e consistente com o resto da app.
+    LaunchedEffect(Unit) { viewModel.carregar() }
     // O detalhe de uma bebida é sempre um popup por cima do ecrã (nunca uma rota) — ver BebidaDetalheSheet.
     var bebidaSelecionadaId by remember { mutableStateOf<Long?>(null) }
     var bebidaParaAdicionarACave by remember { mutableStateOf<BebidaDetail?>(null) }
@@ -116,6 +122,7 @@ fun HomeScreen(
                 onVerCaves = onVerCaves,
                 onVerProdutor = onVerProdutor,
                 onVerSugestoes = onVerSugestoes,
+                onVerPerfil = onVerPerfil,
             )
         }
     }
@@ -145,6 +152,7 @@ private fun HomeContent(
     onVerCaves: () -> Unit,
     onVerProdutor: (Long) -> Unit,
     onVerSugestoes: () -> Unit,
+    onVerPerfil: () -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -154,7 +162,7 @@ private fun HomeContent(
         ),
         verticalArrangement = Arrangement.spacedBy(28.dp),
     ) {
-        item { HeaderRow(state) }
+        item { HeaderRow(state, onVerPerfil) }
         item { SearchBar(onSearchClick) }
         item {
             EscolhidoParaTiSection(
@@ -184,7 +192,7 @@ private fun HomeContent(
 // --- Cabeçalho: logótipo, dia da semana, avatar ---
 
 @Composable
-private fun HeaderRow(state: HomeUiState.Ready) {
+private fun HeaderRow(state: HomeUiState.Ready, onVerPerfil: () -> Unit) {
     val hoje = remember(state) { LocalDate.now() }
     val diaSemana = hoje.dayOfWeek.getDisplayName(JavaTextStyle.FULL, Locale("pt", "PT"))
     val mes = hoje.month.getDisplayName(JavaTextStyle.FULL, Locale("pt", "PT"))
@@ -201,6 +209,7 @@ private fun HeaderRow(state: HomeUiState.Ready) {
             AvatarBadge(
                 avatar = state.utilizador.avatar,
                 iniciais = iniciaisDe(state.utilizador.firstName, state.utilizador.lastName, state.utilizador.username),
+                onClick = onVerPerfil,
             )
         }
         Spacer(Modifier.height(14.dp))
