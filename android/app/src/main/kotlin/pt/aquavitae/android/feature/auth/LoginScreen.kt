@@ -48,6 +48,8 @@ fun LoginScreen(
     onPasswordChangedDismissed: () -> Unit = {},
     // A sessão morreu a meio da utilização (o token não se conseguiu renovar): explica porque se voltou aqui.
     sessaoExpirada: Boolean = false,
+    // A conta acabou de ser apagada pela app (Conta e segurança): confirma-o em vez de deixar o utilizador a duvidar.
+    contaApagada: Boolean = false,
     viewModel: AuthViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -100,6 +102,8 @@ fun LoginScreen(
             )
             if (error != null) {
                 Text(text = error.message, style = AquaText.Error, modifier = Modifier.padding(top = 2.dp))
+            } else if (contaApagada) {
+                Text(text = "A tua conta foi apagada.", style = AquaText.Hint, modifier = Modifier.padding(top = 2.dp))
             } else if (sessaoExpirada) {
                 Text(text = "A tua sessão expirou. Entra novamente.", style = AquaText.Hint, modifier = Modifier.padding(top = 2.dp))
             }

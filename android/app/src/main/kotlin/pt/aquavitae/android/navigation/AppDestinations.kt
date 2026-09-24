@@ -28,6 +28,8 @@ object AppDestinations {
     /** Perfil (fatia 5): alcança-se tocando no avatar em qualquer um dos 3 cabeçalhos que o mostram. */
     const val PERFIL = "perfil"
     const val PERFIL_EDITAR = "perfil/editar"
+    /** "As minhas reviews" (fatia 10): alcança-se do perfil. */
+    const val PERFIL_REVIEWS = "perfil/reviews"
 
     const val ARG_PRODUTOR_ID = "produtorId"
     /** A página de um produtor (fatia 6): alcança-se pelo cartão do produtor em destaque (homepage) e pelo do popup de detalhe de uma bebida. */

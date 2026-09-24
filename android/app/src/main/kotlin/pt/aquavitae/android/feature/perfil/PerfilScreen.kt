@@ -31,6 +31,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -56,20 +59,22 @@ import java.time.format.TextStyle as JavaTextStyle
 
 /**
  * "Detalhes do perfil" (`android/design/perfil/01-perfil.png`): dados + estatísticas + resumo das preferências
- * (editável num popup à parte). "As minhas reviews" e "Conta e segurança" ficam sem destino por agora — os mockups
- * desses dois ainda não chegaram (o utilizador disse que os envia a seguir); "Histórico de provadas" e "As minhas
- * caves" já reaproveitam os ecrãs feitos nas fatias 3b/3c.
+ * (editável num popup à parte). "As minhas reviews" abre o ecrã da fatia 10 e "Conta e segurança" a folha do mesmo nome
+ * (`android/design/perfil/05-reviews-e-conta-seguranca.png`); "Histórico de provadas" e "As minhas caves" reaproveitam os
+ * ecrãs feitos nas fatias 3b/3c.
  */
 @Composable
 fun PerfilScreen(
     onVoltar: () -> Unit,
     onEditarPerfil: () -> Unit,
     onVerProvadas: () -> Unit,
+    onVerReviews: () -> Unit,
     onVerCaves: () -> Unit,
     onSessaoTerminada: () -> Unit,
     viewModel: PerfilViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    var mostrarContaSeguranca by remember { mutableStateOf(false) }
     // "Editar perfil"/"Editar preferências" mudam dados que este ecrã mostra; voltar a ele (de dentro do próprio
     // NavHost) desmonta e volta a montar este Composable, por isso isto recarrega sempre que reaparece — o mesmo
     // padrão do FavoritosScreen/WishlistScreen (ver CLAUDE.md), aqui numa pilha normal de navegação, não numa aba.
@@ -96,9 +101,14 @@ fun PerfilScreen(
                     onVoltar = onVoltar,
                     onEditarPerfil = onEditarPerfil,
                     onVerProvadas = onVerProvadas,
+                    onVerReviews = onVerReviews,
                     onVerCaves = onVerCaves,
+                    onAbrirContaSeguranca = { mostrarContaSeguranca = true },
                     onSessaoTerminada = onSessaoTerminada,
                 )
+                if (mostrarContaSeguranca) {
+                    ContaSegurancaSheet(onDismiss = { mostrarContaSeguranca = false }, onSessaoTerminada = onSessaoTerminada)
+                }
                 if (estado.mostrarEditarPreferencias) {
                     EditarPreferenciasSheet(
                         preferenciasAtuais = estado.preferencias,
@@ -118,7 +128,9 @@ private fun PerfilContent(
     onVoltar: () -> Unit,
     onEditarPerfil: () -> Unit,
     onVerProvadas: () -> Unit,
+    onVerReviews: () -> Unit,
     onVerCaves: () -> Unit,
+    onAbrirContaSeguranca: () -> Unit,
     onSessaoTerminada: () -> Unit,
 ) {
     val utilizador = state.utilizador
@@ -176,9 +188,9 @@ private fun PerfilContent(
                 onClick = onVerProvadas,
             )
         }
-        item { PerfilNavRow(titulo = "As minhas reviews", subtitulo = "${utilizador.totalReviews} publicadas", onClick = null) }
+        item { PerfilNavRow(titulo = "As minhas reviews", subtitulo = "${utilizador.totalReviews} publicadas", onClick = onVerReviews) }
         item { PerfilNavRow(titulo = "As minhas caves", subtitulo = "${utilizador.totalCaves} caves", onClick = onVerCaves) }
-        item { PerfilNavRow(titulo = "Conta e segurança", subtitulo = "email, password, nacionalidade", onClick = null) }
+        item { PerfilNavRow(titulo = "Conta e segurança", subtitulo = "email, password, nacionalidade", onClick = onAbrirContaSeguranca) }
         item {
             LinkText(
                 text = "Terminar sessão",

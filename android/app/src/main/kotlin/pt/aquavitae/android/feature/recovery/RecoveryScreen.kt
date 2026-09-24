@@ -38,6 +38,7 @@ import pt.aquavitae.android.feature.legal.TermsSheet
 import pt.aquavitae.android.ui.components.AquaVitaeLogo
 import pt.aquavitae.android.ui.components.AuthScaffold
 import pt.aquavitae.android.ui.components.CodeInput
+import pt.aquavitae.android.ui.components.CodigoValidade
 import pt.aquavitae.android.ui.components.LogoVariant
 import pt.aquavitae.android.ui.components.NavRow
 import pt.aquavitae.android.ui.components.PillCard
@@ -161,6 +162,9 @@ private fun CodeStep(state: RecoveryUiState, viewModel: RecoveryViewModel) {
         onDone = submit,
     )
     ErrorText(state.error)
+    // O código vale 15 minutos: mostra o que falta e, passado o intervalo mínimo, deixa pedir outro (pedido do utilizador).
+    Spacer(Modifier.height(10.dp))
+    CodigoValidade(contagem = state.contagem, onPedirNovo = viewModel::pedirNovoCodigo, aPedir = state.aPedirNovo)
     Spacer(Modifier.height(22.dp))
     NavRow(onBack = { viewModel.back() }, onForward = submit, forwardLoading = state.loading)
 }

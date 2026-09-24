@@ -73,3 +73,12 @@ data class RedefinirPasswordRequest(
     @field:NotBlank @field:Size(min = 8, max = 72)
     val novaPassword: String,
 )
+
+// A resposta (202) de `POST /api/auth/recuperar-password`: quanto tempo vale o código e quanto falta para se poder pedir outro.
+// **Iguais para todas as contas, existam ou não** (não revelam nada): a app arranca os dois contadores quando recebe a resposta.
+// Se o pedido chegou dentro do intervalo mínimo de um anterior, o código em vigor pode expirar até esse intervalo mais cedo do
+// que a contagem da app diz (o servidor recusa então com "Código expirado").
+data class CodigoInfoResponse(
+    val validadeSegundos: Long,
+    val novoPedidoEmSegundos: Long,
+)

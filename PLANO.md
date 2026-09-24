@@ -3,7 +3,7 @@
 Roadmap vivo do MVP. Atualizar isto no fim de cada sessão de trabalho relevante — é o que uma sessão
 nova do Claude Code (ou tu, ao voltares passado um tempo) deve ler primeiro para saber onde ficámos.
 
-## ▶ Retomar aqui (última atualização: 2026-09-24, fatias 1 a 6 + "Comprar" + sessão renovável + pesquisa sem acentos + painel web (fatias 1 e 2: base, listas e formulário de produtores) feitos — a seguir: painel, fatia 3 (bebidas))
+## ▶ Retomar aqui (última atualização: 2026-09-25, fatias 1 a 6 + "Comprar" + sessão renovável + pesquisa sem acentos + painel web (fatias 1 e 2: base, listas e formulário de produtores) feitos, mais "As minhas reviews" e "Conta e segurança" (fatia 10, mockups do utilizador) — a seguir: melhorar o layout do painel web (pedido do utilizador) e a fatia 3 do painel (bebidas))
 
 **Numa sessão nova, ler por esta ordem:** `CLAUDE.md` (convenções e ferramentas desta máquina) → esta secção → `android/README.md`
 (estado do frontend, estrutura, mapa de ecrãs) → `android/design/README.md` (os prints e **o que o utilizador pediu para cada ecrã**,
@@ -26,8 +26,7 @@ da 1.ª visita mesmo com o modelo certo (detalhe completo em `backend/API_ENDPOI
 "correção pós-3c"). Isto fecha o **fluxo principal do MVP**: login → homepage → catálogo (com filtros) → detalhe de uma bebida
 (favoritar, avaliar — só se já provada —, adicionar à cave) → cave (consumir, criar, ver já provadas) → favoritos/wishlist (a
 sério) → perfil (dados, preferências, avatar, terminar sessão) → página do produtor (a partir do cartão em destaque da home
-e do popup de detalhe de uma bebida). **Já não há nenhum destino da app sem forma de lá chegar**, exceto "As minhas reviews" e
-"Conta e segurança" do perfil (o utilizador está a preparar os mockups). **O ponto "Comprar" está feito** (a pílula do preço e
+e do popup de detalhe de uma bebida). **Já não há nenhum destino da app sem forma de lá chegar**: "As minhas reviews" e "Conta e segurança" entraram a 2026-09-25 (fatia 10, a partir dos mockups do utilizador; o "alterar password" usa o código por email com o temporizador de 15 min e o "apagar conta" tem popup de verificação). **O ponto "Comprar" está feito** (a pílula do preço e
 os botões "COMPRAR" abrem a loja e registam o clique; "Onde comprar" com todas as ofertas; "Compraste?" ao voltar do browser;
 "Comprar em X" da wishlist a funcionar) — antes disto **a app não tinha nenhuma forma de comprar**. **O utilizador combinou o
 que vem a seguir (2026-09-24):** os pontos 2 e 3 do que sugeri — **a sessão** (o token expirava aos 60 min, sem renovação nem
@@ -42,7 +41,7 @@ seguinte — por isso este `PLANO.md` e os READMEs ficam atualizados a cada pont
 **Git:** duas branches. **`feature/api-endpoints-design`** = PR #1 (backend v1): já fundido/enviado. **`feature/android-app`** =
 criada a partir dela em 2026-09-21 para o Android, com [PR #2](https://github.com/krugidev/AquaVitae/pull/2) aberto (para `main`,
 ainda não fundido) — leva tudo desde a fatia 1a até à fatia 6 (a 5 é o commit `d33d440`, a 6 — com a morada e o filtro por
-produtor — o `ff75aa2`), commitado por área/fatia (ver o próprio PR para a lista). **O ponto "Comprar" é o commit `6ae8ec8` e a sessão renovável o `32b31b1`** (ambos enviados); **a pesquisa sem acentos é o `4d81eef`** (enviado); **a fatia 1 do painel web é o `fd6cd63`** (enviado); **a fatia 2 (formulário de produtores) é o `9998fe8`** (enviado; leva: `admin/ProdutorFormulario.kt`, `AdminProdutorService.kt`, `AdminProdutorFormController.kt`, `AdminExceptionHandler.kt`, os templates `produtor-form`/`erro`, o CSS, `AdminRepositories.kt`, `RegiaoRepository`, os testes e os docs). **Ficam de fora dos commits, de propósito** (regra do `CLAUDE.md`): as notas do utilizador —
+produtor — o `ff75aa2`), commitado por área/fatia (ver o próprio PR para a lista). **O ponto "Comprar" é o commit `6ae8ec8` e a sessão renovável o `32b31b1`** (ambos enviados); **a pesquisa sem acentos é o `4d81eef`** (enviado); **a fatia 1 do painel web é o `fd6cd63`** (enviado); **a fatia 10 ("As minhas reviews" e "Conta e segurança") é o commit seguinte ao `80c26bd`** (`git log`: backend `ContaService`/`ApagarContaRepository`, `CodigoInfoResponse`, testes; Android `feature/perfil/*` novos, `ui/components/{FolhaInferior,CodigoValidade,EstrelasRating}`, recuperação com temporizador, login com "A tua conta foi apagada."; docs); **a fatia 2 (formulário de produtores) é o `9998fe8`** (enviado; leva: `admin/ProdutorFormulario.kt`, `AdminProdutorService.kt`, `AdminProdutorFormController.kt`, `AdminExceptionHandler.kt`, os templates `produtor-form`/`erro`, o CSS, `AdminRepositories.kt`, `RegiaoRepository`, os testes e os docs). **Ficam de fora dos commits, de propósito** (regra do `CLAUDE.md`): as notas do utilizador —
 `android/AQUAVITAESEEDS-NOTES` e, na raiz, `—--------------- DADOS A INSERIR NA.txt`, `REGIÕES A AJUSTAR (...).txt` e
 `NOVOSDADOS.txt` (este último parece um relatório de incidentes sem ligação ao projeto — vale a pena o utilizador confirmar se
 foi parar ali por engano). Ao commitar, usar `git commit <caminhos explícitos>`, nunca `git add -A`. **O utilizador autorizou,
@@ -55,7 +54,7 @@ em `docs/`.
 `ratingMedio`/`totalReviews`/`categorias` do produtor — se
 reiniciar, ver `CLAUDE.md`, "Email de recuperação — Gmail", para voltar a carregar `backend/.env.mail` antes do `bootRun`; contentor
 `aquavitae-mailpit` ainda a correr (não é preciso para o dia a dia — `docker compose -f backend/docker-compose.mail-dev.yml down`
-para parar). **Emulador `Pixel_8` ligado, com a build mais recente instalada.** A sessão ativa é a conta de teste
+para parar). **Emulador `Pixel_8` ligado, com a build mais recente instalada.** **Atenção (2026-09-25): a sessão ativa no emulador é a conta pessoal do utilizador** (voltou a entrar por si) — só ver, nunca alterar a password, apagar nem `pm clear`; os testes destrutivos correm num 2.º utilizador do Android (`CLAUDE.md`, "Conta e segurança"). Antes disso a sessão ativa era a conta de teste
 `demo2@aquavitae.local` / `password123` (username `demo_user2`, papel `Utilizador`) — a sessão da **conta pessoal do
 utilizador** (`miguelafsmcruz@gmail.com`, usada até à fatia 4) expirou a meio da fatia 5 e não se voltou a entrar (nunca se pede a
 password real); os dados reais dessa conta (caves "Vinhos 2026"/"Gins 2026", 2 favoritos, 1 wishlist) continuam tal como
@@ -65,8 +64,8 @@ Barca Velha 2015 em guarda até 2035) e "Brancos frescos" (id 23, vazia) — **f
 contínuo; termos repostos a `NULL` no fim desta sessão, e o papel `Utilizador` reposto depois de a promover temporariamente a `Admin` para testar o painel (a fatia 6 também os aceitou ao testar). **Os dados de teste temporários
 da fatia 6** (história/morada/coordenadas/imagem nos produtores 1 e 8 e 7 bebidas movidas para o 1) **já foram revertidos** — a
 BD de dev ficou como estava (nenhum produtor tem história, morada, coordenadas nem imagem; ver "Android — fatia 6"). Testes:
-backend `.\gradlew.bat test` em `backend/` (**168**, sem BD, corridos nesta sessão); Android
-`testDebugUnitTest` (**97**, ver `android/README.md`). Corri o
+backend `.\gradlew.bat test` em `backend/` (**173**, sem BD, corridos nesta sessão); Android
+`testDebugUnitTest` (**116**, ver `android/README.md`). Corri o
 `database/verify/rebuild-check.sh` depois do patch `14` (`produtor_morada`): "reconstrução igual à dev". **Landing page (GitHub
 Pages):** já está ativa em `https://krugidev.github.io/AquaVitae/` (fonte `main:/docs`, HTTPS, sem domínio próprio; HTTP 200
 verificado em 2026-09-24) — serve de "website" nos pedidos a outras redes de afiliados; continua a não se mexer no repo/domínio.
@@ -111,8 +110,9 @@ no `CLAUDE.md` o que fazer se o Docker Desktop crashar.
   (c) **duplicado por EAN**: ao criar, se o EAN já existe, o painel diz qual é a bebida e propõe **só acrescentar o link** (regra do `CLAUDE.md`).
   (d) **imagens**: continuar com o URL da loja até haver alojamento (o campo já aceita as duas formas). (e) **mini-página de regiões/países**
   (hoje `INSERT`s à mão): só se os lotes pedirem regiões novas com frequência.
-- **A5. Ecrãs à espera de mockups do utilizador:** "As minhas reviews" e "Conta e segurança" (esta inclui **apagar conta**, exigido
-  pela Google Play a apps com registo — [regra](https://support.google.com/googleplay/android-developer/answer/13327111?hl=en)).
+- **A5. "As minhas reviews" e "Conta e segurança" — ✅ feito** (fatia 10, ver "Android — fatia 10"). O "apagar conta" é o que a Google Play exige a apps com registo ([regra](https://support.google.com/googleplay/android-developer/answer/13327111?hl=en)); **falta ainda o link web para pedir a eliminação da conta** (fora da app), a preparar com a política de privacidade antes de publicar.
+- **A6. Pedido do utilizador (2026-09-25), ainda por fazer: melhorar o layout do painel web para algo mais intuitivo** (o utilizador guardou os detalhes para o prompt seguinte).
+
 
 **Ideias do utilizador, por decidir:** secção "Produtor" (pesquisa + chips) no popup do catálogo geral — só com centenas de
 produtores; a 2.ª versão com leitura de fotos de refeições (ver "Ideia do utilizador para a versão 2", abaixo).
@@ -288,6 +288,7 @@ domain" nas definições do Pages** (aconteceu por engano uma vez e desviou o si
 - **Painel web de administração — fatia 2: produtores (2026-09-24)** — criar e editar produtores em `/admin/produtores` (país e região em listas
   ligadas, morada, coordenadas, história, visitas, website, imagem por URL), com validação, recusa de nomes repetidos e página 404 do painel.
   **É a primeira escrita do painel** (bebidas e links continuam por SQL). Ver "Painel web — fatia 2", em "Em curso".
+- **"As minhas reviews" e "Conta e segurança" (fatia 10, 2026-09-25)** — a lista das reviews do utilizador por mês (pílulas, meias estrelas, excerto; toque abre o popup da bebida) e a folha "Conta e segurança" (email, **alterar password pelo código por email com temporizador de 15 min e "pedir novo"**, **apagar conta** com popup de verificação por password). O temporizador entrou também na recuperação de password do login. Backend: `POST /api/users/me/apagar` e o corpo `{ validadeSegundos, novoPedidoEmSegundos }` em `recuperar-password`. Ver "Android — fatia 10", em "Em curso".
 - Os restantes ecrãs (`detail`, `reviews`) continuam os placeholders do esqueleto (esqueleto morto, por limpar).
 
 ## Em curso 🔜
@@ -1026,6 +1027,32 @@ seguintes usaram só produtores descartáveis, apagados no fim (identity reposto
 **Em aberto:** o htmx do formulário (região a trocar ao mudar o país) só se testou pelo lado do servidor (fragmento); limite de
 tentativas de login; sem histórico de alterações; **fatia 3 (bebidas)** é a que mais importa para os lotes — formulário por categoria
 (só o vinho tem entidade de subtype; as outras só com os campos gerais), EAN validado, imagem, links de compra e o "duplicado por EAN".
+
+### Android — fatia 10: "As minhas reviews" e "Conta e segurança" (feita e validada ao vivo, 2026-09-25)
+
+Mockups 9a e 9b do utilizador (`android/design/perfil/05-reviews-e-conta-seguranca.png`). Detalhe em `android/design/README.md`, "As minhas reviews e Conta e
+segurança" — aqui o resumo e as decisões.
+
+**O que ficou:** (a) **"As minhas reviews"** — `GET /api/users/me/reviews` (já existia) agrupado por mês na hora de Portugal, pílulas de mês que filtram,
+estrelas com meias, excerto de ~90 caracteres, data "18 SET", toque abre o popup de detalhe da bebida. (b) **Folha "Conta e segurança"** (do perfil e da
+linha "Email e password" do "Editar perfil"): email só leitura, **Alterar password** e **Apagar conta**. (c) **Alterar password = o sistema do código por email**
+(pedido do utilizador, em vez de pedir a password atual): enviar → código com **temporizador de 15 min** e "PEDIR NOVO CÓDIGO" (após 60 s) → password nova
+×2 → volta a entrar com ela (redefinir revoga todas as sessões; este telemóvel mantém a sua). Reusa os 3 endpoints da recuperação; **o temporizador entrou também
+na recuperação do login**. (d) **Apagar conta**: popup com o que se perde, aviso "não pode ser desfeito" e a password; `POST /api/users/me/apagar` apaga tudo
+(garrafas, caves, wishlist, favoritos, provadas, reviews — o trigger recalcula os ratings —, preferências, códigos, sessões e o utilizador); **os cliques em links de
+compra ficam anónimos**; password errada 403 "Password incorreta." (não 401, para o `TokenAuthenticator` não tentar renovar); administradores não se apagam pela app.
+
+**Decisões minhas (a rever):** o "Alterar password" **não pede a password atual** (o código no email é a prova; dá para acrescentar); o servidor manda os mesmos
+`{ validadeSegundos: 900, novoPedidoEmSegundos: 60 }` a qualquer conta (não revelar se existe) e a contagem é da app; cliques anonimizados em vez de apagados (dados de
+negócio sem dados pessoais); sem apagar contas de administrador.
+
+**Testes:** +5 backend (173) e +19 Android (116). **Validado ao vivo** (API + Oracle + emulador, num 2.º utilizador do Android com contas descartáveis; a conta pessoal do
+utilizador só foi vista): reviews em 4 meses com meias estrelas e o filtro; alterar password ponta a ponta (código errado, novo código, passwords que não coincidem, login
+antigo 401/novo 200, sessão mantida); apagar conta (password errada → conta intacta; certa → "A tua conta foi apagada." e **todas as tabelas iguais às do início**, ratings repostos);
+o temporizador na recuperação do login. Um erro meu de método: houve uma passagem por `curl` com acentos que estragou um comentário (`400`) — repetido por ficheiro.
+
+**Em aberto:** a Google Play exige também um **link web** para pedir a eliminação da conta (fora da app) — fica com a política de privacidade antes de publicar; sem limite de tentativas
+da password no "Apagar conta"; o email real (Gmail) não foi exercitado (em dev o código vai para o log); o "Alterar password" sem a password atual.
 
 ### Desenho dos endpoints (concluído, 2026-09-17)
 

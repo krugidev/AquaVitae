@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import pt.aquavitae.android.data.network.toUserMessage
 import pt.aquavitae.android.data.repository.AuthRepository
+import pt.aquavitae.android.ui.components.CodigoContagem
+import pt.aquavitae.android.ui.components.agoraParaContagem
 import javax.inject.Inject
 
 /** Os 3 passos da recuperação: identificar a conta, escrever o código recebido e definir a password nova. */
@@ -25,6 +27,10 @@ data class RecoveryUiState(
     val error: RecoveryProblem? = null,
     /** A password mudou: o ecrã navega para o login (que mostra o "Password alterada!"). */
     val done: Boolean = false,
+    /** Os contadores do código (validade e "pedir novo"), arrancados quando o servidor respondeu ao pedido; `null` antes disso. */
+    val contagem: CodigoContagem? = null,
+    /** Um pedido de código novo em curso (o link "PEDIR NOVO CÓDIGO" fica a "A ENVIAR…"). */
+    val aPedirNovo: Boolean = false,
 )
 
 /**
@@ -71,9 +77,7 @@ class RecoveryViewModel @Inject constructor(
                     return fail(RecoveryProblem("Escreve o teu username ou email.", RecoveryField.Identificador))
                 }
                 // A API responde 202 exista ou não a conta: seguir para o código não confirma que a conta existe.
-                chamar({ authRepository.recuperarPassword(identificador) }, RecoveryField.Identificador) {
-                    it.copy(step = RecoveryStep.Code, codigo = "")
-                }
+                pedirCodigo(identificador, RecoveryField.Identificador, aPedirNovo = false)
             }
 
             RecoveryStep.Code -> {
@@ -91,6 +95,29 @@ class RecoveryViewModel @Inject constructor(
                     it.copy(done = true)
                 }
             }
+        }
+    }
+
+    /**
+     * "PEDIR NOVO CÓDIGO" (o link por baixo do campo): o servidor invalida o anterior e manda outro — se já passou o intervalo mínimo
+     * entre pedidos; antes disso não gera nada e a resposta é a mesma (a contagem do "pedir novo" só o deixa carregar depois).
+     */
+    fun pedirNovoCodigo() {
+        val atual = _state.value
+        if (atual.loading || atual.aPedirNovo || atual.step != RecoveryStep.Code) return
+        pedirCodigo(atual.identificador.trim(), RecoveryField.Codigo, aPedirNovo = true)
+    }
+
+    // Pede o código e, com a resposta, arranca os contadores. `aPedirNovo` distingue o link "pedir novo" do botão de seguir.
+    private fun pedirCodigo(identificador: String, field: RecoveryField, aPedirNovo: Boolean) {
+        _state.update { it.copy(loading = !aPedirNovo, aPedirNovo = aPedirNovo, error = null) }
+        viewModelScope.launch {
+            authRepository.recuperarPassword(identificador).fold(
+                onSuccess = { info ->
+                    _state.update { s -> s.copy(step = RecoveryStep.Code, codigo = "", contagem = CodigoContagem.aPartirDe(info, agoraParaContagem()), loading = false, aPedirNovo = false) }
+                },
+                onFailure = { e -> _state.update { s -> s.copy(loading = false, aPedirNovo = false, error = RecoveryProblem(e.toUserMessage(), field)) } },
+            )
         }
     }
 

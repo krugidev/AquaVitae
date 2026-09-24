@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import pt.aquavitae.android.data.local.TokenDataStore
 import pt.aquavitae.android.data.model.AuthResponse
+import pt.aquavitae.android.data.model.CodigoInfo
 import pt.aquavitae.android.data.model.LoginRequest
 import pt.aquavitae.android.data.model.RecuperarPasswordRequest
 import pt.aquavitae.android.data.model.RedefinirPasswordRequest
@@ -46,9 +47,10 @@ class AuthRepository @Inject constructor(
 
     /**
      * Passo 1 da recuperação: pede o código. A API responde sempre 202, exista ou não a conta (não revela que contas existem),
-     * por isso um sucesso aqui não quer dizer que a conta existe. `identificador` = username ou email.
+     * por isso um sucesso aqui não quer dizer que a conta existe. `identificador` = username ou email. A resposta traz a
+     * validade do código e o tempo até se poder pedir outro (os contadores do ecrã do código).
      */
-    suspend fun recuperarPassword(identificador: String): Result<Unit> = runCatching {
+    suspend fun recuperarPassword(identificador: String): Result<CodigoInfo> = runCatching {
         api.recuperarPassword(RecuperarPasswordRequest(identificador))
     }
 

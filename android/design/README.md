@@ -565,14 +565,14 @@ cabeçalhos da homepage, wishlist e favoritos — nenhum tinha destino até agor
 - **Imagem 1 (Detalhes do perfil):** avatar + nome + "@username" + "nacionalidade · membro desde \<mês\> de \<ano\>",
   bio, 6 estatísticas (provadas/reviews/favoritos/wishlist/caves/garrafas — todas já vinham em `GET /users/me`), cartão
   "As minhas preferências" com resumo (categorias, acidez/doçura, castas) e "EDITAR", nav rows ("Histórico de
-  provadas" → `ProvadasScreen`, fatia 3c; "As minhas reviews" e "Conta e segurança" → sem destino, mockups por chegar;
+  provadas" → `ProvadasScreen`, fatia 3c; "As minhas reviews" e "Conta e segurança" → **feitos na fatia 10** (ver "As minhas reviews e Conta e segurança");
   "As minhas caves" → `CaveScreen`, fatia 3b) e "Terminar sessão". **Feito.**
 - **Imagem 2 (Editar perfil):** "Cancelar"/"EDITAR PERFIL"/"Guardar" no topo, "Mudar avatar", nome/apelido, username
   (com contador — sem verificação de disponibilidade ao vivo, a API não tem esse endpoint; só valida ao gravar, com
   409 se já estiver em uso), nacionalidade (dropdown com bandeira, igual ao do onboarding), descrição/bio (com
   contador). **Feito, com uma diferença combinada com o utilizador:** por agora mostra-se o email como texto simples
-  por baixo da bio, em vez da linha "Email e password" do mockup (essa linha pede o ecrã "Conta e segurança", ainda
-  sem mockup). **Suporte de emojis na bio:** pedido para aplicar-se aqui e no onboarding — por código, nenhum dos dois
+  por baixo da bio, em vez da linha "Email e password" do mockup (essa linha pedia o ecrã "Conta e segurança"; **desde a fatia 10 é a
+  linha do mockup, e abre a folha "Conta e segurança"**). **Suporte de emojis na bio:** pedido para aplicar-se aqui e no onboarding — por código, nenhum dos dois
   campos restringe o tipo de teclado, e o Android troca sozinho para a fonte de emoji do sistema quando a Inter não
   tem o glifo (comportamento por omissão da plataforma, não pede código à parte). **Não validado ao vivo**: o
   `adb shell input text` não consegue enviar emoji (falha com `NullPointerException` mesmo para símbolos do plano
@@ -608,7 +608,7 @@ doçura 4 a 4 + casta "Alvarinho" (pesquisada e confirmada) e "Guardar preferên
 imediato; "Histórico de provadas" a abrir a `ProvadasScreen` certa; "Terminar sessão" a voltar ao login com a pilha
 limpa.
 
-**Em aberto / por fazer:** "As minhas reviews" e "Conta e segurança" sem destino (mockups por chegar); suporte de
+**Em aberto / por fazer:** ("As minhas reviews" e "Conta e segurança" ficaram feitas na fatia 10); suporte de
 emojis por confirmar no teclado a sério; a página do produtor ficou feita na fatia 6 (secção seguinte).
 
 ## Produtor (fatia 6, feita e validada ao vivo — 2026-09-24)
@@ -832,3 +832,56 @@ pontas ignorados; sem texto → as 16; "gin 44" e "44°" → Gin 44°. Na app, "
 **Em aberto:** o mapa cobre o latim (português, espanhol, francês, alemão, italiano): letras como "ł", "ő" ou "ž" (polaco, húngaro,
 checo) não se normalizam — acrescentam-se às duas constantes (e o teste confere-as); a pesquisa continua a ser "contém" (sem
 tolerância a gralhas nem ordenação por relevância — o resultado sai por rating).
+
+## As minhas reviews e Conta e segurança (fatia 10, feita e validada ao vivo — 2026-09-25)
+
+Print em `android/design/perfil/05-reviews-e-conta-seguranca.png` (mockups 9a e 9b do utilizador, "TURNO 9"; notas escritas no print).
+Alcançam-se das linhas do mesmo nome do **perfil**; a folha "Conta e segurança" abre-se também da linha **"Email e password"** do
+"Editar perfil" (a que o mockup 02 já tinha e que estava adiada).
+
+**9a — "As minhas reviews"** (`feature/perfil/MinhasReviewsScreen`): "‹ PERFIL", título "As minhas *reviews*" (serifa, itálico grená), "N REVIEWS
+PUBLICADAS", **pílulas de mês** ("Todos", "Setembro", "Agosto"… — filtram; só os meses que têm reviews, e com o ano ("Dezembro 2025") quando
+não é o da review mais recente), grupos por mês ("SETEMBRO 2026 — 2 REVIEWS") com cartões: nome da bebida, **estrelas com meias** + nota ("4,5"),
+**excerto** (~90 caracteres, cortado numa palavra inteira, com "…"), e no rodapé o avatar + nome do utilizador e a data ("18 SET"). Sem comentário,
+o cartão só tem as estrelas. **Tocar num cartão abre o popup de detalhe da bebida** (o de todos os ecrãs, com "Adicionar à cave" e "Ver produtor").
+O mês conta-se **na hora de Portugal** (uma review das 23:30 UTC de 31 de agosto é de 1 de setembro). Sem reviews: uma frase a explicar como
+escrever a primeira. API: `GET /api/users/me/reviews` (já existia). *Diferença assumida:* o mockup mostra o avatar dentro de um círculo com um
+copo — usa-se o `AvatarBadge` da app (o avatar escolhido, ou as iniciais).
+
+**9b — "Conta e segurança"** (`ContaSegurancaSheet`, uma folha por cima do perfil): "EMAIL DA CONTA" (só leitura), **"Alterar password"**,
+**"Apagar conta"** (a vermelho) e "Fechar".
+- **Alterar password — diferença pedida pelo utilizador:** o mockup dizia "pede a password atual e a nova duas vezes"; o utilizador pediu para usar
+  **o sistema do código por email** da recuperação de password, com o **temporizador de 15 minutos**. Fica: (1) "Enviamos um código de 6 dígitos para
+  ‘******ouser@gmail.com’" + **ENVIAR CÓDIGO** (para não mandar emails num toque sem querer); (2) o código (caixa de 6 espaços), com **"O código expira
+  em 14:32"**, e **"PEDIR NOVO CÓDIGO"** quando passou o intervalo mínimo (60 s; antes diz "Podes pedir outro código dentro de N s") — um código novo
+  invalida o anterior; (3) a password nova duas vezes; (4) "Password alterada!". Usa os mesmos 3 endpoints da recuperação, com o email da conta
+  como identificador (`AlterarPasswordViewModel`), e **entra outra vez com a password nova** para este telemóvel manter a sessão (redefinir revoga
+  todas as sessões: os outros dispositivos ficam sem ela, e a folha diz-o). Se a nova entrada falhasse, "ENTRAR" leva ao login. Não pede a password
+  atual (o código no email é a prova); *alternativa, se quiseres mais um passo:* pedir também a atual.
+- **Apagar conta — o popup de verificação pedido pelo utilizador** (`ApagarContaDialog`): "Apagar a conta?", **o que se perde** ("1 cave (3 garrafas)",
+  "1 favorito", "1 na wishlist", "4 bebidas provadas", "4 reviews" — só o que existe; os totais do perfil), "Não pode ser desfeito." a vermelho, o
+  campo **"A tua password"** e os botões Cancelar / Apagar conta. Password errada → "Password incorreta." (403); certa → apaga tudo, termina a sessão
+  e o login diz **"A tua conta foi apagada."**. Uma conta de administrador não se apaga por aqui. Backend: `POST /api/users/me/apagar`.
+- **O temporizador também entrou na recuperação de password do login** (era uma ideia do utilizador, adiada desde a fatia 1b): o ecrã do código mostra a
+  contagem e o "pedir novo código". O servidor manda `{ validadeSegundos, novoPedidoEmSegundos }` **iguais para qualquer conta** (não revela se existe);
+  a contagem é da app (arranca à chegada da resposta). *Aproximação assumida:* um pedido dentro do intervalo mínimo de outro não gera código novo e o
+  em vigor pode expirar até 60 s mais cedo do que a contagem diz (o servidor então diz "Código expirado").
+
+**Componentes novos** (em `ui/components/`): `FolhaInferior` (+`CabecalhoFolha`, `tituloComDestaque`), `CodigoValidade`/`CodigoContagem`, `EstrelasRating`.
+
+**Testes:** +19 Android (116) — as contagens, as estrelas, o excerto, o mês, o agrupamento e o resumo do que se perde; +5 backend (173) — `ContaServiceTest`.
+
+**Validado ao vivo** (emulador `Pixel_8`, API + Oracle): **"As minhas reviews"** com uma conta descartável com 4 reviews em 4 meses (set/ago/jul 2026 e dez 2025) — grupos e
+cabeçalhos certos, meias estrelas (4,5 e 3,5), excerto com "…", "25 SET" (a review nasceu às 00:01 de Lisboa: o fuso funciona), o filtro "Agosto", a pílula
+"Dezembro 2025" e o cartão a abrir o popup de detalhe; com a conta real do utilizador (só a ver): 2 reviews certas. **"Conta e segurança"** a abrir do perfil e do "Editar perfil".
+**Alterar password**: enviar → código errado ("Código inválido") → esperar 60 s → "PEDIR NOVO CÓDIGO" (código novo; o antigo dá 401 e a contagem recomeça em 14:56) → "As
+passwords não coincidem." → guardada; **login com a password antiga 401, com a nova 200, e a app continuou com sessão**. **Apagar conta**: o popup com os totais certos,
+password errada → "Password incorreta." e a conta continua, password certa → login com "A tua conta foi apagada."; na BD **todas as tabelas voltaram ao que eram** e o rating das
+bebidas com reviews dessa conta voltou a 0/0 (o trigger). **Recuperação do login**: contagem e "PEDIR NOVO CÓDIGO" também para um identificador que não existe.
+As contas de teste eram **descartáveis** (a conta pessoal do utilizador só foi aberta para ver, nunca alterada); os testes destrutivos correram num **segundo utilizador do
+Android** (`pm create-user`, ver `CLAUDE.md`), removido no fim.
+
+**Em aberto:** o "Alterar password" não pede a password atual (decisão acima); sem limite de tentativas do código nem da password no "Apagar conta" (a sessão tem de ser válida);
+o email de recuperação real (Gmail) não foi exercitado (o código ia para o log da API); o "Conta e segurança" no mockup não tem "nacionalidade" (o subtítulo da linha do perfil,
+"email, password, nacionalidade", vem do mockup 01 e ficou assim); falta o **link web para pedir a eliminação da conta** que a Google Play também exige (fora da app) — fica para a
+publicação, junto da política de privacidade.

@@ -28,6 +28,7 @@ import pt.aquavitae.android.feature.home.HomeScreen
 import pt.aquavitae.android.feature.loading.LoadingScreen
 import pt.aquavitae.android.feature.onboarding.OnboardingScreen
 import pt.aquavitae.android.feature.perfil.EditarPerfilScreen
+import pt.aquavitae.android.feature.perfil.MinhasReviewsScreen
 import pt.aquavitae.android.feature.perfil.PerfilScreen
 import pt.aquavitae.android.feature.produtor.ProdutorScreen
 import pt.aquavitae.android.feature.recovery.RecoveryScreen
@@ -46,6 +47,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
     // ecrã, e o login explica porquê. Nos ecrãs de entrada não faz nada (já lá estamos, ou o loading trata do seu caso).
     val sessaoEventos: SessaoEventosViewModel = hiltViewModel()
     val avisoSessaoExpirada by sessaoEventos.eventos.avisoNoLogin.collectAsState()
+    val avisoContaApagada by sessaoEventos.eventos.contaApagada.collectAsState()
     LaunchedEffect(navController) {
         sessaoEventos.eventos.sessaoExpirada.collect {
             val rotaAtual = navController.currentDestination?.route
@@ -86,6 +88,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
                     }
                 },
                 sessaoExpirada = avisoSessaoExpirada,
+                contaApagada = avisoContaApagada,
                 onNavigateToRegister = { navController.navigate(AppDestinations.REGISTER) },
                 onForgotPassword = { navController.navigate(AppDestinations.RECOVER) },
                 showPasswordChanged = passwordChanged,
@@ -212,6 +215,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
                 onVoltar = { navController.popBackStack() },
                 onEditarPerfil = { navController.navigate(AppDestinations.PERFIL_EDITAR) },
                 onVerProvadas = { navController.navigate(AppDestinations.PROVADAS) },
+                onVerReviews = { navController.navigate(AppDestinations.PERFIL_REVIEWS) },
                 onVerCaves = { navController.navigate(AppDestinations.CAVE) },
                 onSessaoTerminada = {
                     navController.navigate(AppDestinations.LOGIN) {
@@ -224,6 +228,19 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             EditarPerfilScreen(
                 onCancelar = { navController.popBackStack() },
                 onGuardado = { navController.popBackStack() },
+                // A conta foi apagada (ou a sessão não se manteve depois de alterar a password): fora, para o login.
+                onSessaoTerminada = {
+                    navController.navigate(AppDestinations.LOGIN) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+            )
+        }
+        // "As minhas reviews" (fatia 10): sem barra de navegação; tocar numa review abre o popup de detalhe da bebida.
+        composable(AppDestinations.PERFIL_REVIEWS) {
+            MinhasReviewsScreen(
+                onVoltar = { navController.popBackStack() },
+                onVerProdutor = { produtorId -> navController.abrirProdutor(produtorId) },
             )
         }
 

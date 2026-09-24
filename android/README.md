@@ -25,6 +25,7 @@ O frontend constrói-se em **fatias verticais**, cada uma um fluxo de ecrãs des
 | 7 | comprar: a pílula do preço e "COMPRAR" abrem a loja e registam o clique, "Onde comprar", "Compraste?" ao voltar do browser, "Comprar em X" da wishlist | ✅ feita (2026-09-24) |
 | 8 | sessão renovável: o token de acesso expirava aos 60 min sem renovação nem tratamento de 401 — agora renova-se sozinho (refresh token) | ✅ feita (2026-09-24) |
 | 9 | pesquisa sem distinguir acentos (catálogo no backend; as castas na app) e sem os curingas `%`/`_` do `LIKE` | ✅ feita (2026-09-24) |
+| 10 | "As minhas reviews" (por mês, com meias estrelas) e a folha "Conta e segurança" (email, **alterar password com o código por email** + temporizador de 15 min, **apagar conta** com popup de verificação) | ✅ feita (2026-09-25) |
 
 Os ecrãs `detail` e `reviews` continuam **placeholders do esqueleto** (esqueleto morto, por limpar — ver abaixo): estão
 embrulhados em `LegacyScreen` (`navigation/AppNavHost.kt`), que dá o espaço das barras do sistema. Ao redesenhar um,
@@ -148,6 +149,9 @@ android/
 | `FloatingLabel` (em `UnderlineField.kt`) | o rótulo que sobe e encolhe, partilhado por campos que não são de escrever (nacionalidade) |
 | `BottomNavBar`, `BottomNavItem`, `BottomNavContentPadding` | a barra de navegação principal (5 destinos, "Home" elevado ao centro); os ícones são os PNG do utilizador, tingidos por `ColorFilter` |
 | `AvatarBadge`, `iniciaisDe(...)` | o avatar (SVG do onboarding, ou as iniciais do nome/username) — cabeçalho da homepage/wishlist/favoritos e autor de uma review; `onClick` opcional abre o perfil |
+| `FolhaInferior`, `CabecalhoFolha`, `tituloComDestaque` | uma folha que sobe do fundo, do tamanho do conteúdo, com pega, título serifado com a última palavra em itálico grená, "X" e teclado a empurrá-la (`imePadding`) — "Conta e segurança" e "Alterar password"; tem o `DialogFillScreen` e o inset da barra de navegação lidos antes do `Dialog` (ver `CLAUDE.md`) |
+| `CodigoValidade`, `CodigoContagem`, `formatarContagem` | o temporizador do código de 6 dígitos: "O código expira em 14:32" e "PEDIR NOVO CÓDIGO" (ou "Podes pedir outro dentro de N s"); a contagem arranca com o `CodigoInfo` que o servidor devolve (relógio monotónico) — recuperar password e "Alterar password" |
+| `EstrelasRating`, `tipoDaEstrela` | 5 estrelas de uma nota com **meias estrelas** (4,5 → ★★★★½), só de mostrar — "As minhas reviews" |
 | `AvatarGridPicker`, `AvatarTileGrid` | pílulas de categoria + grelha 3×3 de avatares (`AvatarGridPicker`, usado no onboarding) e só a grelha (`AvatarTileGrid`, pública, usada pelo `EscolherAvatarSheet` do perfil, que tem uma pílula "Todos" extra sem equivalente no onboarding) |
 | `BebidaCard` | o cartão de bebida (imagem, nome+ano, produtor•região, `linhaAtributos()`, rating, retalhista+preço) — homepage, catálogo; toque curto ou premido (`combinedClickable`) abrem o `BebidaDetalheSheet` |
 | `RangePillRow` | o seletor de intervalo 1–5 (acidez/doçura do popup de filtros): toque escolhe um nível, toque noutro estica o intervalo |
@@ -200,16 +204,16 @@ recuperação de password volta ao login com o popup "Password alterada!" (o log
 `AppNavHost.kt`); trocar de separador preserva o estado de cada um (`saveState`/`restoreState`, o padrão de navegação por abas).
 `provadas`, `perfil`/`perfil/editar` e `produtor/{id}`/`produtor/{id}/catalogo` **não são das 5 abas** — `provadas` alcança-se só a partir da Cave ("ABRIR MAIS" no
 resumo de "Já provadas"), `perfil` tocando no avatar (repetido nos cabeçalhos de `home`/`wishlist`/`favoritos`) e
-`perfil/editar` a partir do próprio `perfil` — `produtor/{id}` pelo cartão do produtor em destaque (home) e pelo cartão do produtor do popup de detalhe de uma bebida (`onVerProdutor`, ligado em home/catálogo/cave/favoritos/wishlist), e `produtor/{id}/catalogo` pela seta de "Garrafas em catálogo" — nenhum tem `BottomNavBar` própria, tal como o popup de detalhe da bebida.
+`perfil/editar` a partir do próprio `perfil`, `perfil/reviews` ("As minhas reviews", fatia 10) da linha do mesmo nome do `perfil` — `produtor/{id}` pelo cartão do produtor em destaque (home) e pelo cartão do produtor do popup de detalhe de uma bebida (`onVerProdutor`, ligado em home/catálogo/cave/favoritos/wishlist), e `produtor/{id}/catalogo` pela seta de "Garrafas em catálogo" — nenhum tem `BottomNavBar` própria, tal como o popup de detalhe da bebida.
 **`detail/{id}`/`reviews/{id}` deixaram de se alcançar por toque** (fatia 3a: o detalhe de uma bebida é sempre o popup
 `BebidaDetalheSheet`, aberto de dentro do próprio ecrã) — as rotas e os ficheiros `feature/detail`/`feature/reviews` ficam no
 código como esqueleto morto, por limpar numa fatia futura.
 
 ## Testes
 
-Unitários (JVM), **97**: `AuthValidationTest` (10, validação do registo), `RecoveryRulesTest` (10, email tapado, password nova),
+Unitários (JVM), **116**: `AuthValidationTest` (10, validação do registo), `RecoveryRulesTest` (10, email tapado, password nova),
 `OnboardingRulesTest` (12, ordem dos ecrãs, montagem dos pedidos de perfil e preferências), `FlagEmojiTest` (3), `ImageUrlsTest` (4),
-`AvatarBadgeTest` (6, iniciais do avatar), `BebidaFormatacaoTest` (8, a fórmula de `linhaAtributos()` e a extração do ano do nome). `ProdutorFormatacaoTest` (14, domínio do site, URL, coordenadas, morada, URI `geo:` por coordenadas ou por morada com o nome escapado, singular/plural) e `ProdutorUiStateTest` (5, 3 garrafas de início, "CARREGAR MAIS N", nunca mais de 6). `CompraFormatacaoTest` (10, a oferta principal é a mais barata das disponíveis com link, "MAIS BARATO" só com comparação, "há N min/horas/dias", "atualizado hoje"). `TokenAuthenticatorTest` (10, contra um `MockWebServer` local: renova e repete com o token novo, renovação recusada apaga a sessão e avisa, sem rede/5xx a sessão mantém-se, pedido anónimo e `/api/auth/` não renovam, outro pedido já renovou, sessão antiga sem refresh token, nunca renova duas vezes o mesmo pedido). `TextoSemAcentosTest` (5, `semAcentos()`/`contemSemAcentos()`, as pesquisas locais de castas).
+`AvatarBadgeTest` (6, iniciais do avatar), `BebidaFormatacaoTest` (8, a fórmula de `linhaAtributos()` e a extração do ano do nome). `ProdutorFormatacaoTest` (14, domínio do site, URL, coordenadas, morada, URI `geo:` por coordenadas ou por morada com o nome escapado, singular/plural) e `ProdutorUiStateTest` (5, 3 garrafas de início, "CARREGAR MAIS N", nunca mais de 6). `CompraFormatacaoTest` (10, a oferta principal é a mais barata das disponíveis com link, "MAIS BARATO" só com comparação, "há N min/horas/dias", "atualizado hoje"). `TokenAuthenticatorTest` (10, contra um `MockWebServer` local: renova e repete com o token novo, renovação recusada apaga a sessão e avisa, sem rede/5xx a sessão mantém-se, pedido anónimo e `/api/auth/` não renovam, outro pedido já renovou, sessão antiga sem refresh token, nunca renova duas vezes o mesmo pedido). `TextoSemAcentosTest` (5, `semAcentos()`/`contemSemAcentos()`, as pesquisas locais de castas). `CodigoContagemTest` (6, os contadores do código: arredondam para cima, expira aos 15 min, "pedir novo" aos 60 s, "14:32"; e as estrelas cheias/meias/vazias de uma nota) e `MinhasReviewsRegrasTest` (13, o excerto de ~90 caracteres cortado numa palavra, o mês na hora de Portugal, "SETEMBRO 2026", "18 SET", agrupar e as pílulas de mês, e o resumo do que "Apagar conta" faz perder).
 Ainda **sem** testes de ViewModels nem de UI (pede `kotlinx-coroutines-test`; fica para quando compensar) — `HomeViewModel` e
 `CatalogViewModel` também ainda não têm testes (o `RangePillRow` e a lógica de intervalo do popup de filtros também só validados ao
 vivo, não têm teste unitário). `descricaoJanela` (`HomeScreen.kt`) continua `private`, sem teste. Os fluxos validam-se ao vivo no
@@ -242,9 +246,7 @@ emulador (compilar → instalar → `adb shell input tap/text` → screenshot), 
   "N NA CAVE", "PROVADA EM \<mês\>", e o link no próprio `BebidaSummaryDto`) — pedem campos novos no `BebidaSummaryDto`, adiados
   a pedido do utilizador (ver `PLANO.md`, "Por fazer depois"); o "Comprar em X" já abre a loja sem esse campo (pede as ofertas
   ao tocar, ver "Comprar"); a deteção de descidas de preço da wishlist foi pedida para ficar de fora por agora.
-- **Perfil (fatia 5), feito:** ver `design/README.md`, "Perfil", para a lista completa — em resumo: "As minhas reviews" e
-  "Conta e segurança" ainda sem destino (mockups por chegar); o email aparece como texto simples por baixo da bio em vez da
-  linha "Email e password" do mockup (também à espera do mockup de "Conta e segurança"); o suporte de emojis na bio não foi
+- **Perfil (fatia 5) e "As minhas reviews"/"Conta e segurança" (fatia 10), feitos:** ver `design/README.md`, "Perfil" e "As minhas reviews e Conta e segurança" — em resumo: as duas linhas que estavam sem destino já têm ecrã, e a linha "Email e password" do "Editar perfil" abre a mesma folha "Conta e segurança"; o suporte de emojis na bio não foi
   validado ao vivo (o `adb shell input text` não consegue enviar emoji, uma limitação da própria ferramenta — por código,
   o campo não restringe o tipo de teclado e o Android troca sozinho para a fonte de emoji do sistema quando a Inter não
   tem o glifo, o comportamento por omissão da plataforma).

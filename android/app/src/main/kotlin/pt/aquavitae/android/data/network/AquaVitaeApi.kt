@@ -1,10 +1,12 @@
 package pt.aquavitae.android.data.network
 
+import pt.aquavitae.android.data.model.ApagarContaRequest
 import pt.aquavitae.android.data.model.AuthResponse
 import pt.aquavitae.android.data.model.Avatar
 import pt.aquavitae.android.data.model.BebidaDetail
 import pt.aquavitae.android.data.model.BebidaRelacao
 import pt.aquavitae.android.data.model.BebidaSummary
+import pt.aquavitae.android.data.model.CodigoInfo
 import pt.aquavitae.android.data.model.CaveBebidaRequest
 import pt.aquavitae.android.data.model.CaveBebidaResponse
 import pt.aquavitae.android.data.model.CaveBebidaUpdateRequest
@@ -16,6 +18,7 @@ import pt.aquavitae.android.data.model.CaveResponse
 import pt.aquavitae.android.data.model.CliquePendente
 import pt.aquavitae.android.data.model.Casta
 import pt.aquavitae.android.data.model.LoginRequest
+import pt.aquavitae.android.data.model.MinhaReview
 import pt.aquavitae.android.data.model.LookupItem
 import pt.aquavitae.android.data.model.Nacionalidade
 import pt.aquavitae.android.data.model.OfertaCompra
@@ -67,7 +70,7 @@ interface AquaVitaeApi {
 
     // Recuperação de password, em 3 passos (o código de 6 dígitos vale 15 min). O 1.º devolve sempre 202, exista ou não a conta.
     @POST("api/auth/recuperar-password")
-    suspend fun recuperarPassword(@Body request: RecuperarPasswordRequest)
+    suspend fun recuperarPassword(@Body request: RecuperarPasswordRequest): CodigoInfo
 
     @POST("api/auth/verificar-codigo")
     suspend fun verificarCodigo(@Body request: VerificarCodigoRequest)
@@ -87,6 +90,10 @@ interface AquaVitaeApi {
     /** O popup dos termos e condições: regista a aceitação agora e devolve o perfil atualizado. */
     @POST("api/users/me/termos/aceitar")
     suspend fun aceitarTermos(): UtilizadorMe
+
+    /** "Apagar conta" (Conta e segurança): confirma com a password e apaga tudo da conta (204; 403 "Password incorreta."). */
+    @POST("api/users/me/apagar")
+    suspend fun apagarConta(@Body request: ApagarContaRequest)
 
     // --- Termos e condições (público: lê-se antes de haver conta) ---
 
@@ -165,6 +172,10 @@ interface AquaVitaeApi {
     ): PageResponse<BebidaSummary>
 
     // --- Reviews ---
+
+    /** "As minhas reviews": as reviews do utilizador com a bebida de cada uma, mais recentes primeiro (sem paginação). */
+    @GET("api/users/me/reviews")
+    suspend fun getMinhasReviews(): List<MinhaReview>
 
     @GET("api/bebidas/{bebidaId}/reviews")
     suspend fun getReviews(@Path("bebidaId") bebidaId: Long): ReviewsResponse

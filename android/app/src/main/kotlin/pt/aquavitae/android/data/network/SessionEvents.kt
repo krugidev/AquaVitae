@@ -28,8 +28,18 @@ class SessionEvents @Inject constructor() {
         _sessaoExpirada.tryEmit(Unit)
     }
 
-    /** O utilizador voltou a entrar: o aviso já não faz sentido. */
+    private val _contaApagada = MutableStateFlow(false)
+
+    /** A conta acabou de ser apagada (Conta e segurança): o login mostra "A tua conta foi apagada." até haver uma entrada. */
+    val contaApagada: StateFlow<Boolean> = _contaApagada.asStateFlow()
+
+    fun notificarContaApagada() {
+        _contaApagada.value = true
+    }
+
+    /** O utilizador voltou a entrar: os avisos já não fazem sentido. */
     fun limparAviso() {
         _avisoNoLogin.value = false
+        _contaApagada.value = false
     }
 }

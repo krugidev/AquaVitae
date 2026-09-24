@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import pt.aquavitae.api.auth.dto.CodigoInfoResponse
 import pt.aquavitae.api.common.InvalidCredentialsException
 import pt.aquavitae.api.email.EmailService
 import pt.aquavitae.api.utilizador.UtilizadorRepository
@@ -31,6 +32,9 @@ class PasswordResetService(
 ) {
     private val logger = LoggerFactory.getLogger(PasswordResetService::class.java)
     private val random = SecureRandom()
+
+    // O que a app precisa para os contadores do ecrã do código (ver CodigoInfoResponse): o mesmo para qualquer conta.
+    fun codigoInfo(): CodigoInfoResponse = CodigoInfoResponse(CODIGO_VALIDADE_MINUTOS * 60, intervaloMinimoSegundos)
 
     @Transactional
     fun recuperarPassword(identificador: String) {

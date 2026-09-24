@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import pt.aquavitae.api.auth.dto.AuthResponse
+import pt.aquavitae.api.auth.dto.CodigoInfoResponse
 import pt.aquavitae.api.auth.dto.LoginRequest
 import pt.aquavitae.api.auth.dto.RecuperarPasswordRequest
 import pt.aquavitae.api.auth.dto.RedefinirPasswordRequest
@@ -42,9 +43,10 @@ class AuthController(
     }
 
     @PostMapping("/recuperar-password")
-    fun recuperarPassword(@Valid @RequestBody request: RecuperarPasswordRequest): ResponseEntity<Void> {
+    fun recuperarPassword(@Valid @RequestBody request: RecuperarPasswordRequest): ResponseEntity<CodigoInfoResponse> {
         passwordResetService.recuperarPassword(request.identificador)
-        return ResponseEntity.accepted().build()
+        // Sempre 202 com o mesmo corpo, exista ou não a conta (não revela que contas existem).
+        return ResponseEntity.accepted().body(passwordResetService.codigoInfo())
     }
 
     @PostMapping("/verificar-codigo")

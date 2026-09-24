@@ -23,7 +23,12 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import pt.aquavitae.android.ui.theme.Ink
+import pt.aquavitae.android.ui.theme.RoseBorder
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -67,9 +72,11 @@ import pt.aquavitae.android.ui.theme.Paper
 fun EditarPerfilScreen(
     onCancelar: () -> Unit,
     onGuardado: () -> Unit,
+    onSessaoTerminada: () -> Unit,
     viewModel: EditarPerfilViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    var mostrarContaSeguranca by remember { mutableStateOf(false) }
 
     Box(Modifier.fillMaxSize().background(Paper).statusBarsPadding()) {
         when (val estado = state) {
@@ -86,7 +93,10 @@ fun EditarPerfilScreen(
             }
 
             is EditarPerfilUiState.Ready -> {
-                EditarPerfilContent(estado, viewModel, onCancelar, onGuardado)
+                EditarPerfilContent(estado, viewModel, onCancelar, onGuardado, onAbrirContaSeguranca = { mostrarContaSeguranca = true })
+                if (mostrarContaSeguranca) {
+                    ContaSegurancaSheet(onDismiss = { mostrarContaSeguranca = false }, onSessaoTerminada = onSessaoTerminada)
+                }
                 if (estado.mostrarEscolherAvatar) {
                     EscolherAvatarSheet(
                         avatarIdAtual = estado.avatar?.id,
@@ -105,6 +115,7 @@ private fun EditarPerfilContent(
     viewModel: EditarPerfilViewModel,
     onCancelar: () -> Unit,
     onGuardado: () -> Unit,
+    onAbrirContaSeguranca: () -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -161,12 +172,15 @@ private fun EditarPerfilContent(
             NationalityField(state.nacionalidades, selectedId = state.nationalityId, onSelect = viewModel::onNationality)
         }
         item { DescriptionBox(value = state.bioDesc, onValueChange = viewModel::onBio) }
-        if (state.email != null) {
-            item {
-                Column {
-                    Text(text = "Email", style = AquaText.Footer.copy(color = MutedInk, fontSize = 11.sp))
-                    Text(text = state.email, style = AquaText.Field.copy(fontSize = 14.sp))
+        // "Email e password" (mockup 02): abre a folha "Conta e segurança" (email só leitura, alterar password, apagar conta).
+        item {
+            HorizontalDivider(thickness = 1.dp, color = RoseBorder)
+            Row(Modifier.fillMaxWidth().clickable(onClick = onAbrirContaSeguranca).padding(top = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(text = "Email e password", style = AquaText.Label.copy(fontSize = 14.sp, color = Ink))
+                    Text(text = state.email.orEmpty(), style = AquaText.Footer.copy(color = MutedInk, fontSize = 11.sp))
                 }
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = Burgundy)
             }
         }
         state.erro?.let { erro ->

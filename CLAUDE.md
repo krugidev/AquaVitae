@@ -14,7 +14,7 @@ cada ecrã** em [`android/design/README.md`](android/design/README.md) — ler o
 briefing/    briefing de produto + schema DBML original
 database/    Oracle XE (Docker) — DDL, triggers, seed
 backend/     API Spring Boot + Kotlin (recursos estáticos, ex. avatares, em src/main/resources/static) + painel de administração web em /admin
-android/     app Android (Compose + MVVM + Hilt) — construída por fatias (feitas: 1 a 6, até à página do produtor; ver android/README.md)
+android/     app Android (Compose + MVVM + Hilt) — construída por fatias (feitas: 1 a 10, até "As minhas reviews" e "Conta e segurança"; ver android/README.md)
 android/design/   prints do Figma + especificação por ecrã (o que foi pedido, estado, diferenças)
 docs/        landing page (GitHub Pages, só na branch main) — o URL foi enviado à Awin, não mexer no repo/domínio
 ```
@@ -24,8 +24,8 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
 - **Backend:** Kotlin 2.4.20 + Spring Boot 3.5.16 + Gradle 9.7.1 (wrapper já commitado, `./gradlew bootRun`).
   Hibernate em `ddl-auto: validate` — o schema é sempre gerido pelo SQL em `database/ddl`, nunca pelo Hibernate.
 - **Android:** Kotlin + Jetpack Compose + Hilt + Retrofit/Moshi + DataStore. Construído por **fatias verticais**, uma por fluxo de ecrãs
-  do Figma, ligada à API real (feitas as fatias 1a a 6: auth/onboarding, homepage, catálogo, popup de detalhe, cave, favoritos/wishlist,
-  perfil e produtor; só `detail`/`reviews` continuam esqueleto morto, ver `android/README.md`). O `AquaVitaeApi.kt` está sincronizado com
+  do Figma, ligada à API real (feitas as fatias 1a a 10: auth/onboarding, homepage, catálogo, popup de detalhe, cave, favoritos/wishlist,
+  perfil, produtor, comprar, sessão renovável, pesquisa sem acentos, "As minhas reviews" e "Conta e segurança"; só `detail`/`reviews` continuam esqueleto morto, ver `android/README.md`). O `AquaVitaeApi.kt` está sincronizado com
   tudo o que as fatias usam (lista em `android/README.md`, "Lacunas conhecidas"); o que falta sincronizar está em
   `backend/API_ENDPOINTS.md`, "Sincronização pendente com o Android". No fim de cada fatia cumpre-se a checklist de `android/README.md`.
 
@@ -232,7 +232,7 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
   exata do Figma); tokens medidos nos prints em `ui/theme/Color.kt`; componentes reutilizáveis em `ui/components/` (`AquaVitaeLogo`,
   `UnderlineField`, `PrimaryButton`, `AuthCard`/`AuthScaffold`/`overlapTop`, `LoadingDots`, `PillCard`/`NavRow`/`NextButton`,
   `OptionRow`/`PillChip`/`LookupContent`, `LevelSlider`, `RangePillRow`, `CodeInput`, `FlagChip`, `BottomNavBar`, `AvatarBadge`,
-  `BebidaCard`, `ContagemEOrdenacao`, popups `TermsDialog`/`PasswordChangedDialog` com `DialogScrim`; lista completa em `android/README.md`) — reutilizar, não
+  `BebidaCard`, `ContagemEOrdenacao`, `FolhaInferior`, `CodigoValidade`, `EstrelasRating`, popups `TermsDialog`/`PasswordChangedDialog` com `DialogScrim`; lista completa em `android/README.md`) — reutilizar, não
   recriar. Cada ecrã novo aplica `systemBarsPadding()` (edge-to-edge); os ecrãs antigos do esqueleto vão embrulhados em `LegacyScreen`
   (`AppNavHost.kt`) até serem redesenhados (já saíram de lá `home` e `catalog`). **Imagens da API com Coil 2.7** (avatares SVG; o
   carregador com o `SvgDecoder` está em `AquaVitaeApplication`; `resolveImageUrl` decide URL absoluto vs. relativo). **Ícones PNG
@@ -245,9 +245,9 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
   qualquer ecrã; sem `SavedStateHandle`, usa `hiltViewModel(key = "bebida-detalhe-$id")` (ver `android/README.md`, "Convenções"). **O cartão do produtor no fim do popup abre a página do produtor** (fatia 6) por um parâmetro `onVerProdutor` do `BebidaDetalheSheet` — cada ecrã que o usa tem de o receber do `AppNavHost` e passá-lo; `null` (o valor por omissão) tira o atalho, e é o que as páginas do próprio produtor fazem.
   **`DatePicker`/`DatePickerDialog` do Material3** (`AdicionarACaveSheet`, fatia 3b) são `@ExperimentalMaterial3Api` — precisam de
   `@OptIn`, já usados pela 1.ª vez neste projeto (a "data de aquisição" do popup "Adicionar à cave").
-  Testes unitários: `gradle.bat -p android testDebugUnitTest --console=plain` (97: registo, recuperar password, onboarding,
+  Testes unitários: `gradle.bat -p android testDebugUnitTest --console=plain` (116: registo, recuperar password, onboarding,
   bandeiras, URLs, iniciais do avatar, formatação de bebida, formatação e estado do produtor, ofertas de compra, renovação de sessão
-  contra um `MockWebServer`, texto sem acentos).
+  contra um `MockWebServer`, texto sem acentos, contadores do código, excerto/agrupamento das reviews).
 - **Um `Row`/`Column` de altura fixa com texto de comprimento variável perde conteúdo sem erro nenhum (apanhado no `BebidaCard`,
   2026-09-23):** o cartão de bebida tem `height(108.dp)` fixo; ao acrescentar `tipo`/`tanino` à linha de atributos, algumas bebidas
   passaram a ter uma linha com 3 segmentos que quebrava para 2 linhas — sem `maxLines`, isso empurrava o preço (a `Row` seguinte) para
@@ -282,6 +282,25 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
   exceção nem aviso, só se via comparando o resultado com o esperado. Corrige-se lendo o inset **antes** de entrar no `Dialog`
   (`WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()`, na janela principal, onde os insets estão corretos) e
   aplicando-o como padding fixo dentro do popup.
+- **"Conta e segurança" (2026-09-25) — como se testa sem tocar na conta do utilizador, e o que não se pode partir.** **A sessão ativa no emulador
+  pode ser a conta pessoal do utilizador** (caves "Vinhos 2026"/"Gins 2026" na home, username `krugileflugi`): nunca lhe mexer na password,
+  nunca apagá-la, nunca `pm clear` (ele volta a entrar à mão) — só ver. Para testes **destrutivos** (alterar password, apagar conta) usa-se um
+  **segundo utilizador do Android**, com dados isolados: `adb shell pm create-user zzteste` (dá o id, ex. 10) → `pm install-existing --user 10
+  pt.aquavitae.android` → `cmd lock_settings set-disabled --user 10 true` e `svc power stayon true` → `am switch-user 10` (esperar ~15 s; o ecrã
+  fica preto/bloqueado: `input keyevent 224` e deslizar de baixo para cima) → `am start --user 10 -n pt.aquavitae.android/.MainActivity`, e no
+  login uma **conta descartável** criada pela API (`POST /api/auth/register`, dados só em ASCII; com acentos vai por `--data-binary @ficheiro`).
+  No fim: `am switch-user 0`, `pm remove-user 10`, `svc power stayon false`. O código de recuperação lê-se no log da API (`... utilizador N: 123456`).
+  **Regras do código:** (1) apagar a conta com password errada dá **403** (`UnauthorizedActionException`), não 401 — o `TokenAuthenticator` renovaria a
+  sessão a cada 401; (2) o "Alterar password" **reutiliza** `/recuperar-password` → `/verificar-codigo` → `/redefinir-password` com o email da conta e
+  depois **volta a entrar** (`login`) com a password nova, porque redefinir revoga todas as sessões; (3) `POST /recuperar-password` devolve **sempre** o
+  mesmo `{ validadeSegundos, novoPedidoEmSegundos }` (não revelar se a conta existe) e os contadores são da app (`CodigoContagem`, relógio monotónico);
+  (4) as reviews agrupam-se por mês **na hora de Portugal** (`Europe/Lisbon`), não em UTC; (5) os cliques em links de compra de uma conta apagada ficam
+  com `utilizador_id` a `NULL` — código que leia `CliqueCompra.utilizador` tem de aceitar `null`. **Ao testar "apagar conta" ao vivo**, comparar as contagens
+  de todas as tabelas com as do início (`select count(*)` de utilizador, review, favorito, wishlist, bebida_provada, cave, cave_bebida, clique_compra,
+  utilizador_preferencia, utilizador_password_reset, utilizador_refresh_token) e apagar depois os cliques anónimos criados pelo teste.
+- **Ficheiros Kotlin criados pelo shell (2026-09-25):** um `cat > ficheiro.kt <<'EOF'` com uma regex `"\\s+"` deixou `"\s+"` no ficheiro ("Illegal escape") e
+  um comando com vários heredocs falhou com "unexpected EOF" sem criar nada — criar os ficheiros Kotlin com a ferramenta de escrita (`Write`), não por heredoc;
+  e um `perl s{...}{...}` com chavetas **desemparelhadas** no padrão dá "syntax error" (usar `Edit`, ou outros delimitadores).
 - **Testar a UI pelo `adb` (sem tocar no emulador):** `adb shell input tap X Y` (X,Y nativos, 1080×2400; uma imagem mostrada a
   900×2000 tem de se multiplicar por 1,2), `input text` (`@` funciona; **espaços escrevem-se `%s`**), `input keyevent 66` (Enter = a
   ação do teclado: "Seguinte" ou "Feito"), `67` (apagar), `123` (fim de linha), `4` (voltar; com o teclado aberto o 1.º só o fecha),
