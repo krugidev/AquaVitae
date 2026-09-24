@@ -50,11 +50,14 @@ class HqlQueriesTest {
                 repositorio.declaredMethods.mapNotNull { metodo -> metodo.getAnnotation(Query::class.java)?.let { metodo to it } }
                     .filterNot { (_, query) -> query.nativeQuery }
                     .forEach { (metodo, query) ->
-                        validadas++
-                        try {
-                            session.createQuery(query.value.trimIndent())
-                        } catch (e: Exception) {
-                            falhas += "${repositorio.simpleName}.${metodo.name}: ${e.message?.lineSequence()?.firstOrNull()}"
+                        // A `countQuery` explícita (listas paginadas do painel) também é HQL e tem de ser válida.
+                        listOf("" to query.value, "(count) " to query.countQuery).filter { (_, hql) -> hql.isNotBlank() }.forEach { (etiqueta, hql) ->
+                            validadas++
+                            try {
+                                session.createQuery(hql.trimIndent())
+                            } catch (e: Exception) {
+                                falhas += "${repositorio.simpleName}.${metodo.name} $etiqueta: ${e.message?.lineSequence()?.firstOrNull()}"
+                            }
                         }
                     }
             }

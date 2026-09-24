@@ -309,6 +309,44 @@ de mercado. `totalProntasAAbrir` conta **garrafas** (não linhas), incluindo as 
 preço por unidade, o mais caro primeiro (sem preço no fim); `dataConsumo` (por omissão) = nas prontas o prazo (`janelaFim`)
 mais próximo ou já passado primeiro, nas em guarda o início da janela mais próximo primeiro; sem data no fim; o id desempata.
 
+## Painel de administração web (`/admin`) — fatia 1 feita em 2026-09-24
+
+**Não é parte da API JSON**: são páginas HTML feitas no servidor (Thymeleaf + htmx, sem build de front-end), com a sua própria
+cadeia de segurança — **sessão por cookie** (a API é sem estado, com JWT), formulário de login, **CSRF ligado**, e só entra quem
+tem o papel `Admin`. A app Android não lhe toca. Decidido com o utilizador (2026-09-24): painel **web, dentro do backend**, não na
+app (única administradora, trabalho de secretária, e poderes de escrita fora de um app instalado em milhares de telemóveis).
+**Isto vai reverter a regra "conteúdo só por SQL, sem endpoints de escrita"** — mas só quando entrar a primeira escrita (fatias 2 e 3:
+produtores e bebidas); a fatia 1 só lê. Quando isso acontecer, atualizar esta secção e o `CLAUDE.md`.
+
+| Pedido | O que faz |
+|---|---|
+| `GET /admin/login` · `POST /admin/login` | formulário (`identificador` = username ou email, sem distinguir maiúsculas, + `password`); falha → `/admin/login?erro`. **Uma conta sem o papel `Admin` recebe a mesma resposta que uma password errada** (não se diz que a conta existe) |
+| `POST /admin/logout` | termina a sessão (com token CSRF) → `/admin/login?saiu` |
+| `GET /admin` | totais (bebidas, produtores, links ativos/desativados, utilizadores) e, por critério de qualidade, quantas bebidas/produtores o falham — cada linha abre a lista já filtrada |
+| `GET /admin/bebidas?q=&categoria=&qualidade=&ordem=&pagina=` | lista paginada (25 por página) |
+| `GET /admin/produtores?q=&qualidade=&ordem=&pagina=` | idem para os produtores |
+| `GET /webjars/htmx.org/dist/htmx.min.js`, `GET /admin/css/**` | recursos estáticos, sem sessão (a página de login usa-os) |
+
+- **Pesquisa (`q`)**: a mesma do catálogo (sem acentos nem maiúsculas, `%`/`_` como texto) — bebidas por nome, produtor, casta ou
+  **EAN**; produtores por nome. Máximo 100 caracteres.
+- **`qualidade`** (um de cada vez; um código desconhecido é ignorado): bebidas — `sem-imagem`, `sem-produtor`, `sem-ean`,
+  `sem-link` (nenhum link de compra ativo), `dados-gerais` (falta categoria, país, teor ou volume), `atributos-vinho` (vinho sem
+  tipo ou sem castas); produtores — `sem-imagem`, `sem-historia`, `sem-morada`, `sem-coordenadas`, `sem-regiao`, `sem-bebidas`.
+  **Só o vinho tem critério de atributos** (as outras categorias ainda não têm entidade no backend).
+- **`ordem`**: `recentes` (id decrescente; por omissão nas bebidas) ou `nome`. O nome ordena pelo Oracle (binário): uma inicial com
+  acento (Á, Ó...) fica no fim.
+- **htmx**: um pedido com o cabeçalho `HX-Request` (a pesquisa enquanto se escreve, a paginação) recebe **só o bloco
+  `#resultado`**; um pedido normal, ou o regresso pelo histórico (`HX-History-Restore-Request`), recebe a página inteira. A resposta
+  leva `Vary: HX-Request`. Com a sessão expirada, um pedido htmx recebe `401` + `HX-Redirect: /admin/login` (o htmx não segue
+  redirecionamentos para trocar a página).
+- **Segurança**: cookie `JSESSIONID` `HttpOnly` + `SameSite=Strict` (em produção, atrás de HTTPS: `SERVER_SERVLET_SESSION_COOKIE_SECURE=true`);
+  CSP só com recursos próprios (imagens de qualquer HTTPS, porque as das bebidas são URLs de retalhistas — um `http://` não aparece);
+  `X-Frame-Options: DENY`. **Ainda não há limite de tentativas de login** — antes de expor o `/admin` à internet: limitar tentativas
+  e/ou restringir por IP/VPN/proxy.
+- **Ter uma conta de administrador** (só por SQL; o registo cria sempre `Utilizador`):
+  `UPDATE utilizador SET utilizador_role_id = (SELECT utilizador_role_id FROM utilizador_role WHERE utilizador_role_value = 'Admin') WHERE utilizador_email = '<email>'; COMMIT;`
+  (o mesmo papel serve os endpoints `/api/admin/**`).
+
 ## Imagens (bebidas, produtores, avatares)
 
 `bebida_path_image` e `produtor_path_imagem` existem no schema mas **nunca foram populadas** no seed —

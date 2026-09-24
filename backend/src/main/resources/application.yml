@@ -21,6 +21,14 @@ spring:
 
 server:
   port: 8080
+  servlet:
+    session:
+      # Só o painel de administração (/admin) usa sessão (a API é sem estado, com JWT). Cookie inacessível ao JavaScript e nunca
+      # enviado a partir de outro site. Em produção, atrás de HTTPS: SERVER_SERVLET_SESSION_COOKIE_SECURE=true.
+      timeout: 60m
+      cookie:
+        http-only: true
+        same-site: strict
 
 aquavitae:
   links:

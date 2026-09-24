@@ -3,7 +3,7 @@
 Roadmap vivo do MVP. Atualizar isto no fim de cada sessão de trabalho relevante — é o que uma sessão
 nova do Claude Code (ou tu, ao voltares passado um tempo) deve ler primeiro para saber onde ficámos.
 
-## ▶ Retomar aqui (última atualização: 2026-09-24, fatias 1 a 6 + "Comprar" + sessão renovável + pesquisa sem acentos feitas — a seguir: painel web de administração)
+## ▶ Retomar aqui (última atualização: 2026-09-24, fatias 1 a 6 + "Comprar" + sessão renovável + pesquisa sem acentos + painel web (fatia 1: base e listas) feitos — a seguir: painel, fatia 2 (formulário de produtores))
 
 **Numa sessão nova, ler por esta ordem:** `CLAUDE.md` (convenções e ferramentas desta máquina) → esta secção → `android/README.md`
 (estado do frontend, estrutura, mapa de ecrãs) → `android/design/README.md` (os prints e **o que o utilizador pediu para cada ecrã**,
@@ -32,7 +32,8 @@ os botões "COMPRAR" abrem a loja e registam o clique; "Onde comprar" com todas 
 "Comprar em X" da wishlist a funcionar) — antes disto **a app não tinha nenhuma forma de comprar**. **O utilizador combinou o
 que vem a seguir (2026-09-24):** os pontos 2 e 3 do que sugeri — **a sessão** (o token expirava aos 60 min, sem renovação nem
 tratamento de 401) e **a pesquisa sem acentos** (com o escape do `%`/`_`), **ambos já feitos** — e **começar já o painel web de administração**
-(páginas no próprio backend, Thymeleaf + HTMX; ver "Próximos passos"); depois a **ronda de bugs** e, só então, as **bebidas
+(páginas no próprio backend, Thymeleaf + HTMX; **a fatia 1 — login de administrador e listas de bebidas e produtores com pesquisa e
+filtros de qualidade — já está feita**, ver "Painel web — fatia 1"; as seguintes em "Próximos passos"); depois a **ronda de bugs** e, só então, as **bebidas
 reais por lotes vindas dos afiliados — da ordem de 100 por semana** (o fluxo abaixo, "Como entram as bebidas", foi desenhado
 para ~30 por lote: rever o que muda com 100/semana). A Auchan (na Awin) já foi pedida pelo utilizador; está a explorar outras
 garrafeiras. **Nota de continuidade:** se o limite de uso do utilizador acabar a meio, ele continua noutra conta ou na semana
@@ -41,7 +42,7 @@ seguinte — por isso este `PLANO.md` e os READMEs ficam atualizados a cada pont
 **Git:** duas branches. **`feature/api-endpoints-design`** = PR #1 (backend v1): já fundido/enviado. **`feature/android-app`** =
 criada a partir dela em 2026-09-21 para o Android, com [PR #2](https://github.com/krugidev/AquaVitae/pull/2) aberto (para `main`,
 ainda não fundido) — leva tudo desde a fatia 1a até à fatia 6 (a 5 é o commit `d33d440`, a 6 — com a morada e o filtro por
-produtor — o `ff75aa2`), commitado por área/fatia (ver o próprio PR para a lista). **O ponto "Comprar" é o commit `6ae8ec8` e a sessão renovável o `32b31b1`** (ambos enviados); **a pesquisa sem acentos está feita mas ainda não commitada nem enviada** (até ao commit, `git status` mostra só os ficheiros dela: backend `bebida/PesquisaTexto.kt` (novo) + `PesquisaTextoTest.kt` (novo), `BebidaRepository.kt`, `BebidaService.kt`; Android `data/model/TextoSemAcentos.kt` (novo) + `TextoSemAcentosTest.kt` (novo), `CatalogViewModel.kt`, `EditarPreferenciasViewModel.kt`; e os READMEs, `CLAUDE.md`, `API_ENDPOINTS.md` e este `PLANO.md`). **Ficam de fora dos commits, de propósito** (regra do `CLAUDE.md`): as notas do utilizador —
+produtor — o `ff75aa2`), commitado por área/fatia (ver o próprio PR para a lista). **O ponto "Comprar" é o commit `6ae8ec8` e a sessão renovável o `32b31b1`** (ambos enviados); **a pesquisa sem acentos é o `4d81eef`** (enviado); **a fatia 1 do painel web é o commit seguinte** (`git log`): o pacote `admin/` do backend, os templates e o CSS, o `SecurityConfig` com `@Order(2)`, `build.gradle.kts`, `application.yml`, `HqlQueriesTest` e os testes `admin/*`, mais os docs. **Ficam de fora dos commits, de propósito** (regra do `CLAUDE.md`): as notas do utilizador —
 `android/AQUAVITAESEEDS-NOTES` e, na raiz, `—--------------- DADOS A INSERIR NA.txt`, `REGIÕES A AJUSTAR (...).txt` e
 `NOVOSDADOS.txt` (este último parece um relatório de incidentes sem ligação ao projeto — vale a pena o utilizador confirmar se
 foi parar ali por engano). Ao commitar, usar `git commit <caminhos explícitos>`, nunca `git add -A`. **O utilizador autorizou,
@@ -49,7 +50,7 @@ foi parar ali por engano). Ao commitar, usar `git commit <caminhos explícitos>`
 meio** — por isso cada ponto (Comprar, sessão, pesquisa, painel) termina com um commit e um push. A `main` só tem a landing page
 em `docs/`.
 
-**Ambiente no fim da sessão:** BD de dev migrada até ao patch `15` (`utilizador_refresh_token`); contentor `aquavitae-oracle-xe` a correr; **API a correr** (arrancada em background, em modo normal — token de 60 min, sem overrides —, a servir a pesquisa sem acentos; se reiniciar, ver "Arrancar tudo"), perfil
+**Ambiente no fim da sessão:** BD de dev migrada até ao patch `15` (`utilizador_refresh_token`); contentor `aquavitae-oracle-xe` a correr; **API parada** (foi parada para correr os testes; arrancar com o `bootRun` abaixo), perfil
 `dev` (sem `mailpit`), com as credenciais do Gmail carregadas e já a servir `tipo`/`tanino`/`produtorRegiao`/`temBebida` e, desde a fatia 6, o
 `ratingMedio`/`totalReviews`/`categorias` do produtor — se
 reiniciar, ver `CLAUDE.md`, "Email de recuperação — Gmail", para voltar a carregar `backend/.env.mail` antes do `bootRun`; contentor
@@ -61,10 +62,10 @@ password real); os dados reais dessa conta (caves "Vinhos 2026"/"Gins 2026", 2 f
 ficaram, por reverter só na próxima vez que o utilizador lá entrar. A `demo_user2` **continua com 3 caves de sessões
 anteriores**: "Adega Principal" (id 21, 1 garrafa — Esporão Reserva Tinto 2018 ×1 em guarda), "Tintos de guarda" (id 22, 1
 Barca Velha 2015 em guarda até 2035) e "Brancos frescos" (id 23, vazia) — **ficam na BD de propósito**, dado de teste
-contínuo; termos repostos a `NULL` no fim desta sessão (a fatia 6 também os aceitou ao testar). **Os dados de teste temporários
+contínuo; termos repostos a `NULL` no fim desta sessão, e o papel `Utilizador` reposto depois de a promover temporariamente a `Admin` para testar o painel (a fatia 6 também os aceitou ao testar). **Os dados de teste temporários
 da fatia 6** (história/morada/coordenadas/imagem nos produtores 1 e 8 e 7 bebidas movidas para o 1) **já foram revertidos** — a
 BD de dev ficou como estava (nenhum produtor tem história, morada, coordenadas nem imagem; ver "Android — fatia 6"). Testes:
-backend `.\gradlew.bat test` em `backend/` (**114**, sem BD, corridos nesta sessão); Android
+backend `.\gradlew.bat test` em `backend/` (**138**, sem BD, corridos nesta sessão); Android
 `testDebugUnitTest` (**97**, ver `android/README.md`). Corri o
 `database/verify/rebuild-check.sh` depois do patch `14` (`produtor_morada`): "reconstrução igual à dev". **Landing page (GitHub
 Pages):** já está ativa em `https://krugidev.github.io/AquaVitae/` (fonte `main:/docs`, HTTPS, sem domínio próprio; HTTP 200
@@ -88,11 +89,11 @@ no `CLAUDE.md` o que fazer se o Docker Desktop crashar.
 - **A3. Pesquisa sem acentos — ✅ feito** (ver "Android — Pesquisa sem acentos"): `TRANSLATE(UPPER(coluna), …)` na BD (dentro de um `CAST … AS String`),
   o mesmo mapa aplicado ao termo no Kotlin (`PesquisaTexto`), `LIKE … ESCAPE '!'` a escapar `%`, `_` e `!`; as pesquisas locais de castas da
   app usam `contemSemAcentos()`. Fica em aberto só o alfabeto (o mapa cobre o latim ocidental).
-- **A4. Painel web de administração — a fazer a seguir.** Decidido: **web, dentro do backend** (`/admin`, Thymeleaf + HTMX, sem build de
+- **A4. Painel web de administração — fatia 1 ✅ feita (ver "Painel web — fatia 1"); fatias 2 a 5 por fazer.** Decidido: **web, dentro do backend** (`/admin`, Thymeleaf + HTMX, sem build de
   front-end, atrás de login `ROLE_ADMIN`), **não na app** (única administradora, trabalho de secretária, sem ciclos de
   publicação, e poderes de escrita fora de um app instalado em milhares de telemóveis). **Muda a decisão antiga de "conteúdo só
   por SQL, sem endpoints de escrita"** (atualizar `CLAUDE.md`/`API_ENDPOINTS.md` quando a 1.ª escrita entrar). Fatias:
-  (1) base — login de administrador e listas com pesquisa e filtros de qualidade ("sem imagem", "sem produtor", "sem
+  (1) ✅ base — login de administrador e listas com pesquisa e filtros de qualidade ("sem imagem", "sem produtor", "sem
   atributos": o script de verificação do catálogo aprovado, agora como ecrã); (2) **produtores** — formulário completo (país e
   região em listas, morada, coordenadas, história, visitas, imagem); (3) **bebidas** — formulário por categoria (vinho com
   castas e %; as outras só com os campos gerais até haver subtypes), EAN validado, imagem e links de compra (retalhista, URL
@@ -272,6 +273,9 @@ domain" nas definições do Pages** (aconteceu por engano uma vez e desviou o si
 - **Pesquisa sem acentos (2026-09-24)** — "esporao"/"meao"/"beirao" passaram a encontrar "Esporão"/"Meão"/"Beirão" (nome da bebida, do produtor e
   das castas), e um `%`/`_` escrito na pesquisa deixou de ser um curinga do `LIKE`. Backend `PesquisaTexto` + `TRANSLATE` na query; app
   `String.contemSemAcentos()` nas pesquisas locais de castas. Ver "Android — Pesquisa sem acentos", em "Em curso".
+- **Painel web de administração — fatia 1 (2026-09-24)** — `/admin` no próprio backend (Thymeleaf + htmx): login de administrador (sessão +
+  CSRF, cadeia de segurança própria), painel com totais e "qualidade do catálogo", e listas de bebidas e produtores com pesquisa (sem
+  acentos; a das bebidas também por EAN), filtros de qualidade, ordenação e paginação. Só lê. Ver "Painel web — fatia 1", em "Em curso".
 - Os restantes ecrãs (`detail`, `reviews`) continuam os placeholders do esqueleto (esqueleto morto, por limpar).
 
 ## Em curso 🔜
@@ -931,6 +935,47 @@ catálogo, "Editar preferências"). **+5 testes** (97 no total).
 `!` → 0 resultados; espaços nas pontas ignorados; sem texto → as 16 bebidas.
 
 **Em aberto:** letras fora do latim ocidental ("ł", "ő", "ž") não se normalizam; a pesquisa é "contém", sem tolerância a gralhas nem relevância.
+
+### Painel web — fatia 1: base e listas (feita e validada ao vivo, 2026-09-24)
+
+Pedido pelo utilizador ("acho que o painel web se quiseres já se pode ir fazendo também… pelo menos para ter pronto a inserir
+posteriormente"). Decisão de desenho aprovada antes (2026-09-24): **web, dentro do backend**, não na app. Contrato completo em
+`backend/API_ENDPOINTS.md`, "Painel de administração web"; regras do código em `CLAUDE.md`. Aqui o resumo.
+
+**O que existe:** `GET /admin` (totais + "qualidade do catálogo": quantas bebidas/produtores ainda falham cada critério, cada linha
+abre a lista já filtrada), `GET /admin/bebidas` e `GET /admin/produtores` (pesquisa que ignora acentos — as bebidas também por EAN —,
+filtros de qualidade, ordenação, 25 por página; com o htmx a lista atualiza-se enquanto se escreve e o link do "regresso" funciona),
+login/logout por formulário. **Só lê** — a 1.ª escrita (fatia 2) é a que reverte a regra "conteúdo só por SQL".
+
+**Peças:** `pt.aquavitae.api.admin` — `AdminSecurityConfig` (cadeia `@Order(1)` só para `/admin/**` e `/webjars/**`: sessão, CSRF,
+CSP sem scripts/estilos embutidos, cookie `HttpOnly` + `SameSite=Strict`; a da API passou a `@Order(2)`), `AdminUserDetailsService`
+(só o papel `Admin`; conta sem o papel = mesmo erro que password errada), `AdminRepositories` (queries com projeção e `countQuery`),
+`AdminCatalogoService`, `AdminControllers`, `AdminModelos` (filtros, linhas, "por resolver"); templates em `resources/templates/admin/`
+(`layout`, `login`, `painel`, `bebidas`, `produtores`); `static/admin/css/admin.css`; htmx 2.0.11 do webjar (`build.gradle.kts`:
+`spring-boot-starter-thymeleaf`, `htmx.org`, `webjars-locator-lite`); sessão em `application.yml` (`server.servlet.session`).
+
+**Testes:** +24 (138 no total) — `AdminWebTest` (contexto completo sem BD, `MockMvc`: redireciona para o login sem sessão, o login traz o
+CSRF, o htmx do webjar abre sem sessão, a API continua a dar 401 e não redireciona, um `Utilizador` recebe 403, as páginas desenham-se
+de verdade com dados fixos, o bloco vs. a página inteira, o `HX-Redirect` com a sessão expirada), `AdminUserDetailsServiceTest` e
+`AdminModelosTest`; o `HqlQueriesTest` passou a validar também as `countQuery`.
+
+**Validado ao vivo** (API + Oracle, conta `demo2` promovida a `Admin` e reposta): login por email e por username (maiúsculas), password
+errada e conta inexistente → `?erro`, conta sem o papel → `?erro`, sem CSRF → 403, logout, a API (`/api/**`) intacta (401 sem token; token de
+Admin abre `/api/admin/**`); os totais do painel **batem certo com SQL direto** (16 bebidas, 15 produtores, 14 sem link ativo, 2 produtores
+sem região…); pesquisa "esporao"/"Esporão"/"Vale Meão"/casta/`%`/`_`; cada filtro e ordenação; **paginação com 46 bebidas** (25 + 21,
+"Seguinte" preserva os filtros, uma página a mais volta à última) — os dados de teste foram apagados e o identity reposto. **Visto no browser**
+(o painel do browser mostrou um instantâneo estático das páginas autenticadas — não se escreveu nenhuma password num campo).
+
+**Em aberto:**
+- **O htmx nunca correu num browser a sério** (a pesquisa enquanto se escreve, a troca do bloco, o histórico): só se testou o lado do
+  servidor (cabeçalhos e blocos) — o utilizador deve abrir `/admin` com uma conta `Admin` e escrever na pesquisa.
+- **Limite de tentativas de login** e restrição por IP/proxy antes de expor o `/admin` à internet.
+- O critério "atributos" só existe para o vinho (as outras categorias não têm entidade no backend); ordenar por nome usa a ordem binária do
+  Oracle (uma inicial com acento fica no fim); as imagens só aparecem em `https://` (CSP).
+- **Ter uma conta `Admin`** é um `UPDATE` por SQL (em `API_ENDPOINTS.md`): o utilizador ainda não tem uma.
+
+**Próximas fatias:** (2) formulário de produtores (país e região em listas, morada, coordenadas, história, visitas, imagem) — é aqui que se
+reescreve a regra do `CLAUDE.md`; (3) bebidas por categoria + links de compra; (4) importador de feed (só com um feed real); (5) rotinas.
 
 ### Desenho dos endpoints (concluído, 2026-09-17)
 

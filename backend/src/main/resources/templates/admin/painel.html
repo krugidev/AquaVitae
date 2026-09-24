@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html th:replace="~{admin/layout :: pagina('Painel', 'painel', ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<body>
+<main class="conteudo">
+    <h1>Painel</h1>
+
+    <section class="cartoes" aria-label="Totais">
+        <a class="cartao" th:href="@{/admin/bebidas}"><strong th:text="${resumo.totalBebidas}">0</strong><span>bebidas</span></a>
+        <a class="cartao" th:href="@{/admin/produtores}"><strong th:text="${resumo.totalProdutores}">0</strong><span>produtores</span></a>
+        <div class="cartao"><strong th:text="${resumo.linksAtivos}">0</strong><span>links de compra ativos</span></div>
+        <div class="cartao" th:classappend="${resumo.linksInativos > 0} ? 'aviso'"><strong th:text="${resumo.linksInativos}">0</strong><span>links desativados</span></div>
+        <div class="cartao"><strong th:text="${resumo.totalUtilizadores}">0</strong><span>utilizadores</span></div>
+    </section>
+
+    <section class="quadro">
+        <h2>Qualidade do catálogo · bebidas</h2>
+        <p class="ajuda">O que ainda falta preencher. Cada linha abre a lista já filtrada.</p>
+        <ul class="qualidade">
+            <li th:each="c : ${resumo.problemasBebidas}">
+                <a th:href="@{/admin/bebidas(qualidade=${c.codigo})}">
+                    <span th:text="${c.rotulo}">Sem imagem</span>
+                    <b th:classappend="${c.total == 0} ? 'ok' : 'aviso'" th:text="${c.total == 0} ? '✓' : ${c.total}">0</b>
+                </a>
+            </li>
+        </ul>
+    </section>
+
+    <section class="quadro">
+        <h2>Qualidade do catálogo · produtores</h2>
+        <ul class="qualidade">
+            <li th:each="c : ${resumo.problemasProdutores}">
+                <a th:href="@{/admin/produtores(qualidade=${c.codigo})}">
+                    <span th:text="${c.rotulo}">Sem imagem</span>
+                    <b th:classappend="${c.total == 0} ? 'ok' : 'aviso'" th:text="${c.total == 0} ? '✓' : ${c.total}">0</b>
+                </a>
+            </li>
+        </ul>
+    </section>
+</main>
+</body>
+</html>

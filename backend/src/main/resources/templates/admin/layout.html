@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<!-- A moldura de todas as páginas do painel: cada página chama `pagina(titulo, ativo, conteudo)` com o seu <main>. -->
+<html lang="pt-PT" xmlns:th="http://www.thymeleaf.org" th:fragment="pagina(titulo, ativo, conteudo)">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <!-- Sem estilos embutidos nem eval (a política de segurança do painel não os permite). -->
+    <meta name="htmx-config" content='{"includeIndicatorStyles": false, "allowEval": false}'>
+    <title th:text="|${titulo} · AquaVitae Admin|">AquaVitae Admin</title>
+    <link rel="stylesheet" th:href="@{/admin/css/admin.css}">
+    <script th:src="@{/webjars/htmx.org/dist/htmx.min.js}" defer></script>
+</head>
+<body>
+<header class="topo">
+    <a class="marca" th:href="@{/admin}">AQUA<span>VITAE</span> <small>Admin</small></a>
+    <nav class="menu" aria-label="Principal">
+        <a th:href="@{/admin}" th:classappend="${ativo == 'painel'} ? 'ativo'">Painel</a>
+        <a th:href="@{/admin/bebidas}" th:classappend="${ativo == 'bebidas'} ? 'ativo'">Bebidas</a>
+        <a th:href="@{/admin/produtores}" th:classappend="${ativo == 'produtores'} ? 'ativo'">Produtores</a>
+    </nav>
+    <form class="sair" th:action="@{/admin/logout}" method="post">
+        <button type="submit">Terminar sessão</button>
+    </form>
+</header>
+<th:block th:replace="${conteudo}"/>
+</body>
+</html>

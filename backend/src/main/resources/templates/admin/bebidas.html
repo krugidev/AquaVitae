@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html th:replace="~{admin/layout :: pagina('Bebidas', 'bebidas', ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<body>
+<main class="conteudo">
+    <h1>Bebidas</h1>
+
+    <!-- Sem JavaScript é um formulário GET normal (botão "Filtrar"); com o htmx a lista atualiza-se enquanto se escreve. -->
+    <form class="filtros" action="/admin/bebidas" method="get"
+          hx-get="/admin/bebidas" hx-trigger="input delay:300ms, change" hx-target="#resultado" hx-swap="outerHTML"
+          hx-push-url="true" hx-sync="this:replace" hx-indicator="#a-carregar">
+        <input type="search" name="q" th:value="${q}" placeholder="Pesquisar por nome, produtor, casta ou EAN…" autocomplete="off" aria-label="Pesquisar">
+        <select name="categoria" aria-label="Categoria">
+            <option value="">Todas as categorias</option>
+            <option th:each="c : ${categorias}" th:value="${c.id}" th:text="${c.value}" th:selected="${categoriaId != null and categoriaId == c.id}">Vinho</option>
+        </select>
+        <select name="qualidade" aria-label="Qualidade">
+            <option value="">Sem filtro de qualidade</option>
+            <option th:each="qq : ${qualidades}" th:value="${qq.codigo}" th:text="${qq.rotulo}" th:selected="${qualidade == qq.codigo}">Sem imagem</option>
+        </select>
+        <select name="ordem" aria-label="Ordenação">
+            <option th:each="o : ${ordens}" th:value="${o.codigo}" th:text="${o.rotulo}" th:selected="${ordem == o.codigo}">Mais recentes</option>
+        </select>
+        <button type="submit" class="botao">Filtrar</button>
+        <span id="a-carregar" class="a-carregar" aria-live="polite">a carregar…</span>
+    </form>
+
+    <section id="resultado" th:fragment="resultado">
+        <p class="contagem"><b th:text="${resultados.total}">0</b> <span th:text="${resultados.total == 1} ? 'bebida' : 'bebidas'">bebidas</span></p>
+
+        <div class="tabela-caixa" th:if="${!resultados.itens.empty}">
+            <table>
+                <thead>
+                <tr><th class="col-img"></th><th>Bebida</th><th>Categoria</th><th>Produtor</th><th>País</th><th>EAN</th><th class="num">Links</th><th>Por resolver</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="b : ${resultados.itens}">
+                    <td class="col-img">
+                        <img th:if="${b.imagemUrl != null}" th:src="${b.imagemUrl}" alt="" width="36" height="48" loading="lazy" referrerpolicy="no-referrer">
+                    </td>
+                    <td>
+                        <span class="nome" th:text="${b.nome} ?: '(sem nome)'">Esporão Reserva Tinto</span>
+                        <small class="detalhe" th:if="${!#strings.isEmpty(b.detalhes)}" th:text="${b.detalhes}">2018 · 14,5% · 750 ml</small>
+                    </td>
+                    <td th:text="${b.categoria} ?: '—'">Vinho</td>
+                    <td th:text="${b.produtor} ?: '—'">Herdade do Esporão</td>
+                    <td th:text="${b.pais} ?: '—'">Portugal</td>
+                    <td class="mono" th:text="${b.ean} ?: '—'">5601234567890</td>
+                    <td class="num" th:classappend="${b.linksAtivos == 0} ? 'aviso'" th:text="${b.linksAtivos}">1</td>
+                    <td>
+                        <span class="etiqueta" th:each="p : ${b.problemas}" th:text="${p}">sem imagem</span>
+                        <span class="ok" th:if="${b.problemas.empty}">✓</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="vazio" th:if="${resultados.itens.empty}">Nenhuma bebida com estes filtros.</p>
+
+        <nav class="paginacao" th:if="${resultados.totalPaginas > 1}" aria-label="Páginas"
+             hx-boost="true" hx-target="#resultado" hx-swap="outerHTML">
+            <a th:if="${resultados.temAnterior}" rel="prev"
+               th:href="@{/admin/bebidas(q=${q},categoria=${categoriaId},qualidade=${qualidade},ordem=${ordem},pagina=${resultados.pagina - 1})}">‹ Anterior</a>
+            <span>Página <b th:text="${resultados.paginaParaMostrar}">1</b> de <span th:text="${resultados.totalPaginas}">3</span></span>
+            <a th:if="${resultados.temSeguinte}" rel="next"
+               th:href="@{/admin/bebidas(q=${q},categoria=${categoriaId},qualidade=${qualidade},ordem=${ordem},pagina=${resultados.pagina + 1})}">Seguinte ›</a>
+        </nav>
+    </section>
+</main>
+</body>
+</html>

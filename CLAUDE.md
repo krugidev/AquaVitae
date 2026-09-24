@@ -13,7 +13,7 @@ cada ecrã** em [`android/design/README.md`](android/design/README.md) — ler o
 ```
 briefing/    briefing de produto + schema DBML original
 database/    Oracle XE (Docker) — DDL, triggers, seed
-backend/     API Spring Boot + Kotlin (recursos estáticos, ex. avatares, em src/main/resources/static)
+backend/     API Spring Boot + Kotlin (recursos estáticos, ex. avatares, em src/main/resources/static) + painel de administração web em /admin
 android/     app Android (Compose + MVVM + Hilt) — construída por fatias (feitas: 1 a 6, até à página do produtor; ver android/README.md)
 android/design/   prints do Figma + especificação por ecrã (o que foi pedido, estado, diferenças)
 docs/        landing page (GitHub Pages, só na branch main) — o URL foi enviado à Awin, não mexer no repo/domínio
@@ -64,7 +64,26 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
 - **Tabelas de conteúdo geridas pelo admin** (`bebida`, `produtor`, `retalhista`, `bebida_link_compra`,
   todos os lookups incluindo `casta`) **não têm endpoints de escrita na API** — só leitura. Inserção/edição
   é direta via SQL Developer ou `sqlplus` (decisão do briefing, secção 4). Só a API escreve dados gerados
-  pelo utilizador (conta, reviews, favoritos, wishlist, cave, "provadas", preferências).
+  pelo utilizador (conta, reviews, favoritos, wishlist, cave, "provadas", preferências). **Vai mudar com o painel web `/admin`
+  (abaixo): a partir da fatia 2 (formulário de produtores) o conteúdo passa a poder editar-se por lá — nesse dia, reescrever esta
+  regra.** Até lá o painel só lê.
+- **Painel de administração web (2026-09-24, fatia 1: base e listas):** páginas HTML no próprio backend (`admin/` em
+  `pt.aquavitae.api`, templates em `src/main/resources/templates/admin/`, CSS em `static/admin/css/`), **Thymeleaf + htmx** (o htmx vem
+  do webjar `org.webjars.npm:htmx.org`, servido em `/webjars/htmx.org/dist/htmx.min.js`; sem CDN nem build de front-end). Tem **a sua
+  própria `SecurityFilterChain` (`@Order(1)`, sessão + CSRF + login por formulário; a da API passou a `@Order(2)`)** e só deixa entrar
+  o papel `Admin` (uma conta sem esse papel leva o mesmo "credenciais inválidas" de uma password errada). Contrato, filtros de
+  qualidade, cabeçalhos do htmx e segurança em `backend/API_ENDPOINTS.md`, "Painel de administração web". **Regras deste código:**
+  (1) listas por **queries com projeção** (`SELECT new ...`, sem entidades), com `countQuery` explícita — o `HqlQueriesTest` valida
+  as duas; um critério novo = um código em `QualidadeBebida`/`QualidadeProdutor` **e** o ramo `:qualidade = '<código>'` no HQL;
+  (2) **no Oracle `''` é NULL**: para "texto em branco" usar `TRIM(x) IS NULL`, nunca `TRIM(x) = ''` (nunca é verdadeiro);
+  (3) a página inteira vs. só o bloco `resultado` decide-se pelo `HX-Request` (e o regresso pelo histórico, `HX-History-Restore-Request`,
+  quer a página inteira) — as respostas levam `Vary: HX-Request`; (4) a CSP não permite estilos nem scripts embutidos: o htmx corre com
+  `includeIndicatorStyles`/`allowEval` desligados (meta `htmx-config` no `layout.html`) e o CSS do indicador está no `admin.css`; (5) os
+  formulários de escrita (fatias 2+) usam `th:action` (leva o token CSRF sozinho) e, nos pedidos do htmx, o token vai em `hx-headers`.
+  **Testes:** `AdminWebTest` (contexto completo sem BD, `MockMvc`, serviço substituído por um falso com **transação de faz-de-conta** —
+  o Spring põe um proxy `@Transactional` também à volta do falso e sem isto tenta abrir ligação ao Oracle) apanha erros de template,
+  de segurança e de cabeçalhos; as queries só se validam ao vivo. **Falta:** limite de tentativas de login (antes de expor o
+  `/admin` à internet).
 - **Catálogo curado vs. ofertas de afiliados:** os atributos de uma bebida (corpo, castas, botânicos, ...) são
   sempre do catálogo, curados à mão; dos afiliados só vêm as ofertas (`bebida_link_compra`: preço, link,
   retalhista). Não estamos presos a uma rede (`retalhista_rede_afiliados` é só uma etiqueta; a Awin é a 1.ª e uma bebida
@@ -350,7 +369,12 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
   não rastreados; usar `git add` com caminhos explícitos, não `git add -A`).
 - **Testes:** os nomes de teste em backticks não podem conter `:` nem `.` (a JVM recusa). Não há testes de
   services/controllers com BD: valida-se ao vivo (ver abaixo). `HqlQueriesTest` e `ContextoArrancaTest` apanham sem BD
-  erros de HQL, de mapeamento e de injeção — correr sempre `--rerun-tasks` depois de criar ficheiros novos.
+  erros de HQL, de mapeamento e de injeção — correr sempre `--rerun-tasks` depois de criar ficheiros novos. **"Cannot access output
+  property 'destinationDirectory' … NoSuchFileException" no `compileTestKotlin`** = duas sessões do daemon Kotlin a competir:
+  `.\gradlew.bat --stop` e repetir (a compilação do `main` até já passou pelo "fallback sem daemon").
+- **Kotlin: os comentários `/* */` aninham** (apanhado 2026-09-24): escrever `/admin/**` (ou qualquer `/**`) dentro de um bloco
+  KDoc abre um comentário novo e o compilador queixa-se de "Unclosed comment" numa linha muito depois — nos KDoc escrever `/admin/...`;
+  os `//` não têm o problema.
 - **Versões:** ao escolher/atualizar versões de Gradle/Kotlin/Spring Boot, consulta a versão atual real em vez de
   usar um número de memória — `services.gradle.org/versions/current` para o Gradle,
   `repo1.maven.org/maven2/.../maven-metadata.xml` para bibliotecas/plugins Maven. Já aconteceu tentar usar
@@ -368,7 +392,16 @@ cd ..\backend; .\gradlew.bat bootRun                                            
 Conta de teste já existente na BD de dev: `demo2@aquavitae.local` / `password123` (papel `Utilizador`; username `demo_user2`). **Ao testar
 o onboarding cria-se uma conta descartável no emulador (só o registo passa pelo onboarding) e apaga-se no fim** (perfil, preferências e
 a conta, por SQL). Para
-testar endpoints de admin, promover temporariamente por SQL (`utilizador_role_id` → o de `Admin`) e reverter depois.
+testar endpoints de admin **ou o painel `/admin`**, promover temporariamente por SQL (`utilizador_role_id` → o de `Admin`) e reverter
+depois (ver `API_ENDPOINTS.md`, "Painel de administração web"); cada login da API deixa uma linha em `utilizador_refresh_token`
+(`DELETE ... WHERE utilizador_id = 22` no fim). **Testar o painel ao vivo sem browser:** `curl -c/-b jar.txt` — `GET /admin/login`,
+extrair o `_csrf` do HTML e `POST /admin/login` (`identificador`, `password`, `_csrf`) → `302 /admin`; depois `GET` das páginas com o
+cookie (`-H "HX-Request: true"` para o bloco). **`curl.exe` estraga acentos em argumentos** (a linha de comandos do Windows é ANSI: "Vale
+Meão" dava 0 resultados e "Vale%20Me%C3%A3o" 1): nas pesquisas com acentos, escrevê-los já em percentagem (UTF-8). Para **ver** as
+páginas autenticadas no painel do browser sem pôr a password num campo: gravar o HTML com o `curl` e servi-lo de
+`backend/build/resources/main/static/admin/css/` (com o `<link>` do CSS, não estilos embutidos — a CSP bloqueia-os; apagar depois).
+**Paginação com dados a sério:** inserir umas 30 bebidas `ZZ Teste NN`, olhar para as páginas, apagá-las e reiniciar o identity
+(`ALTER TABLE bebida MODIFY bebida_id GENERATED BY DEFAULT AS IDENTITY (RESTART START WITH LIMIT VALUE)`).
 
 ## Preferências de trabalho do utilizador
 

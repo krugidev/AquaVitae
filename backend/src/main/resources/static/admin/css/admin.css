@@ -1,0 +1,91 @@
+/* Painel de administração AquaVitae — sem framework, na paleta da app (grená sobre branco). */
+:root {
+    --grena: #8f321d;
+    --grena-claro: #f6e9e5;
+    --tinta: #1b1714;
+    --suave: #6d5a5f;
+    --linha: #e6dcd9;
+    --fundo: #faf8f7;
+    --aviso: #b3261e;
+    --ok: #2e7d4f;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: var(--tinta);
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--fundo); line-height: 1.4; }
+a { color: var(--grena); }
+h1 { font-size: 1.5rem; margin: 0 0 1rem; }
+h2 { font-size: 1.05rem; margin: 0 0 .5rem; }
+
+/* Topo */
+.topo { display: flex; align-items: center; gap: 1.5rem; padding: .75rem 1.5rem; background: #fff; border-bottom: 1px solid var(--linha); }
+.marca { font-weight: 700; letter-spacing: .12em; text-decoration: none; color: var(--tinta); }
+.marca span { color: var(--grena); }
+.marca small { font-weight: 400; letter-spacing: 0; color: var(--suave); margin-left: .35rem; }
+.menu { display: flex; gap: 1rem; flex: 1; }
+.menu a { text-decoration: none; color: var(--suave); padding: .25rem .1rem; border-bottom: 2px solid transparent; }
+.menu a.ativo { color: var(--grena); border-bottom-color: var(--grena); }
+.sair button { background: none; border: 0; color: var(--suave); cursor: pointer; font: inherit; }
+.sair button:hover { color: var(--grena); text-decoration: underline; }
+
+.conteudo { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+
+/* Painel */
+.cartoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: .75rem; margin-bottom: 1.5rem; }
+.cartao { display: flex; flex-direction: column; background: #fff; border: 1px solid var(--linha); border-radius: 10px; padding: .9rem 1rem; text-decoration: none; color: inherit; }
+a.cartao:hover { border-color: var(--grena); }
+.cartao strong { font-size: 1.6rem; }
+.cartao span { color: var(--suave); font-size: .9rem; }
+.cartao.aviso strong { color: var(--aviso); }
+.quadro { background: #fff; border: 1px solid var(--linha); border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+.ajuda { color: var(--suave); font-size: .9rem; margin: 0 0 .5rem; }
+.qualidade { list-style: none; margin: 0; padding: 0; }
+.qualidade a { display: flex; justify-content: space-between; padding: .5rem 0; border-top: 1px solid var(--linha); text-decoration: none; color: var(--tinta); }
+.qualidade li:first-child a { border-top: 0; }
+.qualidade a:hover span { color: var(--grena); }
+b.aviso { color: var(--aviso); }
+b.ok, span.ok { color: var(--ok); }
+
+/* Listas */
+.filtros { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-bottom: 1rem; }
+.filtros input[type=search] { flex: 1 1 260px; }
+input, select { font: inherit; padding: .5rem .65rem; border: 1px solid var(--linha); border-radius: 8px; background: #fff; color: inherit; }
+input:focus, select:focus { outline: 2px solid var(--grena-claro); border-color: var(--grena); }
+.botao { font: inherit; padding: .5rem 1rem; border: 0; border-radius: 8px; background: var(--grena); color: #fff; cursor: pointer; }
+.botao:hover { filter: brightness(1.08); }
+/* O indicador do htmx (o htmx não injeta estilos: ver a meta htmx-config no layout). */
+.a-carregar { display: none; color: var(--suave); font-size: .9rem; }
+.a-carregar.htmx-request, .htmx-request .a-carregar { display: inline; }
+.contagem { color: var(--suave); margin: 0 0 .5rem; }
+.tabela-caixa { overflow-x: auto; background: #fff; border: 1px solid var(--linha); border-radius: 10px; }
+table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+th, td { text-align: left; padding: .55rem .75rem; border-top: 1px solid var(--linha); vertical-align: middle; }
+thead th { border-top: 0; color: var(--suave); font-weight: 600; font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; background: #fdfbfa; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+td.aviso { color: var(--aviso); font-weight: 600; }
+.mono { font-family: ui-monospace, Consolas, monospace; font-size: .85rem; }
+.col-img { width: 3.5rem; }
+.col-img img { display: block; object-fit: contain; background: #f3efee; border-radius: 4px; }
+.nome { display: block; font-weight: 600; }
+.detalhe { color: var(--suave); }
+.etiqueta { display: inline-block; margin: 0 .25rem .2rem 0; padding: .05rem .5rem; border-radius: 999px; background: var(--grena-claro); color: var(--grena); font-size: .78rem; white-space: nowrap; }
+.vazio { padding: 2rem; text-align: center; color: var(--suave); background: #fff; border: 1px dashed var(--linha); border-radius: 10px; }
+.paginacao { display: flex; gap: 1rem; justify-content: center; align-items: center; margin-top: 1rem; }
+
+/* Login */
+.pagina-login { display: grid; place-items: center; min-height: 100vh; }
+.caixa-login { width: min(360px, 92vw); background: #fff; border: 1px solid var(--linha); border-radius: 12px; padding: 1.75rem; }
+.caixa-login h1 { text-align: center; letter-spacing: .14em; margin-bottom: .1rem; }
+.caixa-login h1 span { color: var(--grena); }
+.subtitulo { text-align: center; color: var(--suave); margin: 0 0 1.25rem; }
+.caixa-login label { display: block; font-size: .85rem; color: var(--suave); margin: .75rem 0 .25rem; }
+.caixa-login input { width: 100%; }
+.caixa-login .botao { width: 100%; margin-top: 1.25rem; }
+.mensagem { padding: .5rem .75rem; border-radius: 8px; margin: 0 0 .75rem; font-size: .9rem; }
+.mensagem.erro { background: #fbe9e7; color: var(--aviso); }
+.mensagem.info { background: #e8f3ec; color: var(--ok); }
+
+@media (max-width: 720px) {
+    .topo { flex-wrap: wrap; gap: .5rem 1rem; padding: .75rem 1rem; }
+    .conteudo { padding: 1rem; }
+}

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html th:replace="~{admin/layout :: pagina('Produtores', 'produtores', ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<body>
+<main class="conteudo">
+    <h1>Produtores</h1>
+
+    <form class="filtros" action="/admin/produtores" method="get"
+          hx-get="/admin/produtores" hx-trigger="input delay:300ms, change" hx-target="#resultado" hx-swap="outerHTML"
+          hx-push-url="true" hx-sync="this:replace" hx-indicator="#a-carregar">
+        <input type="search" name="q" th:value="${q}" placeholder="Pesquisar por nome…" autocomplete="off" aria-label="Pesquisar">
+        <select name="qualidade" aria-label="Qualidade">
+            <option value="">Sem filtro de qualidade</option>
+            <option th:each="qq : ${qualidades}" th:value="${qq.codigo}" th:text="${qq.rotulo}" th:selected="${qualidade == qq.codigo}">Sem imagem</option>
+        </select>
+        <select name="ordem" aria-label="Ordenação">
+            <option th:each="o : ${ordens}" th:value="${o.codigo}" th:text="${o.rotulo}" th:selected="${ordem == o.codigo}">Nome</option>
+        </select>
+        <button type="submit" class="botao">Filtrar</button>
+        <span id="a-carregar" class="a-carregar" aria-live="polite">a carregar…</span>
+    </form>
+
+    <section id="resultado" th:fragment="resultado">
+        <p class="contagem"><b th:text="${resultados.total}">0</b> <span th:text="${resultados.total == 1} ? 'produtor' : 'produtores'">produtores</span></p>
+
+        <div class="tabela-caixa" th:if="${!resultados.itens.empty}">
+            <table>
+                <thead>
+                <tr><th class="col-img"></th><th>Produtor</th><th>País</th><th>Região</th><th>Morada</th><th class="num">Bebidas</th><th>Por resolver</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="p : ${resultados.itens}">
+                    <td class="col-img">
+                        <img th:if="${p.imagemUrl != null}" th:src="${p.imagemUrl}" alt="" width="48" height="36" loading="lazy" referrerpolicy="no-referrer">
+                    </td>
+                    <td>
+                        <span class="nome" th:text="${p.nome} ?: '(sem nome)'">Herdade do Esporão</span>
+                        <small class="detalhe" th:if="${p.anoFundacao != null}" th:text="|desde ${p.anoFundacao}|">desde 1973</small>
+                    </td>
+                    <td th:text="${p.pais} ?: '—'">Portugal</td>
+                    <td th:text="${p.regiao} ?: '—'">Alentejo</td>
+                    <td th:text="${p.morada} ?: '—'">Reguengos de Monsaraz</td>
+                    <td class="num" th:classappend="${p.totalBebidas == 0} ? 'aviso'" th:text="${p.totalBebidas}">3</td>
+                    <td>
+                        <span class="etiqueta" th:each="x : ${p.problemas}" th:text="${x}">sem imagem</span>
+                        <span class="ok" th:if="${p.problemas.empty}">✓</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="vazio" th:if="${resultados.itens.empty}">Nenhum produtor com estes filtros.</p>
+
+        <nav class="paginacao" th:if="${resultados.totalPaginas > 1}" aria-label="Páginas"
+             hx-boost="true" hx-target="#resultado" hx-swap="outerHTML">
+            <a th:if="${resultados.temAnterior}" rel="prev"
+               th:href="@{/admin/produtores(q=${q},qualidade=${qualidade},ordem=${ordem},pagina=${resultados.pagina - 1})}">‹ Anterior</a>
+            <span>Página <b th:text="${resultados.paginaParaMostrar}">1</b> de <span th:text="${resultados.totalPaginas}">3</span></span>
+            <a th:if="${resultados.temSeguinte}" rel="next"
+               th:href="@{/admin/produtores(q=${q},qualidade=${qualidade},ordem=${ordem},pagina=${resultados.pagina + 1})}">Seguinte ›</a>
+        </nav>
+    </section>
+</main>
+</body>
+</html>

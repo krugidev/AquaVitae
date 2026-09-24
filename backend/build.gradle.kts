@@ -28,6 +28,12 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     // Envio de email por SMTP (código de recuperação de password); sem SPRING_MAIL_HOST não há servidor e o envio fica em log (só em dev)
     implementation("org.springframework.boot:spring-boot-starter-mail")
+    // Painel de administração web (/admin): páginas no servidor com Thymeleaf + HTMX (servido do webjar, sem CDN nem build de
+    // front-end). O `locator` deixa referenciar o ficheiro sem a versão no URL (/webjars/htmx.org/dist/htmx.min.js).
+    // htmx 2.0.x = a linha estável (o `latest` do npm); a 4.x ainda é `next`.
+    implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
+    implementation("org.webjars.npm:htmx.org:2.0.11")
+    implementation("org.webjars:webjars-locator-lite:1.1.5")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
 
