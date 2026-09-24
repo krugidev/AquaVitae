@@ -92,12 +92,16 @@ private val FormaFolha = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
  * ver [pt.aquavitae.android.ui.components.BebidaCard]) num cartão de bebida, em qualquer sítio da app — catálogo,
  * caves, favoritos, wishlist. Duas tabs: "Detalhes" (atributos, produtor) e "Reviews" (a tua + as da comunidade).
  * `onAdicionarACave` é chamado ao tocar no "+" — o popup de "Adicionar à cave" propriamente dito é outro ecrã.
+ * `onVerProdutor` (fatia 6): tornar o cartão do produtor, no fim da tab "Detalhes", um atalho para a página dele — o
+ * popup fecha-se e o ecrã que o abriu navega. `null` (o valor por omissão) tira o atalho: nas páginas do próprio
+ * produtor não faz sentido ir "ver o produtor" onde já estamos.
  */
 @Composable
 fun BebidaDetalheSheet(
     bebidaId: Long,
     onDismiss: () -> Unit,
     onAdicionarACave: (BebidaDetail) -> Unit,
+    onVerProdutor: ((Long) -> Unit)? = null,
     viewModel: BebidaDetalheViewModel = hiltViewModel(key = "bebida-detalhe-$bebidaId"),
 ) {
     LaunchedEffect(bebidaId) { viewModel.carregar(bebidaId) }
@@ -127,7 +131,7 @@ fun BebidaDetalheSheet(
                     is BebidaDetalheUiState.Error -> Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
                         Text(text = estado.message, style = AquaText.Error, textAlign = TextAlign.Center)
                     }
-                    is BebidaDetalheUiState.Ready -> BebidaDetalheConteudo(estado, viewModel, onDismiss, onAdicionarACave)
+                    is BebidaDetalheUiState.Ready -> BebidaDetalheConteudo(estado, viewModel, onDismiss, onAdicionarACave, onVerProdutor)
                 }
             }
         }
@@ -140,8 +144,11 @@ private fun ColumnScope.BebidaDetalheConteudo(
     viewModel: BebidaDetalheViewModel,
     onDismiss: () -> Unit,
     onAdicionarACave: (BebidaDetail) -> Unit,
+    onVerProdutor: ((Long) -> Unit)?,
 ) {
     val bebida = state.bebida
+    // Fecha o popup antes de navegar, senão ele ficaria por cima da página do produtor.
+    val verProdutor: ((Long) -> Unit)? = onVerProdutor?.let { ver -> { id: Long -> onDismiss(); ver(id) } }
     Box(Modifier.fillMaxWidth().padding(top = 4.dp)) {
         IconButton(onClick = onDismiss, modifier = Modifier.align(Alignment.TopEnd).padding(end = 8.dp)) {
             Icon(Icons.Filled.Close, contentDescription = "Fechar", tint = MutedInk)
@@ -155,7 +162,7 @@ private fun ColumnScope.BebidaDetalheConteudo(
         TabsDetalhe(state, viewModel)
         Spacer(Modifier.height(16.dp))
         when (state.tab) {
-            DetalheTab.DETALHES -> TabDetalhes(bebida)
+            DetalheTab.DETALHES -> TabDetalhes(bebida, verProdutor)
             DetalheTab.REVIEWS -> TabReviews(state, viewModel)
         }
         Spacer(Modifier.height(24.dp))
@@ -258,7 +265,7 @@ private fun AbaTexto(texto: String, selecionado: Boolean, onClick: () -> Unit) {
 // --- Tab "Detalhes" ---
 
 @Composable
-private fun TabDetalhes(bebida: BebidaDetail) {
+private fun TabDetalhes(bebida: BebidaDetail, onVerProdutor: ((Long) -> Unit)?) {
     Column {
         Row(Modifier.fillMaxWidth()) {
             CampoInfo("Teor alcoólico", bebida.teorAlcoolico?.let { String.format(LocalePt, "%.1f%% vol", it) }, Modifier.weight(1f))
@@ -302,7 +309,14 @@ private fun TabDetalhes(bebida: BebidaDetail) {
         val produtor = bebida.produtorResumo
         if (produtor != null) {
             Spacer(Modifier.height(20.dp))
-            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(WineDark).padding(18.dp)) {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(WineDark)
+                    .let { if (onVerProdutor != null) it.clickable { onVerProdutor(produtor.id) } else it }
+                    .padding(18.dp),
+            ) {
                 Text(text = "PRODUTOR", style = AquaText.Footer.copy(color = Color.White.copy(alpha = 0.7f), fontSize = 10.sp))
                 Spacer(Modifier.height(4.dp))
                 Text(text = produtor.nome.orEmpty(), style = AquaText.BebidaNomeSerif.copy(color = Color.White, fontSize = 17.sp))
@@ -313,6 +327,10 @@ private fun TabDetalhes(bebida: BebidaDetail) {
                     if (produtor.permiteVisitas) "recebe visitas" else null,
                 ).joinToString(" · ")
                 Text(text = linha, style = AquaText.Footer.copy(color = Color.White.copy(alpha = 0.85f), fontSize = 11.sp))
+                if (onVerProdutor != null) {
+                    Spacer(Modifier.height(12.dp))
+                    Text(text = "VER PRODUTOR →", style = AquaText.Footer.copy(color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold))
+                }
             }
         }
     }

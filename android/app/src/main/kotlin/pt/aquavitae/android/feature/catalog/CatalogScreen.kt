@@ -23,10 +23,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.FilterList
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -50,6 +50,7 @@ import pt.aquavitae.android.feature.cave.AdicionarACaveSheet
 import pt.aquavitae.android.data.model.CatalogFiltro
 import pt.aquavitae.android.ui.components.BebidaCard
 import pt.aquavitae.android.ui.components.BottomNavContentPadding
+import pt.aquavitae.android.ui.components.ContagemEOrdenacao
 import pt.aquavitae.android.ui.components.LinkText
 import pt.aquavitae.android.ui.components.LoadingDots
 import pt.aquavitae.android.ui.components.PillChip
@@ -63,9 +64,16 @@ import pt.aquavitae.android.ui.theme.RoseBorder
  * Ecrã "Catálogo" (fatia 2b, `android/design/catalogo/`): pesquisa + filtros completos ligados a `GET /api/bebidas`.
  * Chegou-se aqui pela pesquisa/"Ver mais sugestões" da homepage ou pelo separador "Catálogo" da barra inferior — nos
  * dois casos mostra o catálogo todo (sem pré-filtro; um pré-filtro por categoria fica para quando fizer falta).
+ *
+ * **O mesmo ecrã serve o catálogo de um só produtor** (fatia 6, rota `produtor/{id}/catalogo`): a ViewModel lê o id do
+ * argumento de navegação e o ecrã muda de cara — seta de voltar e título do produtor, categorias "Todas" + as dele, sem
+ * barra de navegação por baixo, e sem país/região no popup (ver [FiltrosSheet]). Quem o chama nesse modo passa `onVoltar`.
+ * `onVerProdutor = null` tira o atalho "VER PRODUTOR" do popup de detalhe (não faz sentido no catálogo do próprio produtor).
  */
 @Composable
 fun CatalogScreen(
+    onVerProdutor: ((Long) -> Unit)? = null,
+    onVoltar: (() -> Unit)? = null,
     viewModel: CatalogViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -84,15 +92,21 @@ fun CatalogScreen(
                 Text(text = estado.message, style = AquaText.Error, textAlign = TextAlign.Center)
                 Spacer(Modifier.height(4.dp))
                 LinkText(text = "TENTAR DE NOVO", onClick = viewModel::carregar)
+                if (onVoltar != null) LinkText(text = "VOLTAR", onClick = onVoltar)
             }
 
             is CatalogUiState.Ready -> {
-                CatalogContent(state = estado, viewModel = viewModel, onBebidaClick = { id -> bebidaSelecionadaId = id })
+                CatalogContent(state = estado, viewModel = viewModel, onVoltar = onVoltar, onBebidaClick = { id -> bebidaSelecionadaId = id })
                 if (estado.filtrosAbertos) {
                     FiltrosSheet(state = estado, viewModel = viewModel, onDismiss = viewModel::fecharFiltrosSemAplicar)
                 }
                 bebidaSelecionadaId?.let { id ->
-                    BebidaDetalheSheet(bebidaId = id, onDismiss = { bebidaSelecionadaId = null }, onAdicionarACave = { bebidaParaAdicionarACave = it })
+                    BebidaDetalheSheet(
+                        bebidaId = id,
+                        onDismiss = { bebidaSelecionadaId = null },
+                        onAdicionarACave = { bebidaParaAdicionarACave = it },
+                        onVerProdutor = onVerProdutor,
+                    )
                 }
                 bebidaParaAdicionarACave?.let { bebida ->
                     AdicionarACaveSheet(
@@ -107,23 +121,51 @@ fun CatalogScreen(
 }
 
 @Composable
-private fun CatalogContent(state: CatalogUiState.Ready, viewModel: CatalogViewModel, onBebidaClick: (Long) -> Unit) {
+private fun CatalogContent(state: CatalogUiState.Ready, viewModel: CatalogViewModel, onVoltar: (() -> Unit)?, onBebidaClick: (Long) -> Unit) {
     var busca by remember { mutableStateOf(state.filtro.search.orEmpty()) }
+    val produtor = state.produtor
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 18.dp, bottom = BottomNavContentPadding.calculateBottomPadding()),
+        // Só as abas têm a barra de navegação por baixo; o catálogo de um produtor é uma rota à parte, sem ela.
+        contentPadding = PaddingValues(
+            start = 20.dp,
+            end = 20.dp,
+            top = if (produtor != null) 8.dp else 18.dp,
+            bottom = if (produtor != null) 24.dp else BottomNavContentPadding.calculateBottomPadding(),
+        ),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
+        if (onVoltar != null) {
+            item {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = onVoltar) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar", tint = Burgundy) }
+                }
+            }
+        }
         item {
-            Text(
-                text = buildAnnotatedString {
-                    append("Explora o ")
-                    withStyle(AquaText.SectionSerifAccent.toSpanStyle()) { append("catálogo") }
-                    append(" todo")
-                },
-                style = AquaText.SectionSerif,
-            )
+            if (produtor != null) {
+                Column {
+                    Text(text = "CATÁLOGO DO PRODUTOR", style = AquaText.Footer.copy(fontSize = 10.sp))
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = buildAnnotatedString {
+                            append("Garrafas de ")
+                            withStyle(AquaText.SectionSerifAccent.toSpanStyle()) { append(produtor.nome.orEmpty()) }
+                        },
+                        style = AquaText.SectionSerif,
+                    )
+                }
+            } else {
+                Text(
+                    text = buildAnnotatedString {
+                        append("Explora o ")
+                        withStyle(AquaText.SectionSerifAccent.toSpanStyle()) { append("catálogo") }
+                        append(" todo")
+                    },
+                    style = AquaText.SectionSerif,
+                )
+            }
         }
         item {
             SearchBarComFiltro(
@@ -131,20 +173,35 @@ private fun CatalogContent(state: CatalogUiState.Ready, viewModel: CatalogViewMo
                 onValorChange = { busca = it },
                 onPesquisar = { viewModel.pesquisar(busca) },
                 onFiltroClick = viewModel::abrirFiltros,
+                dica = if (produtor != null) "Pesquisar bebida ou casta..." else "Pesquisar bebida, produtor, casta...",
             )
         }
-        item {
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(state.categorias, key = { it.id }) { categoria ->
-                    PillChip(
-                        text = categoria.nome.orEmpty(),
-                        selected = categoria.id == state.filtro.categoriaId,
-                        onClick = { viewModel.selecionarCategoriaAtiva(categoria.id) },
-                    )
+        // No catálogo de um produtor as categorias são só as dele, com "Todas" à cabeça; com uma só, não há nada a escolher.
+        if (produtor == null || state.categorias.size > 1) {
+            item {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (produtor != null) {
+                        item { PillChip(text = "Todas", selected = state.filtro.categoriaId == null, onClick = { viewModel.selecionarCategoriaAtiva(null) }) }
+                    }
+                    items(state.categorias, key = { it.id }) { categoria ->
+                        PillChip(
+                            text = categoria.nome.orEmpty(),
+                            selected = categoria.id == state.filtro.categoriaId,
+                            onClick = { viewModel.selecionarCategoriaAtiva(categoria.id) },
+                        )
+                    }
                 }
             }
         }
-        item { ContagemEOrdenacao(state, viewModel) }
+        item {
+            ContagemEOrdenacao(
+                contagem = "${state.totalElements} ${if (state.totalElements == 1L) "BEBIDA" else "BEBIDAS"}",
+                atual = state.sort,
+                opcoes = CatalogSort.entries,
+                rotulo = { it.label },
+                onSelecionar = viewModel::selecionarSort,
+            )
+        }
         if (state.filtro.totalAtivos > 0) {
             item { PilulasFiltrosAtivos(state, viewModel) }
         }
@@ -165,14 +222,14 @@ private fun CatalogContent(state: CatalogUiState.Ready, viewModel: CatalogViewMo
 }
 
 @Composable
-private fun SearchBarComFiltro(valor: String, onValorChange: (String) -> Unit, onPesquisar: () -> Unit, onFiltroClick: () -> Unit) {
+private fun SearchBarComFiltro(valor: String, onValorChange: (String) -> Unit, onPesquisar: () -> Unit, onFiltroClick: () -> Unit, dica: String) {
     val shape = RoundedCornerShape(50)
     Row(
         modifier = Modifier.fillMaxWidth().height(52.dp).clip(shape).background(Color.White).border(1.dp, Burgundy, shape).padding(start = 20.dp, end = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.weight(1f)) {
-            if (valor.isEmpty()) Text(text = "Pesquisar bebida, produtor, casta...", style = AquaText.Field.copy(fontSize = 14.sp, color = MutedInk))
+            if (valor.isEmpty()) Text(text = dica, style = AquaText.Field.copy(fontSize = 14.sp, color = MutedInk))
             BasicTextField(
                 value = valor,
                 onValueChange = onValorChange,
@@ -188,26 +245,6 @@ private fun SearchBarComFiltro(valor: String, onValorChange: (String) -> Unit, o
             contentAlignment = Alignment.Center,
         ) {
             Icon(imageVector = Icons.Filled.FilterList, contentDescription = "Filtros", tint = Color.White, modifier = Modifier.size(20.dp))
-        }
-    }
-}
-
-@Composable
-private fun ContagemEOrdenacao(state: CatalogUiState.Ready, viewModel: CatalogViewModel) {
-    var abertoSort by remember { mutableStateOf(false) }
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text(text = "${state.totalElements} BEBIDAS", style = AquaText.Footer.copy(color = MutedInk, fontSize = 11.sp), modifier = Modifier.weight(1f))
-        Box {
-            Text(
-                text = "ORDENAR: ${state.sort.label.uppercase()} ▾",
-                style = AquaText.Footer.copy(color = Burgundy, fontSize = 11.sp),
-                modifier = Modifier.clickable { abertoSort = true },
-            )
-            DropdownMenu(expanded = abertoSort, onDismissRequest = { abertoSort = false }) {
-                CatalogSort.entries.forEach { opcao ->
-                    DropdownMenuItem(text = { Text(opcao.label) }, onClick = { viewModel.selecionarSort(opcao); abertoSort = false })
-                }
-            }
         }
     }
 }

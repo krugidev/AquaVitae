@@ -3,12 +3,12 @@
 Roadmap vivo do MVP. Atualizar isto no fim de cada sessão de trabalho relevante — é o que uma sessão
 nova do Claude Code (ou tu, ao voltares passado um tempo) deve ler primeiro para saber onde ficámos.
 
-## ▶ Retomar aqui (última atualização: 2026-09-24, fatias 1 a 5 do Android feitas — falta só a página do produtor)
+## ▶ Retomar aqui (última atualização: 2026-09-24, fatias 1 a 6 do Android feitas — a seguir: ronda de bugs e os lotes de bebidas)
 
 **Numa sessão nova, ler por esta ordem:** `CLAUDE.md` (convenções e ferramentas desta máquina) → esta secção → `android/README.md`
 (estado do frontend, estrutura, mapa de ecrãs) → `android/design/README.md` (os prints e **o que o utilizador pediu para cada ecrã**,
 secções "14. Homepage", "15. Catálogo / Filtros", "16. Cave e popup de detalhe da bebida", "Ajustes de feedback + 'Já provadas'",
-"Favoritos e Wishlist" e "Perfil" têm o detalhe do que falta) → `backend/API_ENDPOINTS.md` (contrato). O frontend documenta-se
+"Favoritos e Wishlist", "Perfil" e "Produtor" têm o detalhe do que falta) → `backend/API_ENDPOINTS.md` (contrato). O frontend documenta-se
 nesses dois ficheiros do `android/`; o PLANO guarda o roadmap e as decisões.
 
 **Ponto da situação:** o backend da 1.ª versão está fechado. **Todas as fatias do Android até agora estão feitas e validadas ao
@@ -17,32 +17,41 @@ app), 3b (cave: lista, "Nova cave", "Adicionar à cave" com destaque de onde a b
 confirmação ao duplicar numa cave, review a exigir "provada" em vez de a marcar sozinha, "Consumir" a marcar "provada", resumo e
 ecrã inteiro "Já provadas"), 4 (Favoritos e Wishlist a sério, a partir de um mockup do próprio utilizador — filtros/ordenação,
 nota própria vs. média da comunidade, "Comprar em X"/"Para a cave") e **5 (ecrã de perfil: ver/editar dados e preferências,
-escolher avatar, terminar sessão — a partir de um mockup do próprio utilizador)**. Entre a 3c e a 4, o utilizador testou por conta
+escolher avatar, terminar sessão — a partir de um mockup do próprio utilizador)** e **6 (página do produtor: imagem, rating geral das
+bebidas, história em popup, localização com a morada e "Abrir no mapa", garrafas em catálogo com "carregar mais 3" e o catálogo
+só do produtor, com pesquisa e filtros)**. Entre a 3c e a 4, o utilizador testou por conta
 própria (a sua conta pessoal, não a `demo_user2`) e apanhou 3 bugs, já corrigidos e validados ao vivo — Favoritos/Wishlist
 vazios/em erro, "INVESTIDOS"/"GARRAFAS" da Cave sem atualizar depois de guardar uma garrafa, e as duas telas presas ao resultado
 da 1.ª visita mesmo com o modelo certo (detalhe completo em `backend/API_ENDPOINTS.md`, "Sincronização pendente com o Android",
 "correção pós-3c"). Isto fecha o **fluxo principal do MVP**: login → homepage → catálogo (com filtros) → detalhe de uma bebida
 (favoritar, avaliar — só se já provada —, adicionar à cave) → cave (consumir, criar, ver já provadas) → favoritos/wishlist (a
-sério) → perfil (dados, preferências, avatar, terminar sessão). **Só falta a página do produtor para fechar todos os destinos
-hoje sem forma de lá chegar** ("VER PRODUTOR" no popup de detalhe, sem mockup ainda) — ver "Próximos passos".
+sério) → perfil (dados, preferências, avatar, terminar sessão) → página do produtor (a partir do cartão em destaque da home
+e do popup de detalhe de uma bebida). **Já não há nenhum destino da app sem forma de lá chegar**, exceto "As minhas reviews" e
+"Conta e segurança" do perfil (mockups por chegar). **O utilizador combinou o que vem a seguir (2026-09-24):** uma **ronda de
+bugs** e, só depois, começar a meter **bebidas reais por lotes vindas dos afiliados — da ordem de 100 por semana** (o fluxo
+abaixo, "Como entram as bebidas", foi desenhado para ~30 por lote: rever o que muda com 100/semana) — ver "Próximos passos".
 
 **Git:** duas branches. **`feature/api-endpoints-design`** = PR #1 (backend v1): já fundido/enviado. **`feature/android-app`** =
 criada a partir dela em 2026-09-21 para o Android, com [PR #2](https://github.com/krugidev/AquaVitae/pull/2) aberto (para `main`,
-ainda não fundido) — leva tudo desde a fatia 1a até à fatia 4 (incluindo a correção pós-3c), commitado por área/fatia (ver o
-próprio PR para a lista). **A fatia 5 (perfil) já está feita mas ainda não commitada nem enviada** — `git status` mostra só os
-ficheiros dela: `feature/perfil/` (novo, 6 ficheiros), `ui/components/AvatarGridPicker.kt` (novo) e as alterações a
-`AvatarBadge.kt`, `AppDestinations.kt`, `AppNavHost.kt`, `HomeScreen.kt`, `FavoritosScreen.kt`/`WishlistScreen.kt` (só o
-`onVerPerfil` do avatar), `PreferenciaModels.kt`/`UserModels.kt`/`AquaVitaeApi.kt`/`PreferenciaRepository.kt`,
-`ProfileSteps.kt` (onboarding, refatorado para o `AvatarGridPicker` partilhado); `android/design/perfil/` (novo, os 4
-mockups); `android/README.md`, `android/design/README.md`, `backend/API_ENDPOINTS.md` e este `PLANO.md` também têm alterações
-da fatia 5. **Ficam de fora dos commits, de propósito** (regra do `CLAUDE.md`): as notas do utilizador —
+ainda não fundido) — leva tudo desde a fatia 1a até à fatia 5 (incluindo a correção pós-3c; a 5 é o commit `d33d440`),
+commitado por área/fatia (ver o próprio PR para a lista). **A fatia 6 (produtor) já está feita mas ainda não commitada nem
+enviada** — `git status` mostra só os ficheiros dela: **backend** `ProdutorDetailDto.kt`, `ProdutorService.kt`,
+`BebidaRepository.kt` (2 queries novas + o filtro `produtorId`), `BebidaService.kt`/`BebidaController.kt`/`BebidaDtos.kt` (o `produtorId`), `Produtor.kt` (a `morada`), `ProdutorRating.kt` (novo) + `ProdutorRatingTest.kt` (novo);
+**BD** `ddl/01_tables.sql`, `ddl/14_patch_produtor_morada.sql` (novo), `database/README.md`; **Android**
+`feature/produtor/` (novo, 3 ficheiros), `ui/components/ContagemEOrdenacao.kt` (novo), `data/model/ProdutorFormatacao.kt`
+(novo) e alterações a `ProdutorModels.kt`, `AquaVitaeApi.kt`, `BebidaRepository.kt` (Android), `BebidaDetalheSheet.kt`,
+`CatalogScreen.kt`/`CatalogViewModel.kt`/`FiltrosSheet.kt`/`CatalogFiltro.kt` (o catálogo também serve um só produtor; usa o `ContagemEOrdenacao` partilhado), `HomeScreen.kt`/`CaveScreen.kt`/`FavoritosScreen.kt`/`WishlistScreen.kt`
+(o `onVerProdutor`), `AppDestinations.kt`, `AppNavHost.kt`; 2 testes novos em `android/app/src/test/`;
+`android/design/produtor/` (novo, o mockup); `android/README.md`, `android/design/README.md`, `backend/API_ENDPOINTS.md`,
+`CLAUDE.md` e este `PLANO.md` também têm alterações da fatia 6. **Ficam de fora dos commits, de propósito** (regra do `CLAUDE.md`): as notas do utilizador —
 `android/AQUAVITAESEEDS-NOTES` e, na raiz, `—--------------- DADOS A INSERIR NA.txt`, `REGIÕES A AJUSTAR (...).txt` e
 `NOVOSDADOS.txt` (este último parece um relatório de incidentes sem ligação ao projeto — vale a pena o utilizador confirmar se
 foi parar ali por engano). Ao commitar, usar `git commit <caminhos explícitos>`, nunca `git add -A`. A `main` só tem a landing
 page em `docs/`.
 
-**Ambiente no fim da sessão:** BD de dev migrada até ao patch `13`; contentor `aquavitae-oracle-xe` a correr; **API a correr**, perfil
-`dev` (sem `mailpit`), com as credenciais do Gmail carregadas e já a servir `tipo`/`tanino`/`produtorRegiao`/`temBebida` — se
+**Ambiente no fim da sessão:** BD de dev migrada até ao patch `14` (`produtor_morada`); contentor `aquavitae-oracle-xe` a correr; **API a correr**, perfil
+`dev` (sem `mailpit`), com as credenciais do Gmail carregadas e já a servir `tipo`/`tanino`/`produtorRegiao`/`temBebida` e, desde a fatia 6, o
+`ratingMedio`/`totalReviews`/`categorias` do produtor — se
 reiniciar, ver `CLAUDE.md`, "Email de recuperação — Gmail", para voltar a carregar `backend/.env.mail` antes do `bootRun`; contentor
 `aquavitae-mailpit` ainda a correr (não é preciso para o dia a dia — `docker compose -f backend/docker-compose.mail-dev.yml down`
 para parar). **Emulador `Pixel_8` ligado, com a build mais recente instalada.** A sessão ativa é a conta de teste
@@ -52,10 +61,14 @@ password real); os dados reais dessa conta (caves "Vinhos 2026"/"Gins 2026", 2 f
 ficaram, por reverter só na próxima vez que o utilizador lá entrar. A `demo_user2` **continua com 3 caves de sessões
 anteriores**: "Adega Principal" (id 21, 1 garrafa — Esporão Reserva Tinto 2018 ×1 em guarda), "Tintos de guarda" (id 22, 1
 Barca Velha 2015 em guarda até 2035) e "Brancos frescos" (id 23, vazia) — **ficam na BD de propósito**, dado de teste
-contínuo; termos repostos a `NULL` no fim desta sessão (a fatia 5 também os tinha aceitado a testar o popup). Testes: backend
-`.\gradlew.bat test` em `backend/` (**88**, sem BD, não corridos nesta sessão — sem mudanças no backend); Android
-`testDebugUnitTest` (**53**, sem alterações à suite — nem a fatia 4 nem a 5 pediram testes novos, ver `android/README.md`). Não
-corri o `database/verify/rebuild-check.sh` nesta sessão (não mexi no schema).
+contínuo; termos repostos a `NULL` no fim desta sessão (a fatia 6 também os aceitou ao testar). **Os dados de teste temporários
+da fatia 6** (história/morada/coordenadas/imagem nos produtores 1 e 8 e 7 bebidas movidas para o 1) **já foram revertidos** — a
+BD de dev ficou como estava (nenhum produtor tem história, morada, coordenadas nem imagem; ver "Android — fatia 6"). Testes:
+backend `.\gradlew.bat test` em `backend/` (**93**, sem BD, +5 do `ProdutorRatingTest`, corridos nesta sessão); Android
+`testDebugUnitTest` (**72**, +19: `ProdutorFormatacaoTest` e `ProdutorUiStateTest`, ver `android/README.md`). Corri o
+`database/verify/rebuild-check.sh` depois do patch `14` (`produtor_morada`): "reconstrução igual à dev". **Landing page (GitHub
+Pages):** já está ativa em `https://krugidev.github.io/AquaVitae/` (fonte `main:/docs`, HTTPS, sem domínio próprio; HTTP 200
+verificado em 2026-09-24) — serve de "website" nos pedidos a outras redes de afiliados; continua a não se mexer no repo/domínio.
 
 **Arrancar tudo** (detalhes no `CLAUDE.md`): (1) `docker ps` — se o Oracle estiver parado, `docker compose up -d` em `database/`;
 (2) API: carregar `backend/.env.mail` (ver acima) e `.\gradlew.bat bootRun` em `backend/` (em background), confirmar com
@@ -64,31 +77,43 @@ corri o `database/verify/rebuild-check.sh` nesta sessão (não mexi no schema).
 no `CLAUDE.md` o que fazer se o Docker Desktop crashar.
 
 **Próximos passos, por ordem:**
-1. **Página do produtor** ("VER PRODUTOR" no popup de detalhe da bebida, sem destino desde a fatia 3a) — **pedir os mockups
-   ao utilizador antes de construir**, só descrito verbalmente até agora (ver `PLANO.md` de sessões anteriores). Backend já
-   pronto: `GET /api/produtores/{id}` (com `totalProdutos`) e `GET /api/produtores/{id}/bebidas?categoriaId=&page=&size=`
-   (`Page<BebidaSummaryDto>`, os mesmos cartões do catálogo). "As minhas reviews" e "Conta e segurança" do ecrã de perfil
-   também ficam para quando o utilizador enviar os mockups.
-2. **O utilizador ainda pode dar feedback das fatias 4 e 5** (Favoritos/Wishlist: filtros, ordenação, "Comprar em X"/"Para a
-   cave"; Perfil: dados, preferências, avatar) e das anteriores — em especial as **diferenças conscientes** listadas em
-   `android/design/README.md` ("14.", "15.", "16.", "Favoritos e Wishlist", "Perfil"): a serifa aproximada, "ORDENAR" só com 2
+1. **Ronda de bugs (combinada com o utilizador em 2026-09-24, a seguir à fatia 6)**, antes de começar a meter bebidas reais.
+   Candidatos já conhecidos, para não os perder: o cartão de bebida diz "1 reviews" (sem singular) no catálogo/cave/home;
+   as linhas de `ProvadasScreen` não abrem o popup de detalhe (`combinedClickable` nunca foi ligado lá, o mesmo tipo de
+   falha da `CaveScreen`, ver `CLAUDE.md`); uma resposta 401 a meio da utilização ainda não leva ao login; o emoji na bio
+   nunca foi testado ao vivo; "Comprar em X" da wishlist ainda só abre o popup (falta o link real, ver item 7). O
+   utilizador vai testar por conta própria (a conta pessoal) e devolver o que encontrar, como fez depois da 3c.
+   **"As minhas reviews" e "Conta e segurança"** do perfil ficam para quando o utilizador enviar os mockups.
+2. **Preparar os lotes de ~100 bebidas por semana** (o utilizador disse "por exemplo, irmos adicionando 100 bebidas por
+   semana"; o fluxo de "Como entram as bebidas" foi escrito para ~30). O que rever antes do 1.º lote: o **script de
+   verificação do catálogo** (item 5) passa a ser obrigatório, não opcional; a tabela de revisão de 100 linhas é grande
+   demais para uma só mensagem (dividir em blocos de ~25 e aprovar por blocos, ou por categoria); a **verificação diária de
+   links** (`bebida_link_compra_url_verificacao`) e o pedido às páginas dos retalhistas com 100+ links novos por semana —
+   confirmar que o intervalo entre pedidos é educado e que uma página em baixo não atrasa o job todo; a **homepage/sugestões**
+   e o **catálogo** com centenas de bebidas (paginação e `ORDER BY` já estão deterministas, mas nunca se mediu com dados a
+   sério); e produtores sem história/coordenadas/imagem (a página do produtor esconde o que falta, mas ficará pobre até haver
+   esses dados — decidir se se preenchem à mão ou se ficam para depois).
+3. **O utilizador ainda pode dar feedback das fatias 4, 5 e 6** (Favoritos/Wishlist: filtros, ordenação, "Comprar em X"/"Para
+   a cave"; Perfil: dados, preferências, avatar; Produtor: rating geral, morada/mapa, catálogo do produtor) e das anteriores — em
+   especial as **diferenças conscientes** listadas em `android/design/README.md` ("14.", "15.", "16.", "Favoritos e
+   Wishlist", "Perfil", "Produtor"): sem mapa embebido (a morada abre a app de mapas), a serifa aproximada, "ORDENAR" só com 2
    opções no catálogo, os 7 tipos de vinho mostrados (o mockup só tinha 4), o preço nunca testado com dados a sério, a review
    só com estrelas inteiras, o toque curto a abrir o mesmo popup do premido, a pílula "Vinho 2025" da cave (não modelada — o
    que representa?), "Ver as N garrafas" sem destino (só informativo), o email a mostrar-se sempre em "Editar perfil"
-   (contrariamente ao mockup), o emoji na bio nunca testado ao vivo, e os 5 campos da API adiados na fatia 4 (ver item 6).
-3. **Depois:** editar uma garrafa já na cave (o `PATCH` já existe na API e no repositório Android, sem UI); limpar o
+   (contrariamente ao mockup), o emoji na bio nunca testado ao vivo, e os 5 campos da API adiados na fatia 4 (ver item 7).
+4. **Depois:** editar uma garrafa já na cave (o `PATCH` já existe na API e no repositório Android, sem UI); limpar o
    esqueleto morto (`feature/detail`, `feature/reviews`, as rotas `detail/{id}`/`reviews/{id}`, já sem forma de lá chegar por
    toque desde a fatia 3a).
-4. **1.º lote de ~30 bebidas da Awin** (em paralelo com o Android; não depende dele) — fluxo em "Como entram as bebidas"
+5. **1.º lote de bebidas da Awin (~30, ou já ~100)** (em paralelo com o Android; não depende dele) — fluxo em "Como entram as bebidas"
    (logo abaixo). Escrevo então o **script de verificação do catálogo** (aprovado: mínimo por categoria = nome, categoria,
    produtor, país, teor, volume; vinho + tipo e castas; whisky + tipo e idade; gin + destilação; bebida sem linha no
    subtype da categoria e vice-versa; e whisky com região de um país diferente do país de origem da bebida). Antes, **o utilizador**
    avalia os termos dos programas escolhidos na Awin (comparação de preços; uso das imagens do feed).
-5. **Texto final dos termos, quando o utilizador o tiver:** substitui-se `backend/src/main/resources/legal/termos.txt` (hoje é um
+6. **Texto final dos termos, quando o utilizador o tiver:** substitui-se `backend/src/main/resources/legal/termos.txt` (hoje é um
    texto de exemplo) — formato simples (`# ` = título de secção, parágrafos separados por linha em branco), sem mexer no backend nem
    na app. Deve incluir a maioridade 18+ e o aviso de afiliação/comissões; convém revisão jurídica. Não bloqueia o Android, mas é
    preciso antes do lançamento (a Google Play também exige uma política de privacidade com URL público).
-6. **Adiado — "Por fazer depois":** decidido em 2026-09-21 que se trabalha nessa lista **quando a 1.ª versão da app estiver
+7. **Adiado — "Por fazer depois":** decidido em 2026-09-21 que se trabalha nessa lista **quando a 1.ª versão da app estiver
    pronta**. Inclui os subtypes das outras categorias (**nota:** se o 1.º lote trouxer gins/whiskies, o detalhe só mostra os
    campos gerais da bebida, sem os atributos da categoria), a pesquisa de produtores à parte, o `Page<...>` como DTO próprio, os
    testes com BD, a pesquisa sem distinção de acentos, o CI/Dockerfile, a migração da toolchain do Android e o temporizador do código
@@ -99,6 +124,22 @@ no `CLAUDE.md` o que fazer se o Docker Desktop crashar.
    `totalRetalhistasAtivos` ("MENOR DE N RETALHISTAS"), `quantidadeNaCave` ("N NA CAVE" nos favoritos) e `provadaEm`
    ("PROVADA EM \<mês\>"). Todos batch, via `BebidaSummaryAssembler` (o mesmo padrão de `isFavorito`/`isWishlist`/`isProvada`/
    `notaPropria`); a app já está pronta do lado da UI para os receber, só falta o backend e ligar os campos.
+
+**Duas propostas aprovadas pelo utilizador e feitas (2026-09-24, a seguir à fatia 6):** (a) **morada do produtor** — coluna
+`produtor_morada` (anulável, patch `14`) e, na página do produtor, um cartão "LOCALIZAÇÃO" com a morada em texto + "Abrir no
+mapa" (com coordenadas usa-as, sem elas `geo:0,0?q=<morada>`), no lugar do placeholder "Mapa da quinta"; o Maps SDK para
+Android é grátis sem limite mas exige projeto Google Cloud com faturação ativada + chave, por isso fica de fora da 1.ª versão.
+(b) **filtro por produtor** — `produtorId` em `GET /api/bebidas`; o catálogo do produtor passou a ser o próprio `CatalogScreen`
+com pesquisa e popup de filtros (sem país/região). **Fica para depois dos primeiros lotes:** uma secção "Produtor" no popup do
+catálogo **geral** (pesquisa + chips, como as castas) — pede um lookup de produtores e só compensa com centenas deles.
+
+**Ideia do utilizador para a versão 2 (2026-09-24): ler uma foto de uma refeição e sugerir bebidas.** Desenho sugerido: o
+modelo de visão (chamado no backend, chave nunca na app) devolve só **atributos** (pratos, ingredientes, intensidade, gordura,
+picante, acidez → perfil de bebida desejado: categoria, tipo, corpo, acidez, doçura, tanino); o backend consulta o catálogo com
+esses atributos (a mesma pesquisa dos filtros) e ordena por rating/preferências; o modelo só escreve o "porquê". Assim nunca
+sugere bebidas fora do catálogo e o destino continua a ser o link de afiliado. **Depende de** subtypes das outras categorias
+(hoje só o vinho tem corpo/acidez/doçura/tanino) e de atributos bem preenchidos nos lotes. Cuidados: custo por foto (limite
+por utilizador/dia, comprimir no telemóvel), privacidade (processar e descartar a imagem, dizê-lo nos termos), aviso 18+.
 
 **Como entram as bebidas (combinado em 2026-09-19):** as linhas `bebida` criam-se **à mão, em lotes** (~30), não
 automaticamente a partir do feed da Awin. Da Awin vêm os **links de compra** (uma bebida pode ter vários, de retalhistas
@@ -185,6 +226,13 @@ domain" nas definições do Pages** (aconteceu por engano uma vez e desviou o si
   "Escolhido para ti" na homepage, terminar sessão. Novo `GET /api/users/me/preferencias` ligado na app (já existia na API).
   Avatar do cabeçalho (Home, Favoritos, Wishlist) passa a abrir este ecrã. Ver "Android — fatia 5", em "Em curso". **Com isto
   fecham-se todos os destinos da app exceto a página do produtor.**
+- **Fatia 6 (2026-09-24): página do produtor** — desenhada a partir de um mockup do próprio utilizador: imagem, nome, localização,
+  **rating geral das bebidas** (sugestão do utilizador; média ponderada pelas reviews, calculada no backend), pílulas (visitas, site,
+  nº de garrafas), história completa em popup, **morada** + "Abrir no mapa" (a app de mapas, pelas coordenadas ou pela morada;
+  sem mapa embebido), "Garrafas em catálogo" (3 + "carregar mais 3", máximo 6) e o **catálogo só do produtor** (o próprio
+  catálogo, com pesquisa e filtros, via `produtorId` em `GET /api/bebidas`). Acessível pelo cartão do produtor em destaque (home) e pelo do popup de
+  detalhe de uma bebida. Ver "Android — fatia 6", em "Em curso". **Com isto não há nenhum destino da app sem forma de lá chegar**
+  (fora "As minhas reviews"/"Conta e segurança" do perfil, à espera de mockups).
 - Os restantes ecrãs (`detail`, `reviews`) continuam os placeholders do esqueleto (esqueleto morto, por limpar).
 
 ## Em curso 🔜
@@ -707,7 +755,71 @@ sessão e o backstack até ao login). Avatar a abrir o perfil a partir de Home, 
 
 **Em aberto / por fazer:** "As minhas reviews" e "Conta e segurança" (mockups ainda não enviados); emoji na bio só verificado
 por revisão de código, não ao vivo (`adb shell input text` não consegue injetar emoji — limitação da ferramenta de teste, não
-da app); a página do produtor fica para a próxima fatia.
+da app).
+
+
+### Android — fatia 6: página do produtor (feita e validada ao vivo, 2026-09-24)
+
+O utilizador enviou um mockup ("Detalhes do produtor", `android/design/produtor/01-produtor.png`) com as notas: a página tem
+detalhes do produtor, se recebe visitas, quantos itens tem no catálogo, localização (o mapa abre a app de mapas), "Ler a
+história completa" (popup, se houver história), "Garrafas em catálogo" com **até 6 itens — os 3 primeiros com "CARREGAR MAIS
+3", sem carregar mais que isso, e a seta a levar ao catálogo do produtor** (parecido com o catálogo, focado num só produtor),
+o "manter premido" da bebida como em todo o lado, a imagem do produtor no cabeçalho, e uma **sugestão: um rating geral do
+produtor**. Acessível pelo cartão do produtor em destaque e pelo cartão do produtor no fim do popup de detalhe de uma bebida.
+Detalhe completo em `android/design/README.md`, "Produtor" — aqui só o resumo.
+
+**Backend (2 acrescentos, o resto já existia):**
+- `ProdutorDetailDto` ganhou **`ratingMedio`**, **`totalReviews`** e **`categorias`**. O rating geral é a média de todas as
+  reviews das bebidas do produtor: `SUM(rating × reviews) / SUM(reviews)` sobre `bebida_rating_medio`/`bebida_total_reviews`
+  (já mantidos pelo trigger de `review`), 2 casas (`ProdutorRating.media`, com 5 testes). **Ponderado de propósito** — uma
+  bebida com 1 review de 5,0 não pesa como outra com 200 de 4,0; sem reviews é `null` ("Sem reviews ainda", nunca 0,0).
+  O "produtor da semana" continua a ordenar pela média **simples** (aprovada em 2026-09-19): são duas medidas diferentes.
+  `categorias` (`[{id, nome}]`) são as categorias em que o produtor tem bebidas — os separadores do catálogo do produtor.
+  Duas queries novas em `BebidaRepository` (validadas pelo `HqlQueriesTest`, que já apanha erros de HQL sem BD).
+- **Depois da aprovação do utilizador (mesmo dia):** coluna nova **`produtor_morada`** (`VARCHAR2(300 CHAR)`, anulável; `01_tables.sql`
+  + patch `14`, repetível; `rebuild-check.sh` verde) → `Produtor.morada` e `ProdutorDetailDto.morada`; e o filtro **`produtorId`** em
+  `GET /api/bebidas` (`BebidaRepository.search`, `BebidaFiltro`, controller e service; `sugeridas` passa `null`), validado ao
+  vivo (`?produtorId=1` só devolve as dele; combina com `search` e `categoriaIds`).
+- `GET /produtores/{id}/bebidas?categoriaId=&page=&size=&sort=` já existia e serve a lista de 6 da página do produtor.
+
+**Android:**
+- **`feature/produtor/`** (novo, 5 ficheiros): `ProdutorScreen` (cabeçalho com imagem sob a barra de estado e o cartão branco a
+  sobrepor-se, botão de voltar fixo, pílulas em `FlowRow`, rating geral, história com "LER A HISTÓRIA COMPLETA" só se o texto
+  passa das 4 linhas, cartão "LOCALIZAÇÃO", "Garrafas em catálogo" com a seta e as linhas planas do mockup), `ProdutorViewModel`
+  (detalhe + 6 primeiras garrafas em paralelo; `atualizar()` silencioso ao fechar o popup de uma bebida), `HistoriaProdutorSheet`
+  (popup). Rotas `produtor/{id}` e `produtor/{id}/catalogo` (id por `SavedStateHandle`).
+- **Catálogo do produtor = o próprio `CatalogScreen`/`CatalogViewModel`** (a 1.ª versão era um ecrã simples à parte, sem pesquisa
+  nem filtros — **apagado**): a ViewModel lê o `produtorId` do argumento de navegação e o ecrã muda de cara (seta de voltar,
+  "Garrafas de <produtor>", pílulas "Todas" + só as categorias dele, popup de filtros **sem "ORIGEM"**, sem barra de navegação,
+  sem atalho "VER PRODUTOR" no popup). `CatalogFiltro.produtorId`; `selecionarCategoriaAtiva/Rascunho` aceitam `null` ("Todas").
+  Regressão do catálogo geral confirmada ao vivo.
+- **Localização (sem mapa embebido):** cartão com a morada em texto (ou, sem morada, as coordenadas) e "Abrir no mapa" → intent
+  `geo:` para a app de mapas do sistema: com coordenadas `geo:lat,lon?q=lat,lon(Nome)` (o ponto exato), sem elas
+  `geo:0,0?q=<morada>`; sem app de mapas, o Google Maps no browser. (O Maps SDK é grátis sem limite mas pede projeto Google Cloud
+  com faturação e chave — decisão do utilizador: sem mapa desenhado na 1.ª versão.) Validado ao vivo: por morada o Maps reconheceu
+  a Quinta do Vale Meão; por coordenadas abriu no ponto certo.
+- **`BebidaDetalheSheet`** ganhou `onVerProdutor: ((Long) -> Unit)? = null`: o cartão do produtor passa a ser tocável, com uma
+  linha "VER PRODUTOR →"; fecha o popup e o ecrã navega. Ligado em home, catálogo, cave, favoritos e wishlist; **`null` nas
+  páginas do próprio produtor** (não faz sentido "ver o produtor" onde já estamos). O cartão do produtor em destaque da home
+  passou a ser tocável por inteiro (antes só o botão).
+- **`ContagemEOrdenacao`** extraído do `CatalogScreen` para `ui/components/` (genérico no tipo da opção) e partilhado com o
+  catálogo do produtor; `data/model/ProdutorFormatacao.kt` (domínio do site, URL, coordenadas, URI `geo:`).
+- **Testes:** +15 Android (`ProdutorFormatacaoTest`, `ProdutorUiStateTest` — 68 no total) e +5 backend (93).
+
+**Validado ao vivo** (emulador `Pixel_8` + API real, `demo_user2`): como nenhum produtor da BD tem história, coordenadas nem
+imagem, carreguei **dados de teste temporários** no produtor 1 (Casa Ferreirinha) e movi 7 bebidas para ele (9 no total, 8
+vinhos + 1 gin) — **já revertidos**, com SQL de reversão e conferência (mapeamento das 16 bebidas idêntico ao original). Cabeçalho,
+pílulas, rating geral (3,38 = (4,25×2 + 4,0 + 1,0)/4), história em popup, **"Abrir no mapa" a abrir o Google Maps exatamente
+nas coordenadas com o marcador "Casa Ferreirinha"**, 3 → "CARREGAR MAIS 3" → 6 → "VER AS 9 GARRAFAS", toque e premido a abrir o
+popup, catálogo do produtor (Todas/Vinho/Gin, ordenar A-Z, popup, voltar pela pilha com o estado mantido), e os 3 pontos de
+entrada (cartão em destaque, popup do catálogo, popup da cave). Um produtor com poucos dados (Quinta do Vale Meão) e uma história
+curta (sem ligação "LER A HISTÓRIA COMPLETA") também confirmados. Não exercitado ao vivo: o estado de erro ("TENTAR DE NOVO") e a Wishlist/os Favoritos como ponto de entrada (o mesmo código
+dos outros, só compilado).
+
+**Em aberto / por fazer:** nenhum produtor real tem ainda história, morada, coordenadas nem imagem — **dado a preencher à mão**,
+quando o utilizador o tiver; a secção "Produtor" (pesquisa + chips) no popup do catálogo **geral** — só com centenas de
+produtores; `regiaoId` do produtor por usar; a dívida vista de passagem ("1 reviews", `ProvadasScreen` sem popup) está na
+"Ronda de bugs" dos próximos passos.
 
 ### Desenho dos endpoints (concluído, 2026-09-17)
 

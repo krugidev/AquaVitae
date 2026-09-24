@@ -76,7 +76,7 @@ import pt.aquavitae.android.ui.theme.RoseBorder
  * pedido do utilizador (ver `PLANO.md`, "Por fazer depois").
  */
 @Composable
-fun FavoritosScreen(onVerPerfil: () -> Unit = {}, viewModel: FavoritosViewModel = hiltViewModel()) {
+fun FavoritosScreen(onVerPerfil: () -> Unit = {}, onVerProdutor: (Long) -> Unit = {}, viewModel: FavoritosViewModel = hiltViewModel()) {
     val uiState by viewModel.state.collectAsState()
     // A barra de navegação preserva a ViewModel ao trocar de aba (saveState/restoreState) — sem isto, marcar um
     // favorito noutro ecrã e voltar aqui não se refletia (ver CLAUDE.md).
@@ -113,6 +113,7 @@ fun FavoritosScreen(onVerPerfil: () -> Unit = {}, viewModel: FavoritosViewModel 
             bebidaId = id,
             onDismiss = { bebidaSelecionadaId = null },
             onAdicionarACave = { bebidaParaAdicionarACave = it },
+            onVerProdutor = onVerProdutor,
         )
     }
     bebidaParaAdicionarACave?.let { bebida ->

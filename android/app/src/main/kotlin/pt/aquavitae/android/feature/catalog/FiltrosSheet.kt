@@ -116,10 +116,16 @@ fun FiltrosSheet(
                 }
 
                 Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp)) {
-                    SeccaoCategoria(state, viewModel)
-                    Spacer(Modifier.height(22.dp))
-                    SeccaoOrigem(state, viewModel)
-                    Spacer(Modifier.height(22.dp))
+                    // Com só uma categoria (ou nenhuma) não há nada a escolher; no catálogo de um produtor e com uma só, esconde-se.
+                    if (state.produtor == null || state.categorias.size > 1) {
+                        SeccaoCategoria(state, viewModel)
+                        Spacer(Modifier.height(22.dp))
+                    }
+                    // Um produtor tem o seu país e a sua região: "Origem" não se aplica ao catálogo dele.
+                    if (state.produtor == null) {
+                        SeccaoOrigem(state, viewModel)
+                        Spacer(Modifier.height(22.dp))
+                    }
                     SeccaoPreco(state, viewModel)
                     Spacer(Modifier.height(22.dp))
                     SeccaoRating(state, viewModel)
@@ -156,8 +162,16 @@ private fun SeccaoCategoria(state: CatalogUiState.Ready, viewModel: CatalogViewM
     Column {
         Text(text = "CATEGORIA", style = EstiloSeccao)
         Spacer(Modifier.height(10.dp))
-        FlowPills(state.categorias.map { it.id to it.nome.orEmpty() }, selecionados = setOfNotNull(state.rascunho.categoriaId)) {
-            viewModel.selecionarCategoriaRascunho(it)
+        if (state.produtor != null) {
+            // "Todas" (categoriaId = null) só existe no catálogo de um produtor; o id 0 nunca é de uma categoria (identity começa em 1).
+            val itens = listOf(0L to "Todas") + state.categorias.map { it.id to it.nome.orEmpty() }
+            FlowPills(itens, selecionados = setOf(state.rascunho.categoriaId ?: 0L)) {
+                viewModel.selecionarCategoriaRascunho(if (it == 0L) null else it)
+            }
+        } else {
+            FlowPills(state.categorias.map { it.id to it.nome.orEmpty() }, selecionados = setOfNotNull(state.rascunho.categoriaId)) {
+                viewModel.selecionarCategoriaRascunho(it)
+            }
         }
     }
 }

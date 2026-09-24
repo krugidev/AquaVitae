@@ -10,6 +10,7 @@ import java.math.BigDecimal
 data class BebidaFiltro(
     val search: String? = null,
     val categoriaIds: List<Long>? = null,
+    val produtorId: Long? = null,
     val paisId: Long? = null,
     val regiaoIds: List<Long>? = null,
     val ratingMin: BigDecimal? = null,

@@ -26,6 +26,8 @@ ddl/
                                   termos); repetível
   13_patch_nacionalidade_codigo.sql  patch p/ BD de dev JÁ existente: `nationality_codigo_pais` (ISO alfa-2, para a bandeira
                                   da nacionalidade) + os 8 códigos; repetível
+  14_patch_produtor_morada.sql    patch p/ BD de dev JÁ existente: `produtor_morada` (morada em texto, para a página do
+                                  produtor); repetível
 seed/
   01_lookups.sql         tabelas de lookup preenchidas (corpo, taninos, 277 castas, 218 países, casks, ...)
   02_bebidas.sql          produtores, retalhistas e ~16 bebidas de exemplo (maioritariamente portuguesas)
@@ -61,7 +63,7 @@ ou, em bash:
 Isto corre `ddl/01_tables.sql`, `ddl/02_constraints.sql`, `ddl/03_triggers.sql`,
 `seed/01_lookups.sql` e `seed/02_bebidas.sql`, por esta ordem, ligando como o `APP_USER` definido no `.env`.
 
-Os ficheiros `04_*` a `12_*` **não** fazem parte desta sequência: as alterações que fazem já estão em
+Os ficheiros `04_*` a `14_*` **não** fazem parte desta sequência: as alterações que fazem já estão em
 `01_tables.sql`/`02_constraints.sql` (e o `06`, `07`, `09`, `10` e `11` também em `seed/`), por isso só servem para pôr ao dia
 uma BD que já existia antes delas (cada um explica no topo como se corre). Ao mexer no schema: atualizar
 `01_tables.sql` **e** criar um patch novo.
@@ -88,7 +90,8 @@ docker cp ddl/06_patch_seed_notas.sql aquavitae-oracle-xe:/tmp/06.sql
 docker exec -e NLS_LANG=AMERICAN_AMERICA.AL32UTF8 aquavitae-oracle-xe sqlplus -s "<user>/<pass>@//localhost:1521/XEPDB1" @/tmp/06.sql
 ```
 
-(Git Bash: `MSYS_NO_PATHCONV=1` e `cygpath -w` no caminho de origem do `docker cp`.) Depois de carregar dados, procurar
+(Git Bash: `export MSYS_NO_PATHCONV=1` **para os dois comandos** — sem ele o `@/tmp/06.sql` do `docker exec` é convertido num caminho Windows e o
+sqlplus diz "SP2-0310: unable to open file" — e `cygpath -w` no caminho de origem do `docker cp`.) Depois de carregar dados, procurar
 `LIKE '%Ã%'`, `LIKE '%â€%'` e `LIKE '%Â%'` nas colunas de texto.
 
 ## Países: duas tabelas, os mesmos ids

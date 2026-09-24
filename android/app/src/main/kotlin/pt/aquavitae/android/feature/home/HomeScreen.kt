@@ -128,7 +128,12 @@ fun HomeScreen(
     }
 
     bebidaSelecionadaId?.let { id ->
-        BebidaDetalheSheet(bebidaId = id, onDismiss = { bebidaSelecionadaId = null }, onAdicionarACave = { bebidaParaAdicionarACave = it })
+        BebidaDetalheSheet(
+            bebidaId = id,
+            onDismiss = { bebidaSelecionadaId = null },
+            onAdicionarACave = { bebidaParaAdicionarACave = it },
+            onVerProdutor = onVerProdutor,
+        )
     }
     bebidaParaAdicionarACave?.let { bebida ->
         AdicionarACaveSheet(
@@ -401,7 +406,8 @@ private fun StatBox(label: String, valor: Int, modifier: Modifier = Modifier) {
 private fun ProdutorDestaqueSection(produtor: ProdutorDetail, onVerProdutor: (Long) -> Unit) {
     val shape = RoundedCornerShape(20.dp)
     Column(
-        modifier = Modifier.fillMaxWidth().clip(shape).background(WineDark).padding(20.dp),
+        // O cartão todo abre a página do produtor (além do botão "VER PRODUTOR" lá dentro).
+        modifier = Modifier.fillMaxWidth().clip(shape).background(WineDark).clickable(onClick = { onVerProdutor(produtor.id) }).padding(20.dp),
     ) {
         Text(
             text = "PRODUTOR EM DESTAQUE",

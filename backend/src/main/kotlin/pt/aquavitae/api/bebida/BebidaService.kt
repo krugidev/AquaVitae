@@ -44,6 +44,7 @@ class BebidaService(
         val page = bebidaRepository.search(
             search = filtro.search?.trim()?.ifBlank { null },
             categoriaIds = filtro.categoriaIds?.ifEmpty { null },
+            produtorId = filtro.produtorId,
             paisId = filtro.paisId,
             regiaoIds = filtro.regiaoIds?.ifEmpty { null },
             ratingMin = filtro.ratingMin,
@@ -72,6 +73,7 @@ class BebidaService(
         val page = bebidaRepository.search(
             search = null,
             categoriaIds = categoriaIds.ifEmpty { null },
+            produtorId = null,
             paisId = null,
             regiaoIds = null,
             ratingMin = null,

@@ -14,7 +14,7 @@ cada ecrã** em [`android/design/README.md`](android/design/README.md) — ler o
 briefing/    briefing de produto + schema DBML original
 database/    Oracle XE (Docker) — DDL, triggers, seed
 backend/     API Spring Boot + Kotlin (recursos estáticos, ex. avatares, em src/main/resources/static)
-android/     app Android (Compose + MVVM + Hilt) — em construção por fatias (feitas: 1a loading/login/registo, 1b recuperar password/onboarding)
+android/     app Android (Compose + MVVM + Hilt) — construída por fatias (feitas: 1 a 6, até à página do produtor; ver android/README.md)
 android/design/   prints do Figma + especificação por ecrã (o que foi pedido, estado, diferenças)
 docs/        landing page (GitHub Pages, só na branch main) — o URL foi enviado à Awin, não mexer no repo/domínio
 ```
@@ -24,10 +24,10 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
 - **Backend:** Kotlin 2.4.20 + Spring Boot 3.5.16 + Gradle 9.7.1 (wrapper já commitado, `./gradlew bootRun`).
   Hibernate em `ddl-auto: validate` — o schema é sempre gerido pelo SQL em `database/ddl`, nunca pelo Hibernate.
 - **Android:** Kotlin + Jetpack Compose + Hilt + Retrofit/Moshi + DataStore. Construído por **fatias verticais**, uma por fluxo de ecrãs
-  do Figma, ligada à API real (a 1a — loading, login, registo — e a 1b — recuperar password e onboarding — estão feitas; os restantes
-  ecrãs são placeholders do esqueleto, ver `android/README.md`). O `AquaVitaeApi.kt` só está sincronizado para auth (com recuperação),
-  `/me`, termos, perfil/preferências do onboarding e os lookups do onboarding: o resto está desatualizado (ver
-  `backend/API_ENDPOINTS.md`, "Sincronização pendente com o Android"). No fim de cada fatia cumpre-se a checklist de `android/README.md`.
+  do Figma, ligada à API real (feitas as fatias 1a a 6: auth/onboarding, homepage, catálogo, popup de detalhe, cave, favoritos/wishlist,
+  perfil e produtor; só `detail`/`reviews` continuam esqueleto morto, ver `android/README.md`). O `AquaVitaeApi.kt` está sincronizado com
+  tudo o que as fatias usam (lista em `android/README.md`, "Lacunas conhecidas"); o que falta sincronizar está em
+  `backend/API_ENDPOINTS.md`, "Sincronização pendente com o Android". No fim de cada fatia cumpre-se a checklist de `android/README.md`.
 
 ## Convenções importantes (para não repetir bugs já apanhados)
 
@@ -115,6 +115,10 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
   tabela** (`whisky.whisky_regiao_id` → `regiao`; a tabela `whisky_regiao` já não existe, 2026-09-21): um whisky de um país sem
   regiões na lista fica sem região (`NULL`) mas mostra o país de origem. **Ao renomear um valor de lookup, procurar o nome
   antigo nos seeds** (`02_bebidas.sql` procura regiões/países por nome e devolve `NULL` em silêncio se não achar).
+- **Rating geral do produtor (2026-09-24):** `ProdutorDetailDto.ratingMedio`/`totalReviews` = a média de todas as reviews das bebidas do
+  produtor, **ponderada pelo nº de reviews** de cada bebida (`SUM(rating × reviews) / SUM(reviews)`, `ProdutorRating.media`; `null` sem
+  reviews — a app mostra "Sem reviews ainda", nunca 0,0). O "produtor da semana" ordena pela média **simples** (aprovado em
+  2026-09-19): são duas medidas diferentes de propósito, não uniformizar.
 - **Termos e condições (2026-09-21, texto passou a JSON em 2026-09-22):** `utilizador_termos_aceites_em` (`NULL` = nunca aceitou; só a
   data, sem versão). O registo exige `aceitouTermos: true`; `GET /api/users/me` traz `termosAceitesEm` e `precisaAceitarTermos`; `POST
   /api/users/me/termos/aceitar` regista a aceitação; `aquavitae.termos.em-vigor-desde` força nova aceitação. O texto vive em
@@ -192,7 +196,7 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
   exata do Figma); tokens medidos nos prints em `ui/theme/Color.kt`; componentes reutilizáveis em `ui/components/` (`AquaVitaeLogo`,
   `UnderlineField`, `PrimaryButton`, `AuthCard`/`AuthScaffold`/`overlapTop`, `LoadingDots`, `PillCard`/`NavRow`/`NextButton`,
   `OptionRow`/`PillChip`/`LookupContent`, `LevelSlider`, `RangePillRow`, `CodeInput`, `FlagChip`, `BottomNavBar`, `AvatarBadge`,
-  `BebidaCard`, popups `TermsDialog`/`PasswordChangedDialog` com `DialogScrim`; lista completa em `android/README.md`) — reutilizar, não
+  `BebidaCard`, `ContagemEOrdenacao`, popups `TermsDialog`/`PasswordChangedDialog` com `DialogScrim`; lista completa em `android/README.md`) — reutilizar, não
   recriar. Cada ecrã novo aplica `systemBarsPadding()` (edge-to-edge); os ecrãs antigos do esqueleto vão embrulhados em `LegacyScreen`
   (`AppNavHost.kt`) até serem redesenhados (já saíram de lá `home` e `catalog`). **Imagens da API com Coil 2.7** (avatares SVG; o
   carregador com o `SvgDecoder` está em `AquaVitaeApplication`; `resolveImageUrl` decide URL absoluto vs. relativo). **Ícones PNG
@@ -202,11 +206,11 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
   novo ao utilizador quando o ícone é genérico o suficiente (funil de filtro, por exemplo) — só vale a pena pedir um ícone próprio
   quando a forma importa para a identidade visual. **O detalhe de uma bebida é sempre um popup** (`feature/bebidadetalhe/
   BebidaDetalheSheet`, 2026-09-23), nunca uma rota — abre-se em toque curto ou premido (`BebidaCard.combinedClickable`) a partir de
-  qualquer ecrã; sem `SavedStateHandle`, usa `hiltViewModel(key = "bebida-detalhe-$id")` (ver `android/README.md`, "Convenções").
+  qualquer ecrã; sem `SavedStateHandle`, usa `hiltViewModel(key = "bebida-detalhe-$id")` (ver `android/README.md`, "Convenções"). **O cartão do produtor no fim do popup abre a página do produtor** (fatia 6) por um parâmetro `onVerProdutor` do `BebidaDetalheSheet` — cada ecrã que o usa tem de o receber do `AppNavHost` e passá-lo; `null` (o valor por omissão) tira o atalho, e é o que as páginas do próprio produtor fazem.
   **`DatePicker`/`DatePickerDialog` do Material3** (`AdicionarACaveSheet`, fatia 3b) são `@ExperimentalMaterial3Api` — precisam de
   `@OptIn`, já usados pela 1.ª vez neste projeto (a "data de aquisição" do popup "Adicionar à cave").
-  Testes unitários: `gradle.bat -p android testDebugUnitTest --console=plain` (53: registo, recuperar password, onboarding,
-  bandeiras, URLs, iniciais do avatar, formatação de bebida).
+  Testes unitários: `gradle.bat -p android testDebugUnitTest --console=plain` (68: registo, recuperar password, onboarding,
+  bandeiras, URLs, iniciais do avatar, formatação de bebida, formatação e estado do produtor).
 - **Um `Row`/`Column` de altura fixa com texto de comprimento variável perde conteúdo sem erro nenhum (apanhado no `BebidaCard`,
   2026-09-23):** o cartão de bebida tem `height(108.dp)` fixo; ao acrescentar `tipo`/`tanino` à linha de atributos, algumas bebidas
   passaram a ter uma linha com 3 segmentos que quebrava para 2 linhas — sem `maxLines`, isso empurrava o preço (a `Row` seguinte) para
@@ -256,7 +260,9 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
   `bounds` devolvidos — mais lento por toque, mas sem re-tentativas às cegas. Um campo que não reage a `input text` normalmente está
   focado no elemento errado (o toque anterior falhou), não é um bug da app. **`uiautomator dump /dev/tty` às vezes só imprime
   "UI hierchary dumped to: /dev/tty" sem o XML** (apanhado 2026-09-23): correr antes `uiautomator dump /sdcard/dump.xml` e
-  `adb pull` (com `MSYS_NO_PATHCONV=1` no Git Bash, senão o `/sdcard/...` é convertido para um caminho Windows). Um botão/label do
+  `adb pull` (com `MSYS_NO_PATHCONV=1` no Git Bash, senão o `/sdcard/...` é convertido para um caminho Windows; **o destino tem de
+  ser um caminho Windows** — `"$(cygpath -w ficheiro)"` —, porque o `adb.exe` é um binário Windows: com um caminho `/c/...` não dá erro, só
+  não escreve o ficheiro e o `grep` seguinte falha em silêncio; e `adb` pode não estar no `PATH` do Git Bash, usar o caminho inteiro). Um botão/label do
   Compose às vezes só aparece na árvore por `content-desc`, não por `text=` (procurar os dois).
 - **Um ecrã novo que mostra bebidas não herda o toque/premido do `BebidaDetalheSheet` de outro ecrã — tem de se ligar
   explicitamente linha a linha.** Apanhado no `CaveScreen` (2026-09-23): o mockup original já dizia "nas caves" como um dos
@@ -285,6 +291,19 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
   Compose desmonta e volta a montar o conteúdo de uma rota a cada troca de aba (mesmo mantendo a mesma instância da
   ViewModel por trás, ver acima), por isso o `LaunchedEffect(Unit)` volta a correr, e portanto a pedir dados frescos,
   de cada vez que a aba é reaberta.
+- **Testar a página do produtor (2026-09-24): nenhum produtor real tem `produtor_historia`, `produtor_morada`, `produtor_latitude`/`longitude` nem
+  `produtor_path_imagem`**, por isso o ecrã só se exercita por completo com dados de teste temporários: `UPDATE produtor SET ...` no
+  produtor 1 e mover bebidas de outros produtores para ele (`UPDATE bebida SET bebida_producer_id = 1 WHERE bebida_id IN (...)` — a
+  coluna do produtor na `bebida` chama-se `bebida_producer_id`, não `produtor_id`; `ORA-00904` se se enganar). **Antes de mexer, guardar o
+  mapeamento original (`SELECT bebida_id, bebida_producer_id FROM bebida`) e escrever já o SQL de reversão**; conferir no fim. Uma imagem
+  de teste serve qualquer `icones/avatares/*.svg` (caminho relativo, servido pela API). **"Abrir no mapa"** abre o Google Maps do
+  emulador, que mostra primeiro o seu arranque (login → "Skip"; permissão de localização → "Don't allow") antes de chegar ao ponto —
+  **só na 1.ª vez**. Com coordenadas abre no ponto (`geo:lat,lon?q=...(Nome)`); só com morada pesquisa por ela (`geo:0,0?q=morada`), e
+  ambos se conferem ao vivo. **O catálogo do produtor é o `CatalogScreen`/`CatalogViewModel` do catálogo geral** (`produtorId` lido do
+  argumento de navegação por `SavedStateHandle`, `GET /api/bebidas?produtorId=`): ao mexer nos filtros do catálogo, testar também o
+  modo produtor (sem "ORIGEM", categoria "Todas" = `null`) e vice-versa. **Um botão flutuante "≡" do emulador (menu de acessibilidade)
+  pode aparecer por cima do canto superior esquerdo e engolir os toques na seta de voltar** — não é da app: tocar na parte livre ou
+  usar `adb shell input keyevent 4`.
 - **Android Studio (AI-261):** abre `android/` e o sync corre; usa como Gradle JDK um JBR 21 que ele próprio descarregou
   (`~/.jdks/jbr-21.0.11`, guardado em `android/.gradle/config.properties`, ignorado pelo git). Acrescentou uma linha
   (`org.gradle.tooling.parallel=true`) ao `android/gradle.properties` — não vale a pena commitá-la. Recusar o *AGP Upgrade

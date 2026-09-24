@@ -609,4 +609,97 @@ imediato; "Histórico de provadas" a abrir a `ProvadasScreen` certa; "Terminar s
 limpa.
 
 **Em aberto / por fazer:** "As minhas reviews" e "Conta e segurança" sem destino (mockups por chegar); suporte de
-emojis por confirmar no teclado a sério; página do produtor (pedida antes da fatia 5, ainda por fazer).
+emojis por confirmar no teclado a sério; a página do produtor ficou feita na fatia 6 (secção seguinte).
+
+## Produtor (fatia 6, feita e validada ao vivo — 2026-09-24)
+
+Print em `android/design/produtor/01-produtor.png` ("Detalhes do produtor", mockup feito pelo utilizador; as notas por
+ecrã vieram no chat). Alcança-se pelo **cartão do produtor em destaque** da homepage (o cartão todo, não só o botão
+"VER PRODUTOR") e pelo **cartão do produtor no fim da tab "Detalhes" do popup de uma bebida** (ganhou uma linha "VER
+PRODUTOR →" e o cartão inteiro é tocável) — a partir de qualquer ecrã que abra esse popup (home, catálogo, cave,
+favoritos, wishlist). **Não** aparece no popup aberto de dentro das páginas do próprio produtor (já estamos lá).
+
+**O que o mockup pede e o que ficou feito:**
+- **Cabeçalho:** imagem do produtor (`imagePath`; sem imagem, o degradê cor-de-rosa com "Imagem do produtor", como no
+  mockup), botão de voltar redondo (fica fixo por cima do scroll), "PRODUTOR", nome (serifa grande), "Região, País ·
+  fundada em AAAA". **Feito.**
+- **Pílulas:** "RECEBE VISITAS" (só se `permiteVisitas`), o site (só o domínio em maiúsculas — `ferreirinha.pt` —, toca
+  e abre o browser; só se há `website`) e "N GARRAFAS" (`totalProdutos`, singular com 1). Quebram linha em ecrãs
+  estreitos (`FlowRow`). **Feito.**
+- **Rating geral (sugestão do utilizador, não estava no mockup):** "3,4 /5 · 4 REVIEWS · RATING GERAL" por baixo da
+  localização; sem reviews mostra "Sem reviews ainda" (nunca um 0,0). Calculado no backend — média das reviews de
+  todas as bebidas do produtor, **ponderada pelo nº de reviews de cada uma** (ver `backend/API_ENDPOINTS.md`, "Rating
+  geral do produtor"). **Feito.** Posição escolhida por mim (o mockup não tinha sítio): logo abaixo da localização, com
+  o mesmo estilo do rating das garrafas.
+- **História:** parágrafo até 4 linhas + "LER A HISTÓRIA COMPLETA" → popup `HistoriaProdutorSheet` (nome no topo, texto a
+  deslizar, quebras de parágrafo da BD preservadas). Sem `historia`, nem parágrafo nem ligação; **se a história cabe
+  toda nas 4 linhas a ligação também não aparece** (não haveria mais nada para ler — o mockup mostra-a sempre, mas o
+  texto do mockup é mais comprido). **Feito.**
+- **Localização (mudou depois da 1.ª versão — decisão do utilizador, 2026-09-24):** o mockup tinha um mapa desenhado
+  ("Mapa da quinta"). O Maps SDK para Android é gratuito sem limite, mas pede um projeto Google Cloud com **faturação
+  ativada** e uma chave de API, por isso **não há mapa embebido**. Em vez dele, um cartão **"LOCALIZAÇÃO"** com a **morada em
+  texto** (coluna nova `produtor_morada`, patch `14`) e "Abrir no mapa", que abre a **app de mapas do telemóvel**. Com
+  coordenadas usa o **ponto exato** (`geo:lat,lon?q=lat,lon(Nome)` — a morada postal de uma quinta pode ser a da sede, não a
+  das vinhas); **sem coordenadas pesquisa pela morada** (`geo:0,0?q=morada`); sem app de mapas cai para o Google Maps no
+  browser. O cartão aparece se há morada **ou** coordenadas (só coordenadas: mostra-as como texto); sem nenhuma, não
+  aparece. **Feito.**
+- **"Garrafas em catálogo":** título + contagem + seta (a linha toda é tocável) → **catálogo do produtor**. Mostra as
+  **3 primeiras** (rating desc, como o catálogo) com "**CARREGAR MAIS N**" (N = as que faltam até 3, ex.: 1 se o
+  produtor tem 4); depois do toque mostra **até 6 e não carrega mais** — pedido explícito. Cada linha (imagem, nome,
+  linha de atributos, rating, preço) abre o popup de detalhe em toque curto **ou premido**. **Feito.** Um acrescento
+  meu: depois de mostrar as 6, se o produtor tem mais, aparece "VER AS N GARRAFAS" (mesmo destino da seta) — sem ele
+  não havia sinal de que existe mais para ver.
+- **Catálogo do produtor** (rota `produtor/{id}/catalogo`): pedido como "parecido com o catálogo, mas só do produtor".
+  **É o próprio `CatalogScreen`/`CatalogViewModel`** (a mesma pesquisa, o mesmo popup de filtros, "ORDENAR", `BebidaCard`,
+  "Carregar mais"), fixo num produtor: a ViewModel lê o id do argumento de navegação (`SavedStateHandle`) e o
+  `GET /api/bebidas` ganhou o filtro **`produtorId`** (aprovado pelo utilizador em 2026-09-24; na 1.ª versão da fatia 6
+  tinha sido um ecrã simples à parte, sem pesquisa nem filtros — já apagado). **O que muda no modo produtor:** seta de
+  voltar + "CATÁLOGO DO PRODUTOR / Garrafas de \<produtor\>" no lugar do título "Explora o catálogo todo"; pílulas "Todas" +
+  **só as categorias que o produtor tem** (`ProdutorDetail.categorias`; só aparecem se são mais do que uma; o geral
+  abre sempre numa categoria, este abre em "Todas"); o popup de filtros **sem "ORIGEM"** (país/região não se aplicam a um
+  só produtor) e com "Todas" na categoria; sem barra de navegação por baixo (é uma rota à parte); a dica da pesquisa é
+  "Pesquisar bebida ou casta..."; o popup de detalhe sem o atalho "VER PRODUTOR". A contagem diz "1 BEBIDA" no singular
+  (também no catálogo geral). **Feito.** **Ainda não feito (combinado):** a secção "Produtor" no popup do catálogo
+  **geral** (pesquisa + chips, como as castas) — pede um lookup de produtores e só compensa com centenas deles; fica para
+  depois dos primeiros lotes. Componente `ContagemEOrdenacao` extraído para `ui/components/`.
+
+**Estados:** a carregar (5 pontos), erro com "TENTAR DE NOVO", produtor sem garrafas ("Ainda sem garrafas no
+catálogo."). Fechar o popup de uma bebida volta a pedir os dados em silêncio (sem ecrã de carregamento nem perder as 6
+garrafas abertas) — uma review nova muda o rating dela e o rating geral.
+
+**Testes:** +19 (72 no total): `ProdutorFormatacaoTest` (domínio do site, URL, coordenadas, morada, URI `geo:` por
+coordenadas ou por morada com o nome escapado, singular/plural) e `ProdutorUiStateTest` (3 de início, "CARREGAR MAIS N",
+nunca mais de 6). Backend: +5 (`ProdutorRatingTest`, 93 no total); a query com `produtorId` é validada pelo
+`HqlQueriesTest` (sem BD) e ao vivo.
+
+**Validado ao vivo** (emulador `Pixel_8` + API real, conta `demo2@aquavitae.local`): nenhum produtor da BD tinha
+história, coordenadas nem imagem, por isso carreguei **dados de teste temporários** no produtor 1 (Casa Ferreirinha:
+história de 4 parágrafos, coordenadas do mockup, uma imagem qualquer, mais 7 bebidas movidas de outros produtores, 8
+vinhos + 1 gin) — **já revertidos** (SQL de reversão guardado; a BD ficou como estava). Confirmado: cabeçalho com todos
+os campos; rating geral 3,4 (3,375 = (4,25×2 + 4,0 + 1,0)/4; a média simples das 3 bebidas avaliadas daria 3,08 — a ponderada é a certa);
+pílulas (a do site é tocável); popup da história com os parágrafos; **"Abrir no mapa" abre o Google Maps exatamente nas
+coordenadas com o marcador "Casa Ferreirinha"** (Peso da Régua); 3 garrafas → "CARREGAR MAIS 3" → 6 → "VER AS 9
+GARRAFAS"; toque **e** premido numa garrafa a abrir o popup (sem o "VER PRODUTOR" lá dentro); catálogo do produtor
+com "Todas/Vinho/Gin" (Gin → 1 bebida), "ORDENAR: Nome (A-Z)" e o popup; voltar pela pilha (o scroll e as 6 garrafas
+abertas mantêm-se). Os 3 pontos de entrada: cartão em destaque da home, popup a partir do catálogo e popup a partir da
+cave. Um produtor com poucos dados (Quinta do Vale Meão: sem site, ano, história, mapa nem reviews) mostra só o que
+tem; uma história curta (cabe em 4 linhas) não mostra "LER A HISTÓRIA COMPLETA".
+
+**2.ª ronda, validada ao vivo (2026-09-24, depois da aprovação da morada e do filtro por produtor):** patch `14` aplicado
+(duas vezes: é repetível) e `rebuild-check.sh` a dar "reconstrução igual à dev"; dados de teste temporários outra vez
+(morada + coordenadas no produtor 1, só morada no Vale Meão, 7 bebidas movidas para o produtor 1) — **revertidos e
+conferidos**. Cartão "LOCALIZAÇÃO" com a morada nos dois produtores; **"Abrir no mapa" sem coordenadas (Vale Meão) abre o
+Google Maps a pesquisar pela morada e reconhece a Quinta do Vale Meão** (adega, com fotos); com coordenadas (Casa
+Ferreirinha) abre no ponto. Catálogo do produtor: `GET /api/bebidas?produtorId=1` devolve só as bebidas dele (2 no estado
+original; com `search=barca` 1; com a categoria Gin 0), pesquisa "soalheiro" → 1 bebida, popup de filtros **sem "ORIGEM"**,
+com "Todas/Vinho/Gin"; escolher "Vinho" mostra "ATRIBUTOS DE VINHO" e "Ver 1 bebidas" aplica; a seta de voltar e o gesto de
+voltar levam à página do produtor e depois ao catálogo. **Regressão do catálogo geral:** continua com "Explora o catálogo
+todo", sem "Todas" e com "ORIGEM/Portugal" no popup. Um botão flutuante "≡" do sistema (menu de acessibilidade do
+emulador, não é da app) apareceu por cima da seta de voltar a meio dos testes e interceptava os toques — não é um bug da
+app (tocar na parte livre da seta funciona).
+
+**Em aberto / por fazer:** o `regiaoId` do produtor ainda não é usado; a página não tem "partilhar"; o mockup só tinha
+o caso "com todos os dados" — os estados sem imagem/site/história/morada foram decisão minha (esconder o que não existe).
+Nenhum produtor real tem ainda história, morada, coordenadas nem imagem: **é dado a preencher à mão** (SQL), como os
+outros atributos de conteúdo, quando o utilizador os tiver. Dívida antiga vista de passagem: o cartão de bebida diz "1
+reviews" (sem singular) no catálogo/cave/home e as linhas de `ProvadasScreen` não abrem o popup de detalhe.

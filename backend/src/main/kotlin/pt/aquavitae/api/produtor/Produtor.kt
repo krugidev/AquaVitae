@@ -48,6 +48,10 @@ class Produtor(
     @Column(name = "produtor_path_imagem")
     var pathImagem: String? = null,
 
+    // Morada em texto livre (rua, código postal, localidade); null = não disponível.
+    @Column(name = "produtor_morada")
+    var morada: String? = null,
+
     @Column(name = "produtor_latitude")
     var latitude: BigDecimal? = null,
 

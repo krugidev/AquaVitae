@@ -26,6 +26,7 @@ import pt.aquavitae.android.feature.loading.LoadingScreen
 import pt.aquavitae.android.feature.onboarding.OnboardingScreen
 import pt.aquavitae.android.feature.perfil.EditarPerfilScreen
 import pt.aquavitae.android.feature.perfil.PerfilScreen
+import pt.aquavitae.android.feature.produtor.ProdutorScreen
 import pt.aquavitae.android.feature.recovery.RecoveryScreen
 import pt.aquavitae.android.feature.reviews.ReviewsScreen
 import pt.aquavitae.android.feature.wishlist.WishlistScreen
@@ -113,8 +114,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
                 HomeScreen(
                     onSearchClick = { navController.navigate(AppDestinations.CATALOG) },
                     onVerCaves = { navController.navigate(AppDestinations.CAVE) },
-                    // A página de um produtor ainda não existe (fica para uma fatia seguinte); por agora sem destino.
-                    onVerProdutor = {},
+                    onVerProdutor = { produtorId -> navController.abrirProdutor(produtorId) },
                     // Mesmo destino da pesquisa por agora: o catálogo a sério (com o filtro de categoria já aplicado) é a fatia 2b.
                     onVerSugestoes = { navController.navigate(AppDestinations.CATALOG) },
                     onVerPerfil = { navController.navigate(AppDestinations.PERFIL) },
@@ -127,7 +127,7 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         // ecrã — não é uma rota, por isso CatalogScreen já não recebe onBebidaClick.
         composable(AppDestinations.CATALOG) {
             TabScreen(BottomNavItem.Catalogo, navController) {
-                CatalogScreen()
+                CatalogScreen(onVerProdutor = { produtorId -> navController.abrirProdutor(produtorId) })
             }
         }
 
@@ -158,7 +158,10 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         // Cave: redesenhada na fatia 3b (já com systemBarsPadding próprio, sem o invólucro LegacyScreen).
         composable(AppDestinations.CAVE) {
             TabScreen(BottomNavItem.Cave, navController) {
-                CaveScreen(onVerProvadas = { navController.navigate(AppDestinations.PROVADAS) })
+                CaveScreen(
+                    onVerProvadas = { navController.navigate(AppDestinations.PROVADAS) },
+                    onVerProdutor = { produtorId -> navController.abrirProdutor(produtorId) },
+                )
             }
         }
 
@@ -170,12 +173,18 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         // Wishlist e Favoritos: redesenhadas na fatia 4 (já com systemBarsPadding próprio, sem o invólucro LegacyScreen).
         composable(AppDestinations.WISHLIST) {
             TabScreen(BottomNavItem.Wishlist, navController) {
-                WishlistScreen(onVerPerfil = { navController.navigate(AppDestinations.PERFIL) })
+                WishlistScreen(
+                    onVerPerfil = { navController.navigate(AppDestinations.PERFIL) },
+                    onVerProdutor = { produtorId -> navController.abrirProdutor(produtorId) },
+                )
             }
         }
         composable(AppDestinations.FAVORITOS) {
             TabScreen(BottomNavItem.Favoritos, navController) {
-                FavoritosScreen(onVerPerfil = { navController.navigate(AppDestinations.PERFIL) })
+                FavoritosScreen(
+                    onVerPerfil = { navController.navigate(AppDestinations.PERFIL) },
+                    onVerProdutor = { produtorId -> navController.abrirProdutor(produtorId) },
+                )
             }
         }
 
@@ -199,7 +208,32 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
                 onGuardado = { navController.popBackStack() },
             )
         }
+
+        // Produtor (fatia 6): a página dele e o catálogo só das suas garrafas. Sem barra de navegação (não são abas);
+        // alcançam-se pelo cartão do produtor em destaque (home) e pelo cartão do produtor no popup de detalhe de uma bebida.
+        composable(
+            route = AppDestinations.PRODUTOR_ROUTE,
+            arguments = listOf(navArgument(AppDestinations.ARG_PRODUTOR_ID) { type = NavType.LongType }),
+        ) { entry ->
+            val produtorId = entry.arguments?.getLong(AppDestinations.ARG_PRODUTOR_ID) ?: return@composable
+            ProdutorScreen(
+                onVoltar = { navController.popBackStack() },
+                onVerCatalogo = { navController.navigate(AppDestinations.produtorCatalogo(produtorId)) },
+            )
+        }
+        composable(
+            route = AppDestinations.PRODUTOR_CATALOGO_ROUTE,
+            arguments = listOf(navArgument(AppDestinations.ARG_PRODUTOR_ID) { type = NavType.LongType }),
+        ) {
+            // O mesmo ecrã do catálogo, fixo no produtor (a ViewModel lê o id do argumento de navegação).
+            CatalogScreen(onVoltar = { navController.popBackStack() })
+        }
     }
+}
+
+/** Abre a página de um produtor; `launchSingleTop` evita empilhar duas iguais se o toque for duplo. */
+private fun NavHostController.abrirProdutor(produtorId: Long) {
+    navigate(AppDestinations.produtor(produtorId)) { launchSingleTop = true }
 }
 
 /**

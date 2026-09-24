@@ -119,6 +119,8 @@ CREATE TABLE produtor (
     produtor_ano_fundacao     NUMBER(4),
     produtor_website          VARCHAR2(255 CHAR),
     produtor_path_imagem      VARCHAR2(255 CHAR),
+    -- Morada em texto livre (rua, código postal, localidade), para a página do produtor; NULL = não disponível.
+    produtor_morada           VARCHAR2(300 CHAR),
     produtor_latitude         NUMBER(9,6),
     produtor_longitude        NUMBER(9,6),
     produtor_permite_visitas  NUMBER(1) DEFAULT 0 CHECK (produtor_permite_visitas IN (0, 1)),

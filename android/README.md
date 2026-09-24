@@ -21,7 +21,7 @@ O frontend constrói-se em **fatias verticais**, cada uma um fluxo de ecrãs des
 | — | correção pós-3c: `getFavoritos`/`getWishlist` com o modelo errado, totais da cave sem atualizar após "Adicionar à cave", e as duas telas presas ao resultado da 1.ª visita à aba | ✅ feita (2026-09-23/24) |
 | 4 | Favoritos e Wishlist a sério (filtros/ordenação, nota própria vs. média, "Comprar"/"Para a cave") | ✅ feita (2026-09-24) |
 | 5 | perfil: ver/editar dados e preferências, escolher avatar, terminar sessão | ✅ feita (2026-09-24) |
-| 6 | página do produtor | ⏳ |
+| 6 | página do produtor (imagem, rating geral, história, mapa, garrafas) + catálogo só desse produtor | ✅ feita (2026-09-24) |
 
 Os ecrãs `detail` e `reviews` continuam **placeholders do esqueleto** (esqueleto morto, por limpar — ver abaixo): estão
 embrulhados em `LegacyScreen` (`navigation/AppNavHost.kt`), que dá o espaço das barras do sistema. Ao redesenhar um,
@@ -147,12 +147,14 @@ android/
 | `AvatarGridPicker`, `AvatarTileGrid` | pílulas de categoria + grelha 3×3 de avatares (`AvatarGridPicker`, usado no onboarding) e só a grelha (`AvatarTileGrid`, pública, usada pelo `EscolherAvatarSheet` do perfil, que tem uma pílula "Todos" extra sem equivalente no onboarding) |
 | `BebidaCard` | o cartão de bebida (imagem, nome+ano, produtor•região, `linhaAtributos()`, rating, retalhista+preço) — homepage, catálogo; toque curto ou premido (`combinedClickable`) abrem o `BebidaDetalheSheet` |
 | `RangePillRow` | o seletor de intervalo 1–5 (acidez/doçura do popup de filtros): toque escolhe um nível, toque noutro estica o intervalo |
+| `ContagemEOrdenacao` | a linha "N BEBIDAS ..... ORDENAR: X ▾" com o menu de ordenação, genérica no tipo da opção — catálogo e catálogo do produtor |
 | `feature/catalog/FiltrosSheet` | o popup "Filtros" do catálogo (sobe de baixo, sobre `Dialog` como o `TermsSheet`) — não é `ui/components/` por ter o `CatalogViewModel` próprio |
 | `feature/bebidadetalhe/BebidaDetalheSheet` | o popup de detalhe de uma bebida (partilhado por toda a app): tabs Detalhes/Reviews, favorito/wishlist otimistas, publicar review. Sem rota/`SavedStateHandle` — `hiltViewModel(key = "bebida-detalhe-$bebidaId")` + `carregar(bebidaId)` por `LaunchedEffect` (ver "Convenções") |
 | `feature/cave/NovaCaveSheet` | o popup "Nova cave" (nome + descrição) — reutilizado tal e qual dentro do `AdicionarACaveSheet` ("+ nova cave") |
 | `feature/cave/AdicionarACaveSheet` | o popup "Adicionar à cave" (aberto do "+" do popup de detalhe): pílulas de cave com destaque independente de "já tem esta bebida" (✓) e "escolhida para este adicionar" (cor); quantidade, preço, `DatePicker` do Material3, janela de consumo, notas; se a cave escolhida já tiver a bebida (✓), confirma antes de guardar (`AlertDialog`, "Adicionar na mesma"/"Cancelar") |
 | `feature/perfil/EscolherAvatarSheet` | o popup "Escolher avatar" do perfil: pílulas "Todos"/categorias + `AvatarTileGrid`; só confirma localmente (`onConfirmar`) — quem grava é o "Guardar" do `EditarPerfilScreen` |
 | `feature/perfil/EditarPreferenciasSheet` | o popup "Editar preferências" do perfil: as mesmas do onboarding (tipos de bebida, acidez/doçura, castas), aqui em pílulas horizontais compactas (`RangePillRow` reutilizado tal e qual) em vez das listas paginadas do onboarding |
+| `feature/produtor/HistoriaProdutorSheet` | o popup "Ler a história completa" da página do produtor: nome no topo, texto a deslizar, parágrafos da BD preservados |
 
 **Tokens novos da homepage/catálogo** (`ui/theme/Color.kt`/`Type.kt`): `WineDark` (cartão do produtor em destaque), `RoseBorder`
 (contorno das caixas de estatística e das pílulas de filtro removíveis); `AquaText.SectionSerif`/`SectionSerifAccent`/`GreetingSerif`/
@@ -180,23 +182,26 @@ android/
 | *(popup, sem rota)* | `feature/cave/AdicionarACaveSheet.kt` (+ `AdicionarACaveViewModel`) | ✅ | `GET /users/me/caves?bebidaId=`, `POST /caves/{id}/bebidas`, `POST /users/me/caves` |
 | *(popup, sem rota)* | `feature/perfil/EscolherAvatarSheet.kt` (+ `EscolherAvatarViewModel`) | ✅ | `GET /lookup/avatar-categorias`, `/lookup/avatares` |
 | *(popup, sem rota)* | `feature/perfil/EditarPreferenciasSheet.kt` (+ `EditarPreferenciasViewModel`) | ✅ | `GET /lookup/categorias-bebida`, `/lookup/castas`, `PUT /users/me/preferencias` |
+| `produtor/{id}` | `feature/produtor/ProdutorScreen.kt` (+ `ProdutorViewModel`) | ✅ | `GET /produtores/{id}`, `/produtores/{id}/bebidas?size=6` |
+| `produtor/{id}/catalogo` | `feature/catalog/CatalogScreen.kt` (+ `CatalogViewModel`, **o mesmo ecrã do catálogo**, fixo num produtor: lê o id do argumento de navegação) | ✅ | `GET /produtores/{id}`, `GET /bebidas?produtorId=` |
+| *(popup, sem rota)* | `feature/produtor/HistoriaProdutorSheet.kt` | ✅ | — (usa a `historia` do produtor) |
 
 Depois do login/onboarding vai-se para `home` (antes ia para `catalog`); só quem acabou de se registar passa pelo onboarding. A
 recuperação de password volta ao login com o popup "Password alterada!" (o login recebe o aviso pelo `savedStateHandle`, ver
 `AppNavHost`). `home`, `catalog`, `cave`, `wishlist` e `favoritos` têm a `BottomNavBar` sobreposta ao fundo (`TabScreen` em
 `AppNavHost.kt`); trocar de separador preserva o estado de cada um (`saveState`/`restoreState`, o padrão de navegação por abas).
-`provadas` e `perfil`/`perfil/editar` **não são das 5 abas** — `provadas` alcança-se só a partir da Cave ("ABRIR MAIS" no
+`provadas`, `perfil`/`perfil/editar` e `produtor/{id}`/`produtor/{id}/catalogo` **não são das 5 abas** — `provadas` alcança-se só a partir da Cave ("ABRIR MAIS" no
 resumo de "Já provadas"), `perfil` tocando no avatar (repetido nos cabeçalhos de `home`/`wishlist`/`favoritos`) e
-`perfil/editar` a partir do próprio `perfil` — nenhum tem `BottomNavBar` própria, tal como o popup de detalhe da bebida.
+`perfil/editar` a partir do próprio `perfil` — `produtor/{id}` pelo cartão do produtor em destaque (home) e pelo cartão do produtor do popup de detalhe de uma bebida (`onVerProdutor`, ligado em home/catálogo/cave/favoritos/wishlist), e `produtor/{id}/catalogo` pela seta de "Garrafas em catálogo" — nenhum tem `BottomNavBar` própria, tal como o popup de detalhe da bebida.
 **`detail/{id}`/`reviews/{id}` deixaram de se alcançar por toque** (fatia 3a: o detalhe de uma bebida é sempre o popup
 `BebidaDetalheSheet`, aberto de dentro do próprio ecrã) — as rotas e os ficheiros `feature/detail`/`feature/reviews` ficam no
 código como esqueleto morto, por limpar numa fatia futura.
 
 ## Testes
 
-Unitários (JVM), **53**: `AuthValidationTest` (10, validação do registo), `RecoveryRulesTest` (10, email tapado, password nova),
+Unitários (JVM), **72**: `AuthValidationTest` (10, validação do registo), `RecoveryRulesTest` (10, email tapado, password nova),
 `OnboardingRulesTest` (12, ordem dos ecrãs, montagem dos pedidos de perfil e preferências), `FlagEmojiTest` (3), `ImageUrlsTest` (4),
-`AvatarBadgeTest` (6, iniciais do avatar), `BebidaFormatacaoTest` (8, a fórmula de `linhaAtributos()` e a extração do ano do nome).
+`AvatarBadgeTest` (6, iniciais do avatar), `BebidaFormatacaoTest` (8, a fórmula de `linhaAtributos()` e a extração do ano do nome). `ProdutorFormatacaoTest` (14, domínio do site, URL, coordenadas, morada, URI `geo:` por coordenadas ou por morada com o nome escapado, singular/plural) e `ProdutorUiStateTest` (5, 3 garrafas de início, "CARREGAR MAIS N", nunca mais de 6).
 Ainda **sem** testes de ViewModels nem de UI (pede `kotlinx-coroutines-test`; fica para quando compensar) — `HomeViewModel` e
 `CatalogViewModel` também ainda não têm testes (o `RangePillRow` e a lógica de intervalo do popup de filtros também só validados ao
 vivo, não têm teste unitário). `descricaoJanela` (`HomeScreen.kt`) continua `private`, sem teste. Os fluxos validam-se ao vivo no
@@ -220,8 +225,7 @@ emulador (compilar → instalar → `adb shell input tap/text` → screenshot), 
   com o Android". Sincroniza-se por fatia.
 - **Homepage (fatia 2a), Catálogo (fatia 2b), popup de detalhe da bebida (fatia 3a), Cave (fatia 3b), ajustes + "Já provadas"
   (fatia 3c) e Favoritos/Wishlist (fatia 4), feitos:** ver a lista completa do que falta em `design/README.md`, secções "14.",
-  "15.", "16." e "Favoritos e Wishlist" — em resumo: "VER PRODUTOR" continua sem destino (depende da página do produtor, ecrã
-  por construir); "Ver as N garrafas" da cave é só informativo (a lista já mostra tudo); a secção "As minhas Caves" já foi
+  "15.", "16." e "Favoritos e Wishlist" — em resumo: "VER PRODUTOR" já tem destino desde a fatia 6; "Ver as N garrafas" da cave é só informativo (a lista já mostra tudo); a secção "As minhas Caves" já foi
   validada com garrafas a sério; a serifa dos títulos é uma aproximação do sistema; "ORDENAR" do catálogo só tem 2 opções
   (falta ordenar por preço, que pede trabalho no backend); o `RangeSlider` do preço nunca foi testado com dados a sério; a
   review só aceita estrelas inteiras (sem as meias-estrelas do mockup); `DetailScreen`/`ReviewsScreen` (esqueleto antigo)
@@ -236,6 +240,14 @@ emulador (compilar → instalar → `adb shell input tap/text` → screenshot), 
   validado ao vivo (o `adb shell input text` não consegue enviar emoji, uma limitação da própria ferramenta — por código,
   o campo não restringe o tipo de teclado e o Android troca sozinho para a fonte de emoji do sistema quando a Inter não
   tem o glifo, o comportamento por omissão da plataforma).
+- **Produtor (fatia 6), feito:** ver `design/README.md`, "Produtor", para a lista completa — em resumo: **sem mapa embebido** (o Maps
+  SDK é grátis mas pede projeto Google Cloud com faturação e chave) — a página mostra a **morada em texto** (`produtor_morada`,
+  patch `14`) e "Abrir no mapa" abre a app de mapas (pelas coordenadas, se houver; senão pela morada); o **catálogo do produtor é
+  o próprio `CatalogScreen`** com o filtro `produtorId` (pesquisa + filtros, sem país/região); falta a secção "Produtor" no popup
+  do catálogo geral (só compensa com centenas de produtores); o rating geral é a média ponderada pelas reviews (calculado no backend); **nenhum produtor real tem ainda
+  história, morada, coordenadas nem imagem** (a página esconde o que não existe) — é dado a preencher à mão; o `regiaoId` do produtor
+  ainda não é usado. Dívida vista de passagem: `BebidaCard` diz "1 reviews" (sem singular) e as linhas de `ProvadasScreen`
+  não abrem o popup de detalhe.
 - **Recuperar password:** o código já chega por email (backend, 2026-09-22; testado com Mailpit local — ver `../CLAUDE.md`); o
   temporizador de validade com "pedir código novo" fica para depois (pede backend, ver `design/README.md`).
 - **Onboarding:** os pedidos só se enviam no último ecrã, por isso, se a app for fechada a meio, perde-se o que estava por guardar. O

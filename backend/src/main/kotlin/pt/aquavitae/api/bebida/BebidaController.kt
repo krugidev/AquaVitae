@@ -24,6 +24,7 @@ class BebidaController(
     fun search(
         @RequestParam(required = false) search: String?,
         @RequestParam(required = false) categoriaIds: List<Long>?,
+        @RequestParam(required = false) produtorId: Long?,
         @RequestParam(required = false) paisId: Long?,
         @RequestParam(required = false) regiaoIds: List<Long>?,
         @RequestParam(required = false) ratingMin: BigDecimal?,
@@ -46,6 +47,7 @@ class BebidaController(
         BebidaFiltro(
             search = search,
             categoriaIds = categoriaIds,
+            produtorId = produtorId,
             paisId = paisId,
             regiaoIds = regiaoIds,
             ratingMin = ratingMin,

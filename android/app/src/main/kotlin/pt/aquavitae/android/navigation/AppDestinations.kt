@@ -29,6 +29,14 @@ object AppDestinations {
     const val PERFIL = "perfil"
     const val PERFIL_EDITAR = "perfil/editar"
 
+    const val ARG_PRODUTOR_ID = "produtorId"
+    /** A página de um produtor (fatia 6): alcança-se pelo cartão do produtor em destaque (homepage) e pelo do popup de detalhe de uma bebida. */
+    const val PRODUTOR_ROUTE = "produtor/{$ARG_PRODUTOR_ID}"
+    /** O catálogo só desse produtor (a seta de "Garrafas em catálogo"). */
+    const val PRODUTOR_CATALOGO_ROUTE = "produtor/{$ARG_PRODUTOR_ID}/catalogo"
+
     fun detail(bebidaId: Long) = "detail/$bebidaId"
     fun reviews(bebidaId: Long) = "reviews/$bebidaId"
+    fun produtor(produtorId: Long) = "produtor/$produtorId"
+    fun produtorCatalogo(produtorId: Long) = "produtor/$produtorId/catalogo"
 }

@@ -32,6 +32,7 @@ class BebidaRepository @Inject constructor(
         api.searchBebidas(
             search = filtro.search?.trim()?.ifBlank { null },
             categoriaIds = filtro.categoriaId?.let { listOf(it) },
+            produtorId = filtro.produtorId,
             paisId = filtro.paisId,
             regiaoIds = filtro.regiaoIds.ifEmpty { null }?.toList(),
             ratingMin = filtro.ratingMin,
@@ -67,5 +68,16 @@ class BebidaRepository @Inject constructor(
     /** O produtor em destaque da semana (cartão da homepage). */
     suspend fun getProdutorDestaque(): Result<ProdutorDetail> = runCatching {
         api.getProdutorDestaque()
+    }
+
+    /** As bebidas de um produtor: a página do produtor pede as 6 primeiras, o catálogo do produtor pagina o resto. */
+    suspend fun getBebidasDoProdutor(
+        produtorId: Long,
+        categoriaId: Long? = null,
+        page: Int = 0,
+        size: Int = 20,
+        sort: String? = null,
+    ): Result<PageResponse<BebidaSummary>> = runCatching {
+        api.getBebidasDoProdutor(produtorId, categoriaId = categoriaId, page = page, size = size, sort = sort)
     }
 }

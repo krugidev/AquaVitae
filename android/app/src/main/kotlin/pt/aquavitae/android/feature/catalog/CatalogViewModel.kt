@@ -1,5 +1,6 @@
 package pt.aquavitae.android.feature.catalog
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -15,9 +16,11 @@ import pt.aquavitae.android.data.model.Casta
 import pt.aquavitae.android.data.model.CatalogFiltro
 import pt.aquavitae.android.data.model.LookupItem
 import pt.aquavitae.android.data.model.LookupState
+import pt.aquavitae.android.data.model.ProdutorDetail
 import pt.aquavitae.android.data.network.toUserMessage
 import pt.aquavitae.android.data.repository.BebidaRepository
 import pt.aquavitae.android.data.repository.LookupRepository
+import pt.aquavitae.android.navigation.AppDestinations
 import javax.inject.Inject
 
 private const val CATEGORIA_VINHO = "Vinho"
@@ -53,6 +56,8 @@ sealed interface CatalogUiState {
         val castaBusca: String = "",
         val contagemRascunho: Long? = null,
         val aContarRascunho: Boolean = false,
+        /** Só no catálogo de um produtor (fatia 6): quem é — `categorias` passa a ser só as dele e o país/região deixam de fazer sentido. */
+        val produtor: ProdutorDetail? = null,
     ) : CatalogUiState {
         val categoriaVinhoId: Long? get() = categorias.firstOrNull { it.nome.equals(CATEGORIA_VINHO, ignoreCase = true) }?.id
         val rascunhoEhVinho: Boolean get() = rascunho.categoriaId != null && rascunho.categoriaId == categoriaVinhoId
@@ -81,7 +86,14 @@ sealed interface CatalogUiState {
 class CatalogViewModel @Inject constructor(
     private val bebidaRepository: BebidaRepository,
     private val lookupRepository: LookupRepository,
+    savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
+
+    /**
+     * Presente só quando o ecrã é o catálogo de um produtor (rota `produtor/{id}/catalogo`, fatia 6): o mesmo ecrã e os mesmos
+     * filtros, mas fixo num produtor. Na aba "Catálogo" não há argumento e fica `null`.
+     */
+    private val produtorId: Long? = savedStateHandle.get<Long>(AppDestinations.ARG_PRODUTOR_ID)
 
     private val _state = MutableStateFlow<CatalogUiState>(CatalogUiState.Loading)
     val state: StateFlow<CatalogUiState> = _state.asStateFlow()
@@ -95,6 +107,10 @@ class CatalogViewModel @Inject constructor(
 
     fun carregar() {
         _state.value = CatalogUiState.Loading
+        if (produtorId != null) {
+            carregarDoProdutor(produtorId)
+            return
+        }
         viewModelScope.launch {
             lookupRepository.categoriasBebida()
                 .onSuccess { categorias ->
@@ -109,9 +125,32 @@ class CatalogViewModel @Inject constructor(
         }
     }
 
+    /**
+     * O catálogo de um produtor: começa em "Todas" as categorias dele (`categoriaId = null`, ao contrário do geral, que abre em
+     * Vinho) e só as categorias que ele tem — vêm no próprio `GET /produtores/{id}`. País e região não se aplicam (é um só produtor).
+     */
+    private fun carregarDoProdutor(id: Long) {
+        viewModelScope.launch {
+            bebidaRepository.getProdutorDetail(id)
+                .onSuccess { produtor ->
+                    val filtroInicial = CatalogFiltro(produtorId = id)
+                    _state.value = CatalogUiState.Ready(
+                        categorias = produtor.categorias,
+                        filtro = filtroInicial,
+                        rascunho = filtroInicial,
+                        produtor = produtor,
+                    )
+                    buscar(reiniciar = true)
+                    carregarLookupsDoPopup()
+                }
+                .onFailure { _state.value = CatalogUiState.Error(it.toUserMessage()) }
+        }
+    }
+
     // --- Resultados (o filtro já aplicado) ---
 
-    fun selecionarCategoriaAtiva(id: Long) = atualizarPronto { copy(filtro = filtro.copy(categoriaId = id), rascunho = rascunho.copy(categoriaId = id)) }
+    /** `null` = "Todas" (só no catálogo de um produtor; o geral tem sempre uma categoria ativa). */
+    fun selecionarCategoriaAtiva(id: Long?) = atualizarPronto { copy(filtro = filtro.copy(categoriaId = id), rascunho = rascunho.copy(categoriaId = id)) }
         .also { buscar(reiniciar = true) }
 
     fun pesquisar(texto: String) = atualizarPronto { copy(filtro = filtro.copy(search = texto.ifBlank { null })) }
@@ -166,7 +205,9 @@ class CatalogViewModel @Inject constructor(
     // "Portugal" por omissão (ver carregarLookupsDoPopup) só quando o filtro aplicado ainda não tem país nenhum — um
     // país já aplicado antes (ou já escolhido numa abertura anterior do popup nesta visita) tem sempre prioridade.
     fun abrirFiltros() = atualizarPronto {
-        copy(filtrosAbertos = true, rascunho = filtro.copy(paisId = filtro.paisId ?: rascunho.paisId), castaBusca = "")
+        // No catálogo de um produtor não há país (nem região) para escolher: fica sempre sem.
+        val paisDoRascunho = if (produtor != null) null else filtro.paisId ?: rascunho.paisId
+        copy(filtrosAbertos = true, rascunho = filtro.copy(paisId = paisDoRascunho), castaBusca = "")
     }.also { recarregarRegioesDoRascunho() }
 
     // Repõe `regioes` para o país do filtro aplicado (o rascunho pode ter mudado de país sem aplicar) — assim os
@@ -183,7 +224,8 @@ class CatalogViewModel @Inject constructor(
 
     fun limparRascunho() = editarRascunho { it.limpo() }
 
-    fun selecionarCategoriaRascunho(id: Long) {
+    /** `null` = "Todas" (só no catálogo de um produtor). */
+    fun selecionarCategoriaRascunho(id: Long?) {
         editarRascunho { it.copy(categoriaId = id) }
         recarregarRegioesDoRascunho()
     }
@@ -245,9 +287,9 @@ class CatalogViewModel @Inject constructor(
                 .onSuccess { paises ->
                     atualizarPronto { copy(paises = LookupState.Ready(paises)) }
                     // Só o rascunho (o popup ainda fechado): "Portugal" por omissão, como no mockup — a lista de baixo só
-                    // passa a filtrar por país quando o utilizador tocar em "Ver X bebidas".
+                    // passa a filtrar por país quando o utilizador tocar em "Ver X bebidas". Não no catálogo de um produtor.
                     val paisInicial = paises.firstOrNull { it.id == CatalogFiltro.PAIS_PORTUGAL_ID }?.id ?: paises.firstOrNull()?.id
-                    if (paisInicial != null) {
+                    if (paisInicial != null && produtorId == null) {
                         editarRascunho { it.copy(paisId = paisInicial) }
                         recarregarRegioesDoRascunho()
                     }

@@ -10,6 +10,7 @@ import pt.aquavitae.api.bebida.BebidaSummaryAssembler
 import pt.aquavitae.api.bebida.comOrdenacaoPadraoDeBebidas
 import pt.aquavitae.api.bebida.dto.BebidaSummaryDto
 import pt.aquavitae.api.common.ResourceNotFoundException
+import pt.aquavitae.api.lookup.dto.LookupItemDto
 import pt.aquavitae.api.produtor.dto.ProdutorDetailDto
 import pt.aquavitae.api.utilizador.Utilizador
 import java.time.Clock
@@ -27,7 +28,15 @@ class ProdutorService(
     fun getDetail(id: Long): ProdutorDetailDto {
         val produtor = produtorRepository.findByIdWithPais(id)
             .orElseThrow { ResourceNotFoundException("Produtor $id não encontrado") }
-        return ProdutorDetailDto.from(produtor, totalProdutos = bebidaRepository.countByProdutor_Id(id).toInt())
+        val rating = bebidaRepository.ratingDoProdutor(id)
+        val totalReviews = rating.totalReviews ?: 0L
+        return ProdutorDetailDto.from(
+            produtor,
+            totalProdutos = bebidaRepository.countByProdutor_Id(id).toInt(),
+            ratingMedio = ProdutorRating.media(rating.somaPonderada, totalReviews),
+            totalReviews = totalReviews.toInt(),
+            categorias = bebidaRepository.categoriasDoProdutor(id).map { LookupItemDto(it.id, it.value) },
+        )
     }
 
     // Separador "Produtos" da página do produtor, com o filtro por categoria.

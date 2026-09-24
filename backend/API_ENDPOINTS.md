@@ -198,7 +198,7 @@ botão de compra) mas **a linha fica como histórico**, e volta a ativo sozinho 
 
 | Método | Path | Estado |
 |---|---|---|
-| GET | `/api/bebidas?search=&categoriaIds=&paisId=&regiaoIds=&precoMin=&precoMax=&ratingMin=&acidezMin=&acidezMax=&docuraMin=&docuraMax=&corpoId=&taninoId=&tipoId=&castaIds=&page=&size=` | ✅ **implementado** (2026-09-18) — testado com `categoriaIds`, `precoMax`. 🆕 (2026-09-19, **validado ao vivo**) `regiaoIds` (repetir o parâmetro: `regiaoIds=3&regiaoIds=7`; os ids de `/lookup/regioes?paisId=`; era `regioes` em texto, substituído no mesmo dia pela tabela `regiao`) e `search` que passa a casar também o **nome do produtor** e o **nome de uma casta** (tudo em AND com os filtros aplicados; "limpar" um filtro é o cliente deixar de o enviar) |
+| GET | `/api/bebidas?search=&categoriaIds=&produtorId=&paisId=&regiaoIds=&precoMin=&precoMax=&ratingMin=&acidezMin=&acidezMax=&docuraMin=&docuraMax=&corpoId=&taninoId=&tipoId=&castaIds=&page=&size=` | ✅ **implementado** (2026-09-18) — testado com `categoriaIds`, `precoMax`. 🆕 (2026-09-19, **validado ao vivo**) `regiaoIds` (repetir o parâmetro: `regiaoIds=3&regiaoIds=7`; os ids de `/lookup/regioes?paisId=`; era `regioes` em texto, substituído no mesmo dia pela tabela `regiao`) e `search` que passa a casar também o **nome do produtor** e o **nome de uma casta** (tudo em AND com os filtros aplicados; "limpar" um filtro é o cliente deixar de o enviar). 🆕 (2026-09-24, **validado ao vivo**) **`produtorId`** — só as bebidas desse produtor (a FK da bebida, sem join; combina em AND com tudo o resto, incluindo `search`, `categoriaIds` e os atributos de vinho): é o que faz o "catálogo do produtor" da app ser o mesmo ecrã do catálogo. Um produtor que não existe devolve página vazia (não 404, ao contrário de `/produtores/{id}/bebidas`) |
 | GET | `/api/bebidas/sugeridas` (auth) | ✅ **implementado** — sem preferências, cai para o catálogo todo (nunca vazio); com preferências, filtra por categorias/acidez/doçura preferidas. **Algoritmo ainda simples** (sem ordenação por rating dedicada) — afinar mais tarde se necessário |
 | GET | `/api/bebidas/{id}` | ✅ **implementado** — `produtorResumo`, `linkCompra` (mais barato), flags do utilizador |
 | GET | `/api/bebidas/{id}/reviews` | ✅ **implementado** — `{ distribuicao: {1..5: n}, reviews: [...] }`. **Sincronizado no Android em 2026-09-23** (fatia 3a, `ReviewsResponse`, validado ao vivo) |
@@ -220,7 +220,7 @@ padrão já usado para `produtorNome`.
 
 | Método | Path | Estado |
 |---|---|---|
-| GET | `/api/produtores/{id}` | ✅ **implementado** (2026-09-19, validado ao vivo) — ganha `totalProdutos` (nº de bebidas do produtor no catálogo) |
+| GET | `/api/produtores/{id}` | ✅ **implementado** (2026-09-19, validado ao vivo) — ganha `totalProdutos` (nº de bebidas do produtor no catálogo); **2026-09-24: ganha `ratingMedio`, `totalReviews` e `categorias`** (ver "Rating geral do produtor" abaixo) |
 | GET | `/api/produtores/{id}/bebidas?categoriaId=&page=&size=` | ✅ **implementado** (2026-09-19, validado ao vivo) — `Page<BebidaSummaryDto>` (mesmo cartão do catálogo, com as marcações do utilizador se houver Bearer); ordenação por omissão como o catálogo (rating desc, nome, id); 404 se o produtor não existir |
 | GET | `/api/produtores/destaque` | ✅ **implementado** (2026-09-19, validado ao vivo) — devolve o mesmo `ProdutorDetailDto` |
 
@@ -231,6 +231,15 @@ os **10 primeiros** (`ProdutorDestaque.TAMANHO_ROTACAO`) e escolhe um, avançand
 meio do ano, produtores sem qualquer avaliação — daí o corte nos 10 (**aprovado pelo utilizador em 2026-09-19**). Limitação
 conhecida: o ranking usa os ratings de agora, por isso uma review nova pode trocar o produtor a meio da semana. 404 se
 ainda não houver produtores com bebidas.
+
+**Rating geral do produtor (`ratingMedio` + `totalReviews`, 2026-09-24, sugestão do utilizador para a página do produtor)** —
+computado, sem coluna nova: a média de **todas as reviews** das bebidas do produtor, isto é, a média dos `bebida_rating_medio`
+**ponderada pelo `bebida_total_reviews`** (`SUM(rating × reviews) / SUM(reviews)`, 2 casas, `ProdutorRating.media`). Sem
+ponderar, uma bebida com 1 review de 5,0 pesava tanto como outra com 200 reviews de 4,0; bebidas sem reviews não pesam.
+Sem nenhuma review, `ratingMedio` é `null` e `totalReviews` 0 (a app mostra "Sem reviews ainda", nunca um 0,0 que pareça
+uma nota). **Duas medidas diferentes de propósito:** o "produtor da semana" (`/destaque`) continua a ordenar pela média
+**simples** das bebidas avaliadas (aprovado em 2026-09-19). `categorias` (`[{ id, nome }]`) são as categorias em que o produtor
+tem bebidas, pela ordem do lookup — os separadores do "catálogo do produtor" da app.
 
 ## Favoritos / Wishlist / Provadas
 
@@ -352,6 +361,10 @@ data class ReviewsResponse(
 
 // ProdutorDetailDto (GET /api/produtores/{id}) — adicionar:
 totalProdutos: Int
+morada: String?                 // (2026-09-24) texto livre (rua, código postal, localidade); coluna `produtor_morada`, patch 14; null = não disponível
+ratingMedio: Double?            // (2026-09-24) média ponderada pelas reviews de todas as bebidas do produtor; null sem reviews
+totalReviews: Int               // (2026-09-24)
+categorias: List<LookupItemDto> // (2026-09-24) as categorias em que o produtor tem bebidas
 regiaoId: Long?                 // (2026-09-19) `regiao` continua a ser o nome; o mesmo em ProdutorResumoDto
 
 // CaveResponse (GET /api/users/me/caves) — adicionar:
@@ -523,9 +536,21 @@ Já corrigido no fim do dia: a pesquisa do catálogo não tinha `ORDER BY` (pagi
   ver "fatia 2a" acima). `GET /api/users/me` continua a não devolver o id da nacionalidade, só o nome
   (`UtilizadorMeDto.nationality`) — a app resolve o id por nome na lista de `GET /api/lookup/nacionalidades` (funciona
   porque é uma lista curada sem nomes repetidos; não pediu mudança no backend).
+- ✅ **Feito na app em 2026-09-24 (fatia 6: página do produtor)** — `feature/produtor/` (novo): `GET /api/produtores/{id}` e
+  `GET /api/produtores/{id}/bebidas?categoriaId=&page=&size=&sort=` (`getProdutorDetail` já existia na app; `getBebidasDoProdutor`
+  é novo). **Backend, 2 acrescentos pedidos/decorrentes do mockup:** `ProdutorDetailDto` ganhou `ratingMedio`
+  (média de todas as reviews das bebidas do produtor, ponderada; sugestão do utilizador), `totalReviews` e `categorias`
+  (os separadores do catálogo do produtor) — ver "Rating geral do produtor" na secção Produtores. A app abre a página pelo
+  cartão do produtor em destaque (home) e pelo cartão do produtor no popup de detalhe de uma bebida (`BebidaDetalheSheet`
+  ganhou `onVerProdutor`), a partir de qualquer ecrã que o use. **Os campos de imagem/mapa/história/site já vinham no DTO**
+  (`imagePath`, `latitude`/`longitude`, `historia`, `website`, `permiteVisitas`) — nenhum produtor da BD de dev os tem
+  preenchidos hoje (só `website`, `anoFundacao` e `permiteVisitas` em alguns): a página esconde o que não existe.
+  **Acrescentado no mesmo dia, depois de o utilizador aprovar duas propostas:** `ProdutorDetailDto.morada` (coluna nova
+  `produtor_morada`, patch `14` — a página mostra a morada em texto em vez de um mapa desenhado; "Abrir no mapa" usa as
+  coordenadas se houver, senão pesquisa pela morada) e o filtro **`produtorId` em `GET /api/bebidas`** (o catálogo do
+  produtor passa a ser o `CatalogScreen` da app, com pesquisa e filtros, em vez do ecrã simples da 1.ª versão da fatia 6).
 - Imagens: `imagePath` pode ser um URL absoluto (`https://...`) além de um caminho relativo — resolver conforme a regra da
   secção "Imagens" (já resolvido pela app, `resolveImageUrl`, para os campos que já sincronizou)
-- Produtores: `GET /api/produtores/{id}/bebidas` ainda por usar na app (a página de um produtor é um ecrã por construir)
-- `ProdutorDetailDto`/`ProdutorResumoDto` ganharam `regiaoId` (`regiao` continua a ser o nome) — ainda não usado na app (a
-  página de um produtor é o mesmo ecrã por construir referido acima). `GET /api/lookup/regioes?paisId=` já está sincronizado
-  desde a fatia 2b (usado no popup de filtros do catálogo).
+- Produtores: `GET /api/produtores/{id}/bebidas` já usado na app desde a fatia 6 (página e catálogo do produtor).
+- `ProdutorDetailDto`/`ProdutorResumoDto` ganharam `regiaoId` (`regiao` continua a ser o nome) — a página do produtor ainda não o usa (só `regiao`, o nome).
+  `GET /api/lookup/regioes?paisId=` já está sincronizado desde a fatia 2b (usado no popup de filtros do catálogo).

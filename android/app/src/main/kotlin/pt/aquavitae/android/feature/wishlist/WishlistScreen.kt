@@ -83,7 +83,7 @@ import java.time.format.TextStyle as JavaTextStyle
  * agora "Comprar em X" abre o popup de detalhe da bebida em vez do link do retalhista.
  */
 @Composable
-fun WishlistScreen(onVerPerfil: () -> Unit = {}, viewModel: WishlistViewModel = hiltViewModel()) {
+fun WishlistScreen(onVerPerfil: () -> Unit = {}, onVerProdutor: (Long) -> Unit = {}, viewModel: WishlistViewModel = hiltViewModel()) {
     val uiState by viewModel.state.collectAsState()
     // Ver o comentário equivalente em FavoritosScreen: sem isto, o ecrã ficava preso ao resultado da 1.ª visita.
     LaunchedEffect(Unit) { viewModel.carregar() }
@@ -120,6 +120,7 @@ fun WishlistScreen(onVerPerfil: () -> Unit = {}, viewModel: WishlistViewModel = 
             bebidaId = id,
             onDismiss = { bebidaSelecionadaId = null },
             onAdicionarACave = { bebidaParaAdicionarACave = it },
+            onVerProdutor = onVerProdutor,
         )
     }
     bebidaParaAdicionarACave?.let { bebida ->

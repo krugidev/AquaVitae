@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
+import pt.aquavitae.api.lookup.BebidaCategoria
 import java.math.BigDecimal
 
 interface BebidaRepository : JpaRepository<Bebida, Long> {
@@ -21,6 +22,7 @@ interface BebidaRepository : JpaRepository<Bebida, Long> {
     // Produtor e região vão em EXISTS com `b.produtor.id` (a FK, sem join): navegar `b.produtor.regiao` no
     // WHERE criaria um INNER JOIN implícito que tirava da pesquisa toda a bebida sem produtor, mesmo sem filtro.
     // `regiaoIds` são os ids devolvidos por /lookup/regioes?paisId= (as pílulas do popup de filtros).
+    // `produtorId` limita a um produtor (o catálogo do produtor, fatia 6): a FK da própria bebida, sem join.
     @Query(
         """
         SELECT b FROM Bebida b LEFT JOIN Vinho v ON v.bebidaId = b.id
@@ -31,6 +33,7 @@ interface BebidaRepository : JpaRepository<Bebida, Long> {
                 OR EXISTS (SELECT 1 FROM VinhoCasta vc WHERE vc.vinho = v
                              AND UPPER(vc.casta.name) LIKE UPPER(CONCAT('%', :search, '%'))))
           AND (:categoriaIds IS NULL OR b.categoria.id IN :categoriaIds)
+          AND (:produtorId IS NULL OR b.produtor.id = :produtorId)
           AND (:paisId IS NULL OR b.paisOrigem.id = :paisId)
           AND (:regiaoIds IS NULL OR EXISTS (SELECT 1 FROM Produtor p WHERE p.id = b.produtor.id AND p.regiao.id IN :regiaoIds))
           AND (:ratingMin IS NULL OR b.ratingMedio >= :ratingMin)
@@ -53,6 +56,7 @@ interface BebidaRepository : JpaRepository<Bebida, Long> {
     fun search(
         @Param("search") search: String?,
         @Param("categoriaIds") categoriaIds: List<Long>?,
+        @Param("produtorId") produtorId: Long?,
         @Param("paisId") paisId: Long?,
         @Param("regiaoIds") regiaoIds: List<Long>?,
         @Param("ratingMin") ratingMin: BigDecimal?,
@@ -85,4 +89,30 @@ interface BebidaRepository : JpaRepository<Bebida, Long> {
     ): Page<Bebida>
 
     fun countByProdutor_Id(produtorId: Long): Long
+
+    // Rating geral do produtor (ver ProdutorRating): SUM(rating × reviews) e SUM(reviews) de todas as suas bebidas.
+    // Sem bebidas, as duas somas vêm null.
+    @Query(
+        """
+        SELECT SUM(b.ratingMedio * b.totalReviews) AS somaPonderada, SUM(b.totalReviews) AS totalReviews
+        FROM Bebida b
+        WHERE b.produtor.id = :produtorId
+        """,
+    )
+    fun ratingDoProdutor(@Param("produtorId") produtorId: Long): RatingDoProdutorRow
+
+    // As categorias em que o produtor tem bebidas (os separadores do "catálogo do produtor"), pela ordem do lookup.
+    @Query(
+        """
+        SELECT DISTINCT c FROM Bebida b JOIN b.categoria c
+        WHERE b.produtor.id = :produtorId
+        ORDER BY c.id
+        """,
+    )
+    fun categoriasDoProdutor(@Param("produtorId") produtorId: Long): List<BebidaCategoria>
+}
+
+interface RatingDoProdutorRow {
+    val somaPonderada: BigDecimal?
+    val totalReviews: Long?
 }

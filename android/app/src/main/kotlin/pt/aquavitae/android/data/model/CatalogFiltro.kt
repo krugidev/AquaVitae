@@ -10,6 +10,8 @@ package pt.aquavitae.android.data.model
 data class CatalogFiltro(
     val search: String? = null,
     val categoriaId: Long? = null,
+    /** Só as bebidas deste produtor (o catálogo do produtor, fatia 6); `null` = catálogo geral. */
+    val produtorId: Long? = null,
     val paisId: Long? = null,
     val regiaoIds: Set<Long> = emptySet(),
     val ratingMin: Double? = null,
@@ -35,8 +37,8 @@ data class CatalogFiltro(
             precoMin, precoMax,
         ).size + regiaoIds.size + castaIds.size
 
-    /** Limpa tudo menos a categoria escolhida (o popup mantém sempre uma categoria ativa). */
-    fun limpo() = CatalogFiltro(categoriaId = categoriaId)
+    /** Limpa tudo menos a categoria escolhida e o produtor (o catálogo do produtor continua a ser só dele). */
+    fun limpo() = CatalogFiltro(categoriaId = categoriaId, produtorId = produtorId)
 
     companion object {
         const val PAIS_PORTUGAL_ID = 1L

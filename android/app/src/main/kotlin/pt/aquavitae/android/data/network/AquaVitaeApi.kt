@@ -91,6 +91,7 @@ interface AquaVitaeApi {
     suspend fun searchBebidas(
         @Query("search") search: String? = null,
         @Query("categoriaIds") categoriaIds: List<Long>? = null,
+        @Query("produtorId") produtorId: Long? = null,
         @Query("paisId") paisId: Long? = null,
         @Query("regiaoIds") regiaoIds: List<Long>? = null,
         @Query("ratingMin") ratingMin: Double? = null,
@@ -127,6 +128,16 @@ interface AquaVitaeApi {
     /** O produtor em destaque da semana (rotação computada; nunca vazio se houver algum produtor com bebidas). */
     @GET("api/produtores/destaque")
     suspend fun getProdutorDestaque(): ProdutorDetail
+
+    /** As bebidas de um produtor (os mesmos cartões do catálogo), com filtro opcional por categoria; rating desc por omissão. */
+    @GET("api/produtores/{id}/bebidas")
+    suspend fun getBebidasDoProdutor(
+        @Path("id") id: Long,
+        @Query("categoriaId") categoriaId: Long? = null,
+        @Query("page") page: Int? = null,
+        @Query("size") size: Int? = null,
+        @Query("sort") sort: String? = null,
+    ): PageResponse<BebidaSummary>
 
     // --- Reviews ---
 

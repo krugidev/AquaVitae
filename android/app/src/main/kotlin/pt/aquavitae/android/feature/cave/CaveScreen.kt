@@ -71,7 +71,7 @@ import pt.aquavitae.android.ui.theme.RoseBorder
  * estatísticas da cave escolhida, "Prontas a abrir" (com "Consumir") e "Em guarda" (com ordenação).
  */
 @Composable
-fun CaveScreen(onVerProvadas: () -> Unit = {}, viewModel: CaveViewModel = hiltViewModel()) {
+fun CaveScreen(onVerProvadas: () -> Unit = {}, onVerProdutor: (Long) -> Unit = {}, viewModel: CaveViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsState()
     // O detalhe de uma bebida é sempre um popup (também "nas caves", ver BebidaCard) — falhava aqui, apanhado a
     // testar o bloqueio da review (2026-09-23): as linhas de garrafa nunca tinham ficado ligadas.
@@ -111,6 +111,7 @@ fun CaveScreen(onVerProvadas: () -> Unit = {}, viewModel: CaveViewModel = hiltVi
             bebidaId = id,
             onDismiss = { bebidaSelecionadaId = null },
             onAdicionarACave = { bebidaParaAdicionarACave = it },
+            onVerProdutor = onVerProdutor,
         )
         bebidaParaAdicionarACave?.let { bebida ->
             AdicionarACaveSheet(
