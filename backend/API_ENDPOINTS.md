@@ -507,6 +507,15 @@ Já corrigido no fim do dia: a pesquisa do catálogo não tinha `ORDER BY` (pagi
     no topo de `FavoritosScreen`/`WishlistScreen` — o Navigation Compose desmonta e remonta o conteúdo da rota a cada
     troca de aba, por isso o `LaunchedEffect(Unit)` volta a correr (e a pedir dados frescos) de cada vez que a aba é
     reaberta, mesmo com a mesma instância da ViewModel por trás.
+- ✅ **Feito na app em 2026-09-24 (fatia 4: Favoritos e Wishlist a sério)** — `feature/favoritos/`, `feature/wishlist/`
+  reescritos a partir de um mockup do utilizador; sem mudanças de contrato — usam só o que `BebidaSummaryDto` já tinha
+  (`precoDesde`, `retalhistaNome`, `notaPropria`, `ratingMedio`, `totalReviews`). **Adiado de propósito, combinado com o
+  utilizador:** 5 campos que o mockup pede e o `BebidaSummaryDto` não tem — `linkCompraId`/`linkCompraUrl` (para "Comprar
+  em X" abrir o browser e registar o clique em `POST /bebidas/{id}/links-compra/{linkId}/clique`, que já existe),
+  `precoAtualizadoEm` ("ATUALIZADA HOJE"), `totalRetalhistasAtivos` ("MENOR DE N RETALHISTAS"), `quantidadeNaCave` ("N NA
+  CAVE") e `provadaEm` ("PROVADA EM \<mês\>"). Todos dariam para o mesmo padrão de enriquecimento em lote do
+  `BebidaSummaryAssembler` (como `isFavorito`/`isWishlist`/`isProvada`/`notaPropria`) — ver `PLANO.md`, "Adiado — Por
+  fazer depois", para o detalhe de cada um.
 - Imagens: `imagePath` pode ser um URL absoluto (`https://...`) além de um caminho relativo — resolver conforme a regra da
   secção "Imagens" (já resolvido pela app, `resolveImageUrl`, para os campos que já sincronizou)
 - Produtores: `GET /api/produtores/{id}/bebidas` ainda por usar na app (a página de um produtor é um ecrã por construir)

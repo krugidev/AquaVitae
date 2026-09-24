@@ -164,11 +164,12 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             ProvadasScreen(onVoltar = { navController.popBackStack() })
         }
 
+        // Wishlist e Favoritos: redesenhadas nesta fatia (já com systemBarsPadding próprio, sem o invólucro LegacyScreen).
         composable(AppDestinations.WISHLIST) {
-            TabScreen(BottomNavItem.Wishlist, navController) { LegacyScreen { WishlistScreen() } }
+            TabScreen(BottomNavItem.Wishlist, navController) { WishlistScreen() }
         }
         composable(AppDestinations.FAVORITOS) {
-            TabScreen(BottomNavItem.Favoritos, navController) { LegacyScreen { FavoritosScreen() } }
+            TabScreen(BottomNavItem.Favoritos, navController) { FavoritosScreen() }
         }
     }
 }

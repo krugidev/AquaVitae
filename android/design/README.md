@@ -505,6 +505,52 @@ continua a passar (53 testes, sem alterações à suite).
 **Validado ao vivo** (emulador `Pixel_8` + API real, conta `demo2@aquavitae.local`): as 5 verificações da lista acima, todas
 com capturas de ecrã confirmando o comportamento esperado — ver o resumo de cada ponto.
 
-**Em aberto / por fazer:** os antigos `DetailScreen`/`ReviewsScreen`/rotas continuam como código morto; imagem 17 por copiar
-para `design/caves/`; Favoritos/Wishlist (imagens 14/15, enviadas como contexto) continuam por construir — não pedidos nesta
-fatia.
+**Em aberto / por fazer:** os antigos `DetailScreen`/`ReviewsScreen`/rotas continuam como código morto; Favoritos/Wishlist
+(imagens 14/15, enviadas como contexto) continuam por construir — não pedidos nesta fatia (feitos a seguir, ver
+"Favoritos e Wishlist"). A imagem 17 ("Bebidas já provadas") acabou por se copiar para `design/caves/06-ja-provadas-popup.png`
+numa sessão seguinte (chegou por ficheiro entretanto).
+
+### Favoritos e Wishlist (feita e validada ao vivo, 2026-09-24)
+
+Prints em `android/design/favoritos-wishlist/01-wishlist.png` e `02-favoritos.png`, com anotações do próprio utilizador
+por cima da imagem (não é o Figma original — um mockup feito à mão a partir da app, com notas técnicas sobre a origem de
+cada dado). Substituem os placeholders do esqueleto que só liam mal o JSON (ver correção pós-3c).
+
+**O que o mockup pede e o que ficou feito:**
+- **Wishlist:** cabeçalho (wordmark + avatar, como a homepage), pílulas de ordenação "Recentes"/"Preço"/"Rating"
+  (ordenadas no telemóvel — a lista já vem inteira, sem paginação), cartão por bebida (imagem, nome, produtor • região,
+  atributos, preço mais barato, "ADICIONADA há N dias"/"em \<mês\>", marcador para remover, botões "Comprar em X" e
+  "Para a cave"). **Feito**, exceto a nota "MENOR DE N RETALHISTAS"/"ATUALIZADA HOJE" e a deteção de descidas de preço
+  ("3 baixaram de preço") — a própria anotação do utilizador no mockup diz para adiar isto ("A DETEÇÃO DE BAIXAR DE
+  PREÇO É REMOVIDA PARA JÁ"); as outras duas pedem campos que a API ainda não devolve (ver "Por fazer depois" abaixo) —
+  por agora "Comprar em X" abre o popup de detalhe da bebida em vez do link do retalhista.
+- **Favoritos:** cabeçalho igual, estatísticas ("N favoritos • N provadas • N com nota tua" — as duas primeiras vêm de
+  fontes diferentes, a 2.ª de `GET /users/me`), pílulas de categoria (só as presentes nos favoritos, não o lookup
+  inteiro), cartão com nota própria vs. média da comunidade, e "Ver a tua review"/"Avaliar" conforme haja review
+  publicada. **Feito**, exceto "PROVADA EM \<mês\>" e "N NA CAVE" (pedem campos novos, adiados — ver abaixo); sem essa
+  informação, o cartão de uma bebida provada mostra só o botão "Ver a tua review", sem a pílula do mês.
+- **"Ver as N garrafas favoritas":** só 3 cartões por omissão, com este link a mostrar os restantes (a API não pagina —
+  é um `take(3)`/mostrar tudo no telemóvel, decisão combinada com o utilizador).
+- **Remover um favorito/wishlist:** toca-se no coração/marcador do próprio cartão (otimista — sai da lista de imediato,
+  volta se o pedido falhar), sem confirmação (o mesmo padrão do popup de detalhe).
+- **"Para a cave":** ao contrário do popup de detalhe (que já tem o `BebidaDetail` carregado), o cartão da lista só tem
+  `BebidaSummary` — o botão busca `GET /bebidas/{id}` sozinho antes de abrir o `AdicionarACaveSheet`, com um pequeno
+  estado de carregamento ("A abrir…") no próprio botão.
+
+**Decisão combinada com o utilizador (dados em falta):** em vez de alargar a API agora, ficam por fazer 5 campos que o
+mockup pede e o `BebidaSummaryDto` não tem — o link de compra completo (`id`+`url`, para "Comprar" abrir o browser e
+registar o clique em `POST .../links-compra/{id}/clique`, que já existe), a data de verificação do preço mais barato
+("ATUALIZADA HOJE"), quantas ofertas ativas tem a bebida ("MENOR DE N RETALHISTAS"), quantas garrafas dela há numa cave
+do utilizador ("N NA CAVE") e a data em que foi marcada como provada ("PROVADA EM \<mês\>"). Fica registado em
+`PLANO.md`, "Por fazer depois", para uma sessão futura — a app já está pronta para os receber sem outra alteração de UI
+(os campos correspondentes é que ainda faltam nos modelos/ecrãs).
+
+**Testes:** sem testes novos. `assembleDebug testDebugUnitTest` continua a passar (53).
+
+**Validado ao vivo** (emulador `Pixel_8`, conta pessoal do utilizador): filtro por categoria nos favoritos; "Ver a tua
+review" a abrir o popup de detalhe da bebida certa; "Para a cave" na wishlist a buscar o detalhe e abrir
+`AdicionarACaveSheet` diretamente (sem passar pelo popup); remover um item da wishlist pelo marcador (otimista,
+confirmado a reaparecer ao voltar a marcá-lo).
+
+**Em aberto / por fazer:** os 5 campos da API listados acima; os antigos `DetailScreen`/`ReviewsScreen`/rotas continuam
+como código morto.

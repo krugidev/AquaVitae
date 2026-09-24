@@ -3,66 +3,58 @@
 Roadmap vivo do MVP. Atualizar isto no fim de cada sessão de trabalho relevante — é o que uma sessão
 nova do Claude Code (ou tu, ao voltares passado um tempo) deve ler primeiro para saber onde ficámos.
 
-## ▶ Retomar aqui (última atualização: 2026-09-23, fatias 1 a 3c do Android feitas + 2 correções pós-3c — fluxo principal do MVP completo)
+## ▶ Retomar aqui (última atualização: 2026-09-24, fatias 1 a 4 do Android feitas — fluxo principal do MVP completo, com Favoritos/Wishlist a sério)
 
 **Numa sessão nova, ler por esta ordem:** `CLAUDE.md` (convenções e ferramentas desta máquina) → esta secção → `android/README.md`
 (estado do frontend, estrutura, mapa de ecrãs) → `android/design/README.md` (os prints e **o que o utilizador pediu para cada ecrã**,
-secções "14. Homepage", "15. Catálogo / Filtros", "16. Cave e popup de detalhe da bebida" e "Ajustes de feedback + 'Já provadas'"
-têm o detalhe do que falta) → `backend/API_ENDPOINTS.md` (contrato). O frontend documenta-se nesses dois ficheiros do `android/`; o
-PLANO guarda o roadmap e as decisões.
+secções "14. Homepage", "15. Catálogo / Filtros", "16. Cave e popup de detalhe da bebida", "Ajustes de feedback + 'Já provadas'" e
+"Favoritos e Wishlist" têm o detalhe do que falta) → `backend/API_ENDPOINTS.md` (contrato). O frontend documenta-se nesses dois
+ficheiros do `android/`; o PLANO guarda o roadmap e as decisões.
 
 **Ponto da situação:** o backend da 1.ª versão está fechado. **Todas as fatias do Android até agora estão feitas e validadas ao
 vivo:** 1a/1b (auth, onboarding), 2a (homepage), 2b (catálogo/filtros), 3a (popup de detalhe de uma bebida, partilhado por toda a
-app), 3b (cave: lista, "Nova cave", "Adicionar à cave" com destaque de onde a bebida já está) e 3c (ajustes de feedback: popup de
+app), 3b (cave: lista, "Nova cave", "Adicionar à cave" com destaque de onde a bebida já está), 3c (ajustes de feedback: popup de
 confirmação ao duplicar numa cave, review a exigir "provada" em vez de a marcar sozinha, "Consumir" a marcar "provada", resumo e
-ecrã inteiro "Já provadas"). **Depois da 3c, o utilizador testou por conta própria (a sua conta pessoal, não a `demo_user2`) e
-apanhou 2 bugs, já corrigidos e validados ao vivo nessa mesma conta:** (a) Favoritos/Wishlist ficavam vazios/em erro
-("Required value 'id' missing") — `getFavoritos`/`getWishlist` na app esperavam `BebidaSummary` direto, mas a API sempre devolveu
-`{ bebida, data }`; (b) "INVESTIDOS"/"GARRAFAS" da Cave não atualizavam depois de guardar uma garrafa pelo popup "Adicionar à
-cave" — a lista de caves só era pedida de novo em `carregar()`/`criarCave()`/`consumir()`, não depois de guardar. Detalhe completo
-em `backend/API_ENDPOINTS.md`, "Sincronização pendente com o Android" ("correção pós-3c"). Isto fecha o **fluxo principal do
-MVP**: login → homepage → catálogo (com filtros) → detalhe de uma bebida (favoritar, avaliar — só se já provada —, adicionar à
-cave) → cave (consumir, criar, ver já provadas) → favoritos/wishlist (placeholders simples, mas agora com dados a sério). **Não
-há nenhuma fatia "a meio" neste momento** — o que falta são pontas soltas (página do produtor, perfil, o desenho dos ecrãs de
-favoritos/wishlist) e polimento (ver "Próximos passos"). Boa altura para o utilizador rever tudo com calma antes de decidir o
-que vem a seguir.
+ecrã inteiro "Já provadas") e **4 (Favoritos e Wishlist a sério, a partir de um mockup do próprio utilizador — filtros/ordenação,
+nota própria vs. média da comunidade, "Comprar em X"/"Para a cave")**. Entre a 3c e a 4, o utilizador testou por conta própria (a
+sua conta pessoal, não a `demo_user2`) e apanhou 3 bugs, já corrigidos e validados ao vivo nessa mesma conta — Favoritos/Wishlist
+vazios/em erro (`getFavoritos`/`getWishlist` com o modelo errado), "INVESTIDOS"/"GARRAFAS" da Cave sem atualizar depois de guardar
+uma garrafa, e as duas telas presas ao resultado da 1.ª visita mesmo com o modelo certo (detalhe completo em
+`backend/API_ENDPOINTS.md`, "Sincronização pendente com o Android", "correção pós-3c"). Isto fecha o **fluxo principal do MVP**:
+login → homepage → catálogo (com filtros) → detalhe de uma bebida (favoritar, avaliar — só se já provada —, adicionar à cave) →
+cave (consumir, criar, ver já provadas) → favoritos/wishlist (a sério, com filtros/ordenação e ações). **Não há nenhuma fatia "a
+meio" neste momento** — o que falta são pontas soltas (página do produtor, perfil, 5 campos da API adiados de propósito na fatia 4
+— ver "Adiado — Por fazer depois") e polimento (ver "Próximos passos"). Boa altura para o utilizador rever tudo com calma antes
+de decidir o que vem a seguir.
 
 **Git:** duas branches. **`feature/api-endpoints-design`** = PR #1 (backend v1): já fundido/enviado. **`feature/android-app`** =
-criada a partir dela em 2026-09-21 para o Android. **Está tudo por commitar nesta branch** (`git status` para a lista completa; ficou
-muito grande — sugestão forte: um commit por fatia/tema, não tudo de uma vez, dado o volume acumulado). Desde o último apontamento
-aqui, para além do resto: **no backend**, `tipo`/`tanino`/`produtorRegiao` no `BebidaSummaryDto` e `?bebidaId=`/`temBebida` em
-`GET /users/me/caves` (sem mudanças de backend na fatia 3c nem na correção pós-3c — só reaproveitaram endpoints já existentes);
-**no Android**, os modelos sincronizados (`BebidaModels`/`CaveModels`/`ProdutorModels`/`UserModels`/`ReviewModels`/
-`CatalogFiltro` novo/`BebidaFormatacao` novo), a homepage (`feature/home/`), o catálogo/filtros (`feature/catalog/` reescrito), o
-popup de detalhe da bebida (`feature/bebidadetalhe/` novo), a cave (`feature/cave/` reescrito: `CaveScreen`/`CaveViewModel`/
-`NovaCaveSheet`/`AdicionarACaveSheet`/`AdicionarACaveViewModel`, este último com o popup de confirmação de duplicado),
-`feature/provadas/` (novo: `ProvadasScreen`/`ProvadasViewModel`), `ProvadaRepository.kt` (com `getProvadas` novo),
-`FavoritoRepository.kt`/`WishlistRepository.kt`/`feature/favoritos/`/`feature/wishlist/` (corrigidos para `BebidaRelacao`),
-componentes partilhados novos (`ui/components/BebidaCard.kt`, `RangePillRow.kt`), a barra de navegação
-(`ui/components/BottomNavBar.kt`), o avatar (`AvatarBadge.kt`), os assets do utilizador (`res/drawable/ic_wordmark_home.png`,
-`ic_nav_*.png`, `ic_perfil.png`) e `android/design/homepage/` + `catalogo/` + `caves/` + `logos/` + `icones/`. **Ficam de fora dos
-commits, de propósito** (regra do `CLAUDE.md`): as notas do utilizador — `android/AQUAVITAESEEDS-NOTES` e, na raiz,
-`—--------------- DADOS A INSERIR NA.txt` e `REGIÕES A AJUSTAR (...).txt` — e a linha que o Android Studio acrescentou a
-`android/gradle.properties`. Ao commitar, usar `git commit <caminhos explícitos>`, nunca `git add -A`. A `main` só tem a landing
-page em `docs/`.
+criada a partir dela em 2026-09-21 para o Android, com [PR #2](https://github.com/krugidev/AquaVitae/pull/2) aberto (para `main`,
+ainda não fundido) — leva tudo desde a fatia 1a até à correção pós-3c, em 8 commits agrupados por área (BD, backend, Android
+fundação/homepage+catálogo/detalhe+cave+provadas, design, docs — ver o próprio PR para a lista; não reproduz as fatias históricas
+exatas, combinado com o utilizador dado o volume acumulado nunca commitado até essa altura). **A fatia 4 (Favoritos/Wishlist) já
+está feita mas ainda não commitada nem enviada** — `git status` mostra só os ficheiros dela: `feature/favoritos/`,
+`feature/wishlist/`, `AppNavHost.kt` (tira o `LegacyScreen` das duas rotas), `android/design/favoritos-wishlist/` (novo, os 2
+mockups) e `android/design/caves/06-ja-provadas-popup.png` (a imagem 17 da fatia 3c, que entretanto apareceu em disco). **Ficam de
+fora dos commits, de propósito** (regra do `CLAUDE.md`): as notas do utilizador — `android/AQUAVITAESEEDS-NOTES` e, na raiz,
+`—--------------- DADOS A INSERIR NA.txt`, `REGIÕES A AJUSTAR (...).txt` e `NOVOSDADOS.txt` (este último parece um relatório de
+incidentes sem ligação ao projeto — vale a pena o utilizador confirmar se foi parar ali por engano). Ao commitar, usar
+`git commit <caminhos explícitos>`, nunca `git add -A`. A `main` só tem a landing page em `docs/`.
 
 **Ambiente no fim da sessão:** BD de dev migrada até ao patch `13`; contentor `aquavitae-oracle-xe` a correr; **API a correr**, perfil
 `dev` (sem `mailpit`), com as credenciais do Gmail carregadas e já a servir `tipo`/`tanino`/`produtorRegiao`/`temBebida` — se
 reiniciar, ver `CLAUDE.md`, "Email de recuperação — Gmail", para voltar a carregar `backend/.env.mail` antes do `bootRun`; contentor
 `aquavitae-mailpit` ainda a correr (não é preciso para o dia a dia — `docker compose -f backend/docker-compose.mail-dev.yml down`
 para parar). **Emulador `Pixel_8` ligado, com a build mais recente instalada, sessão ativa da conta pessoal do utilizador**
-(`miguelafsmcruz@gmail.com`, não a `demo_user2` — foi essa conta que o utilizador usou para testar por conta própria depois da
-fatia 3c e onde os 2 bugs desta correção foram validados ao vivo): tem as caves reais "Vinhos 2026" (4 garrafas, 208,00€) e
-"Gins 2026" (**revertida para vazia/0,00€** — usada para validar a correção dos totais, com uma garrafa de teste da "Esporão
-Reserva Tinto 2018" a 50,00€, removida no fim via `DELETE /api/caves/{id}/bebidas/{id}`; o mesmo favorito/wishlist de teste
-nessa bebida também foram desmarcados via API, `DELETE .../favorito` e `.../wishlist` — a conta ficou tal como o utilizador a
-deixou). Conta de teste `demo2@aquavitae.local` / `password123` (username `demo_user2`, papel `Utilizador`) **continua com 3
-caves de sessões anteriores**: "Adega Principal" (id 21, 1 garrafa — Esporão Reserva Tinto 2018 ×1 em guarda; a Barca Velha 2015
-que lá estava foi consumida numa sessão anterior), "Tintos de guarda" (id 22, 1 Barca Velha 2015 em guarda até 2035) e "Brancos
-frescos" (id 23, vazia) — **ficam na BD de propósito**, dado de teste contínuo; termos repostos a `NULL` numa sessão anterior.
-Testes: backend `.\gradlew.bat test` em `backend/` (**88**, sem BD, não corridos nesta sessão — sem mudanças no backend); Android
-`testDebugUnitTest` (**53**, sem alterações à suite, ver `android/README.md`). Não corri o `database/verify/rebuild-check.sh`
-nesta sessão (não mexi no schema).
+(`miguelafsmcruz@gmail.com`, não a `demo_user2` — é a conta com que o utilizador tem testado por conta própria desde a correção
+pós-3c): tem as caves reais "Vinhos 2026" (4 garrafas, 208,00€) e "Gins 2026" (vazia/0,00€ — usada só para testar, sem dados
+falsos por remover); 2 favoritos ("Barca Velha 2015", com review 4,0★, e "Vinha Grande Tinto 2019", sem review) e 1 wishlist
+("Vinha Grande Tinto 2019") — todos dados reais do utilizador, **nenhum por reverter**. Conta de teste `demo2@aquavitae.local` /
+`password123` (username `demo_user2`, papel `Utilizador`) **continua com 3 caves de sessões anteriores**: "Adega Principal" (id
+21, 1 garrafa — Esporão Reserva Tinto 2018 ×1 em guarda), "Tintos de guarda" (id 22, 1 Barca Velha 2015 em guarda até 2035) e
+"Brancos frescos" (id 23, vazia) — **ficam na BD de propósito**, dado de teste contínuo; termos repostos a `NULL` numa sessão
+anterior. Testes: backend `.\gradlew.bat test` em `backend/` (**88**, sem BD, não corridos nesta sessão — sem mudanças no
+backend); Android `testDebugUnitTest` (**53**, sem alterações à suite — a fatia 4 não pediu testes novos, ver
+`android/README.md`). Não corri o `database/verify/rebuild-check.sh` nesta sessão (não mexi no schema).
 
 **Arrancar tudo** (detalhes no `CLAUDE.md`): (1) `docker ps` — se o Oracle estiver parado, `docker compose up -d` em `database/`;
 (2) API: carregar `backend/.env.mail` (ver acima) e `.\gradlew.bat bootRun` em `backend/` (em background), confirmar com
@@ -71,16 +63,15 @@ nesta sessão (não mexi no schema).
 no `CLAUDE.md` o que fazer se o Docker Desktop crashar.
 
 **Próximos passos, por ordem:**
-1. **O utilizador testa o fluxo todo no emulador, incluindo os ajustes da fatia 3c** (popup de duplicado, bloqueio da review sem
-   "provada", "Consumir" a marcar provada, resumo e ecrã "Já provadas" com a busca) **e dá feedback** — em especial as
-   **diferenças conscientes** listadas em `android/design/README.md` ("14.", "15.", "16."): a serifa aproximada, "ORDENAR" só com
-   2 opções no catálogo, os 7 tipos de vinho mostrados (o mockup só tinha 4), o preço nunca testado com dados a sério, a review só
-   com estrelas inteiras, o toque curto a abrir o mesmo popup do premido, a pílula "Vinho 2025" da cave (não modelada — o que
-   representa?), "Ver as N garrafas" sem destino (só informativo).
+1. **O utilizador testa o fluxo todo no emulador, incluindo a fatia 4** (Favoritos/Wishlist a sério: filtros, ordenação,
+   "Comprar em X"/"Para a cave") **e dá feedback** — em especial as **diferenças conscientes** listadas em
+   `android/design/README.md` ("14.", "15.", "16.", "Favoritos e Wishlist"): a serifa aproximada, "ORDENAR" só com 2 opções no
+   catálogo, os 7 tipos de vinho mostrados (o mockup só tinha 4), o preço nunca testado com dados a sério, a review só com
+   estrelas inteiras, o toque curto a abrir o mesmo popup do premido, a pílula "Vinho 2025" da cave (não modelada — o que
+   representa?), "Ver as N garrafas" sem destino (só informativo), e os 5 campos da API adiados na fatia 4 (ver item 6).
 2. **Página do produtor:** "VER PRODUTOR" do popup de detalhe continua sem destino — fica para a fatia 6 do plano original.
-3. **Depois:** perfil e desenhar Favoritos/Wishlist a sério a partir de um mockup (os dados já estão corretos desde a correção
-   pós-3c — só falta a UI); editar uma garrafa já na cave (o `PATCH` já existe na API e no repositório Android, sem UI); limpar
-   o esqueleto morto (`feature/detail`, `feature/reviews`, as rotas `detail/{id}`/`reviews/{id}`, já sem forma de lá chegar por
+3. **Depois:** perfil; editar uma garrafa já na cave (o `PATCH` já existe na API e no repositório Android, sem UI); limpar o
+   esqueleto morto (`feature/detail`, `feature/reviews`, as rotas `detail/{id}`/`reviews/{id}`, já sem forma de lá chegar por
    toque desde a fatia 3a).
 4. **1.º lote de ~30 bebidas da Awin** (em paralelo com o Android; não depende dele) — fluxo em "Como entram as bebidas"
    (logo abaixo). Escrevo então o **script de verificação do catálogo** (aprovado: mínimo por categoria = nome, categoria,
@@ -95,7 +86,13 @@ no `CLAUDE.md` o que fazer se o Docker Desktop crashar.
    pronta**. Inclui os subtypes das outras categorias (**nota:** se o 1.º lote trouxer gins/whiskies, o detalhe só mostra os
    campos gerais da bebida, sem os atributos da categoria), a pesquisa de produtores à parte, o `Page<...>` como DTO próprio, os
    testes com BD, a pesquisa sem distinção de acentos, o CI/Dockerfile, a migração da toolchain do Android e o temporizador do código
-   de recuperação com "pedir novo" (`expiraEm` na resposta — o intervalo mínimo entre pedidos já está feito).
+   de recuperação com "pedir novo" (`expiraEm` na resposta — o intervalo mínimo entre pedidos já está feito). **Acrescentado na
+   fatia 4 (2026-09-24, combinado com o utilizador):** 5 campos que o mockup de Favoritos/Wishlist pede e o `BebidaSummaryDto`
+   não tem — `linkCompraId`/`linkCompraUrl` (para "Comprar em X" abrir o browser do retalhista e registar o clique em
+   `POST /bebidas/{id}/links-compra/{linkId}/clique`, endpoint que já existe), `precoAtualizadoEm` ("ATUALIZADA HOJE"),
+   `totalRetalhistasAtivos` ("MENOR DE N RETALHISTAS"), `quantidadeNaCave` ("N NA CAVE" nos favoritos) e `provadaEm`
+   ("PROVADA EM \<mês\>"). Todos batch, via `BebidaSummaryAssembler` (o mesmo padrão de `isFavorito`/`isWishlist`/`isProvada`/
+   `notaPropria`); a app já está pronta do lado da UI para os receber, só falta o backend e ligar os campos.
 
 **Como entram as bebidas (combinado em 2026-09-19):** as linhas `bebida` criam-se **à mão, em lotes** (~30), não
 automaticamente a partir do feed da Awin. Da Awin vêm os **links de compra** (uma bebida pode ter vários, de retalhistas
@@ -172,9 +169,11 @@ domain" nas definições do Pages** (aconteceu por engano uma vez e desviou o si
   garrafa pelo popup "Adicionar à cave", e, logo a seguir, Favoritos/Wishlist **ainda** presos ao resultado da 1.ª visita à aba
   mesmo depois de corrigido o modelo (marcar um favorito noutro ecrã e voltar à aba não mostrava a mudança); todos corrigidos e
   validados ao vivo. Ver `backend/API_ENDPOINTS.md`, "Sincronização pendente com o Android".
-- Os restantes ecrãs (`detail`, `reviews`) são ainda os placeholders do esqueleto (esqueleto morto, por limpar); `wishlist` e
-  `favoritos` já leem dados a sério (corrigidos acima) mas continuam com a UI simples do esqueleto, por desenhar a partir de um
-  mockup numa fatia futura.
+- **Fatia 4 (2026-09-24): Favoritos e Wishlist a sério** — desenhadas a partir de um mockup do próprio utilizador: filtro por
+  categoria e nota própria vs. média nos favoritos, ordenação por recentes/preço/rating na wishlist, "Comprar em X"/"Para a cave";
+  5 campos do mockup adiados de propósito (ver "Adiado — Por fazer depois"). Ver "Android — fatia 4", em "Em curso". **Com isto,
+  todos os ecrãs principais da barra de navegação têm o design final** (só faltam a página do produtor e o perfil).
+- Os restantes ecrãs (`detail`, `reviews`) continuam os placeholders do esqueleto (esqueleto morto, por limpar).
 
 ## Em curso 🔜
 
@@ -617,6 +616,39 @@ atualizaram de imediato (1/50,00€), sem sair do ecrã; marcou favorito + wishl
 confirmou que a aba "Favoritos" refletia a mudança ao reabri-la, nos dois sentidos (bug 3). Dados de teste revertidos no fim
 (token extraído do `DataStore` via `adb run-as` só para chamar `DELETE .../bebidas/{id}` na cave, `.../favorito` e
 `.../wishlist` — a conta do utilizador ficou tal como estava antes destes testes).
+
+### Android — fatia 4: Favoritos e Wishlist a sério (feita e validada ao vivo, 2026-09-24)
+
+O utilizador pediu para desenhar os dois ecrãs a partir de um mockup próprio (`android/design/favoritos-wishlist/`, feito a
+partir da app com anotações técnicas por cima — não é o Figma original). Detalhe completo em `android/design/README.md`,
+"Favoritos e Wishlist" — aqui só o resumo.
+
+**Backend:** nenhuma mudança — decisão combinada com o utilizador (ver "Adiado — Por fazer depois"): 5 campos que o mockup
+pede ficam para depois (link de compra completo, data de verificação, contagem de ofertas, quantidade na cave, data da
+provada); por agora usa-se só o que o `BebidaSummaryDto` já tinha.
+
+**Android:**
+- **`feature/favoritos/`** (reescrito): filtro por categoria (só as presentes nos favoritos do utilizador, não o lookup
+  inteiro), estatísticas "N favoritos • N provadas • N com nota tua" (a 2.ª vem de `GET /users/me`, as outras duas
+  calculadas a partir da própria lista), cartão com nota própria vs. média da comunidade e "Ver a tua review"/"Avaliar"
+  (abre o popup de detalhe da bebida — o próprio popup já bloqueia "Avaliar" se a bebida não estiver provada, fatia 3c);
+  "Ver as N garrafas favoritas" mostra só 3 por omissão, expande ao tocar.
+- **`feature/wishlist/`** (reescrito): pílulas de ordenação "Recentes"/"Preço"/"Rating" — ordenadas no telemóvel (a lista já
+  vem inteira, sem paginação, decisão combinada com o utilizador); "ADICIONADA há N dias"/"em \<mês\>"; "Comprar em X" (por
+  agora abre o popup de detalhe, falta o link real — ver acima) e "Para a cave" (busca `GET /bebidas/{id}` sozinho e abre o
+  `AdicionarACaveSheet` diretamente, sem passar pelo popup de detalhe — a lista só tem `BebidaSummary`).
+- **Remover um favorito/wishlist:** toca-se no coração/marcador do próprio cartão, otimista (sai da lista de imediato,
+  volta a aparecer se o pedido falhar), sem confirmação.
+- Os dois ecrãs saíram do `LegacyScreen` em `AppNavHost.kt` (já têm `systemBarsPadding()` próprio, como `home`/`catalog`/`cave`).
+- **Testes:** sem testes novos (mesma dívida do `kotlinx-coroutines-test`). `assembleDebug testDebugUnitTest` continua com 53.
+
+**Validado ao vivo** (emulador `Pixel_8`, conta pessoal do utilizador): filtro "Vinho" nos favoritos a mostrar só as 2 bebidas
+de vinho; "Ver a tua review" a abrir o popup certo (Barca Velha 2015); "Para a cave" na wishlist a buscar o detalhe e abrir
+`AdicionarACaveSheet` diretamente (confirmado com "Vinha Grande Tinto 2019", sem passar pelo popup); remover e voltar a
+adicionar o mesmo item da wishlist pelo marcador — a lista atualizou-se corretamente nos dois sentidos.
+
+**Em aberto / por fazer:** os 5 campos da API adiados (ver "Adiado — Por fazer depois"); os antigos
+`DetailScreen`/`ReviewsScreen`/rotas continuam como código morto; a página do produtor e o perfil ficam para depois.
 
 ### Desenho dos endpoints (concluído, 2026-09-17)
 

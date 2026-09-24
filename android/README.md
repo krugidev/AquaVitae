@@ -19,14 +19,15 @@ O frontend constrói-se em **fatias verticais**, cada uma um fluxo de ecrãs des
 | 3b | cave: lista ("As minhas Caves"), popup "Nova cave", popup "Adicionar à cave" (com destaque das caves onde a bebida já está) | ✅ feita (2026-09-23) |
 | 3c | ajustes de feedback: popup de confirmação ao duplicar numa cave, review a exigir "provada", "Consumir" a marcar provada, ecrã "Já provadas" | ✅ feita (2026-09-23) |
 | — | correção pós-3c: `getFavoritos`/`getWishlist` com o modelo errado, totais da cave sem atualizar após "Adicionar à cave", e as duas telas presas ao resultado da 1.ª visita à aba | ✅ feita (2026-09-23/24) |
-| 4 | desenhar Favoritos e Wishlist a partir de um mockup (já leem dados a sério, só falta a UI) | ⏳ |
+| 4 | Favoritos e Wishlist a sério (filtros/ordenação, nota própria vs. média, "Comprar"/"Para a cave") | ✅ feita (2026-09-24) |
 | 6 | página do produtor | ⏳ |
 
-Os ecrãs `detail`, `reviews`, `wishlist` e `favoritos` continuam **placeholders do esqueleto** (funcionais, mas sem o design
-final): estão embrulhados em `LegacyScreen` (`navigation/AppNavHost.kt`), que dá o espaço das barras do sistema. Ao redesenhar um,
-tira-se o invólucro — já aconteceu a `home` (fatia 2a), a `catalog` (fatia 2b) e a `cave` (fatia 3b). `home` é o ecrã de destino
-depois do login/onboarding (antes ia para `catalog`); `catalog`/`cave`/`wishlist`/`favoritos` continuam acessíveis pela barra de
-navegação (`BottomNavBar`), que também sobrepõe `home`, `catalog` e `cave`. `detail`/`reviews` deixaram de se alcançar por toque
+Os ecrãs `detail` e `reviews` continuam **placeholders do esqueleto** (esqueleto morto, por limpar — ver abaixo): estão
+embrulhados em `LegacyScreen` (`navigation/AppNavHost.kt`), que dá o espaço das barras do sistema. Ao redesenhar um,
+tira-se o invólucro — já aconteceu a `home` (fatia 2a), a `catalog` (fatia 2b), a `cave` (fatia 3b) e, na fatia 4,
+`wishlist`/`favoritos`. `home` é o ecrã de destino depois do login/onboarding (antes ia para `catalog`);
+`catalog`/`cave`/`wishlist`/`favoritos` continuam acessíveis pela barra de navegação (`BottomNavBar`), que também
+sobrepõe todos eles. `detail`/`reviews` deixaram de se alcançar por toque
 desde a fatia 3a (o detalhe de uma bebida é sempre o popup `BebidaDetalheSheet`) — ficam como código morto, por limpar.
 
 ## Compilar, instalar e ver (Windows; detalhes e porquês no `../CLAUDE.md`)
@@ -167,7 +168,8 @@ android/
 | `catalog` | `feature/catalog/CatalogScreen.kt` (+ `CatalogViewModel`, `CatalogUiState`, `FiltrosSheet`) | ✅ | `GET /bebidas` (todos os filtros: `categoriaIds`, `paisId`, `regiaoIds`, `precoMin/Max`, `ratingMin`, `acidezMin/Max`, `docuraMin/Max`, `corpoId`, `taninoId`, `tipoId`, `castaIds`, `search`, `sort`), `/lookup/{paises, regioes, vinho/corpos, vinho/taninos, vinho/tipos, castas, categorias-bebida}` |
 | `cave` | `feature/cave/CaveScreen.kt` (+ `CaveViewModel`, `CaveUiState`, `NovaCaveSheet`) | ✅ | `GET /users/me/caves`, `/caves/{id}?sort=`, `POST /users/me/caves`, `POST .../consumir` (marca "provada" a seguir, `POST /bebidas/{id}/provada`), `GET /users/me/provadas` (resumo de 5) |
 | `provadas` | `feature/provadas/ProvadasScreen.kt` (+ `ProvadasViewModel`) | ✅ | `GET /users/me/provadas?categoriaId=&ano=`, `/lookup/categorias-bebida`, `GET /bebidas` (busca), `POST /bebidas/{id}/provada` |
-| `wishlist`, `favoritos` | `feature/wishlist`, `favoritos` | 🔶 esqueleto (dados já corretos) | `GET /users/me/wishlist?sort=`, `/favoritos` (`List<BebidaRelacao>`, corrigido — ver "Lacunas conhecidas") |
+| `wishlist` | `feature/wishlist/WishlistScreen.kt` (+ `WishlistViewModel`) | ✅ | `GET /users/me/wishlist`, `GET /users/me`, `POST/DELETE .../wishlist`, `GET /bebidas/{id}` (para "Para a cave") |
+| `favoritos` | `feature/favoritos/FavoritosScreen.kt` (+ `FavoritosViewModel`) | ✅ | `GET /users/me/favoritos`, `GET /users/me`, `DELETE .../favorito` |
 | *(popup, sem rota)* | `feature/bebidadetalhe/BebidaDetalheSheet.kt` (+ `BebidaDetalheViewModel`) | ✅ | `GET /bebidas/{id}`, `/bebidas/{id}/reviews`, `POST/DELETE .../favorito`, `.../wishlist`, `POST .../reviews` (só se `isProvada == true`; já não marca "provada" sozinho, ver "3c") |
 | *(popup, sem rota)* | `feature/cave/AdicionarACaveSheet.kt` (+ `AdicionarACaveViewModel`) | ✅ | `GET /users/me/caves?bebidaId=`, `POST /caves/{id}/bebidas`, `POST /users/me/caves` |
 
@@ -207,16 +209,18 @@ emulador (compilar → instalar → `adb shell input tap/text` → screenshot), 
   `LaunchedEffect(Unit) { viewModel.carregar...() }` no topo de `FavoritosScreen`/`WishlistScreen`, que volta a correr (e a
   pedir dados frescos) sempre que a aba é reaberta. Resto da lista em `../backend/API_ENDPOINTS.md`, "Sincronização pendente
   com o Android". Sincroniza-se por fatia.
-- **Homepage (fatia 2a), Catálogo (fatia 2b), popup de detalhe da bebida (fatia 3a), Cave (fatia 3b) e ajustes + "Já provadas"
-  (fatia 3c), feitos:** ver a lista completa do que falta em `design/README.md`, secções "14.", "15." e "16." — em resumo: "VER
-  PRODUTOR" continua sem destino (depende da página do produtor, ecrã por construir); "Ver as N garrafas" da cave é só
-  informativo (a lista já mostra tudo); a secção "As minhas Caves" já foi validada com garrafas a sério; a serifa dos títulos é
-  uma aproximação do sistema; "ORDENAR" do catálogo só tem 2 opções (falta ordenar por preço, que pede trabalho no backend); o
-  `RangeSlider` do preço nunca foi testado com dados a sério; a review só aceita estrelas inteiras (sem as meias-estrelas do
-  mockup); `DetailScreen`/`ReviewsScreen` (esqueleto antigo) ficam como código morto, por limpar; falta trocar `AquaVitaeLogo`
-  (texto Inter) pelo wordmark real (`ic_wordmark_home`) nos outros ecrãs de auth; o mockup do ecrã "Já provadas" (imagem 17,
-  enviada nesta sessão) ainda não foi copiado para `design/caves/` (chegou depois de um resumo de contexto, sem ficheiro em
-  disco para copiar) — fica por copiar numa próxima sessão, se o utilizador o reenviar.
+- **Homepage (fatia 2a), Catálogo (fatia 2b), popup de detalhe da bebida (fatia 3a), Cave (fatia 3b), ajustes + "Já provadas"
+  (fatia 3c) e Favoritos/Wishlist (fatia 4), feitos:** ver a lista completa do que falta em `design/README.md`, secções "14.",
+  "15.", "16." e "Favoritos e Wishlist" — em resumo: "VER PRODUTOR" continua sem destino (depende da página do produtor, ecrã
+  por construir); "Ver as N garrafas" da cave é só informativo (a lista já mostra tudo); a secção "As minhas Caves" já foi
+  validada com garrafas a sério; a serifa dos títulos é uma aproximação do sistema; "ORDENAR" do catálogo só tem 2 opções
+  (falta ordenar por preço, que pede trabalho no backend); o `RangeSlider` do preço nunca foi testado com dados a sério; a
+  review só aceita estrelas inteiras (sem as meias-estrelas do mockup); `DetailScreen`/`ReviewsScreen` (esqueleto antigo)
+  ficam como código morto, por limpar; falta trocar `AquaVitaeLogo` (texto Inter) pelo wordmark real (`ic_wordmark_home`) nos
+  outros ecrãs de auth; **Favoritos/Wishlist ficam sem 5 detalhes do mockup** (link de compra completo para "Comprar" abrir o
+  browser e registar o clique, "ATUALIZADA HOJE"/"MENOR DE N RETALHISTAS", "N NA CAVE", "PROVADA EM \<mês\>") — pedem campos
+  novos no `BebidaSummaryDto`, adiados a pedido do utilizador (ver `PLANO.md`, "Por fazer depois"); a deteção de descidas de
+  preço da wishlist foi pedida para ficar de fora por agora.
 - **Recuperar password:** o código já chega por email (backend, 2026-09-22; testado com Mailpit local — ver `../CLAUDE.md`); o
   temporizador de validade com "pedir código novo" fica para depois (pede backend, ver `design/README.md`).
 - **Onboarding:** os pedidos só se enviam no último ecrã, por isso, se a app for fechada a meio, perde-se o que estava por guardar. O
