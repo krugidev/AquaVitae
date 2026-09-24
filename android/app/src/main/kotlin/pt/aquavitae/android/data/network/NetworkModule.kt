@@ -48,11 +48,28 @@ object NetworkModule {
     @Singleton
     fun provideOkHttpClient(
         authInterceptor: AuthInterceptor,
+        tokenAuthenticator: TokenAuthenticator,
         loggingInterceptor: HttpLoggingInterceptor,
     ): OkHttpClient = OkHttpClient.Builder()
         .addInterceptor(authInterceptor)
         .addInterceptor(loggingInterceptor)
+        // Renova a sessão (uma vez, para todos os pedidos em simultâneo) quando um pedido volta com 401.
+        .authenticator(tokenAuthenticator)
         .build()
+
+    /**
+     * A renovação da sessão tem o seu próprio cliente, **sem** o [AuthInterceptor] nem o [TokenAuthenticator]: é o
+     * `Authenticator` que a chama, e com o mesmo cliente seria um ciclo.
+     */
+    @Provides
+    @Singleton
+    fun provideAuthRefreshApi(moshi: Moshi, loggingInterceptor: HttpLoggingInterceptor): AuthRefreshApi =
+        Retrofit.Builder()
+            .baseUrl(BuildConfig.API_BASE_URL)
+            .client(OkHttpClient.Builder().addInterceptor(loggingInterceptor).build())
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .build()
+            .create(AuthRefreshApi::class.java)
 
     @Provides
     @Singleton

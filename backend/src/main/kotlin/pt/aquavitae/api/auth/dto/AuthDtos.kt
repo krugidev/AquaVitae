@@ -35,10 +35,18 @@ data class LoginRequest(
     val password: String,
 )
 
+// `token` = o JWT de acesso (60 min); `refreshToken` = o token opaco que o troca por um par novo em `POST /api/auth/refresh`
+// quando o de acesso expira (30 dias, rodado a cada renovação).
 data class AuthResponse(
     val token: String,
+    val refreshToken: String,
     val userId: Long,
     val username: String?,
+)
+
+data class RefreshRequest(
+    @field:NotBlank
+    val refreshToken: String,
 )
 
 // Os 3 passos da recuperação identificam a conta como o login: "Username ou Email" (`identificador`).

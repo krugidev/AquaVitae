@@ -108,6 +108,8 @@ dependencies {
 
     // Testes
     testImplementation(libs.junit)
+    // O TokenAuthenticator (renovação da sessão) testa-se contra um servidor HTTP local, sem rede real.
+    testImplementation(libs.okhttp.mockwebserver)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

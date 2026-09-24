@@ -7,6 +7,7 @@ import pt.aquavitae.android.data.model.AuthResponse
 import pt.aquavitae.android.data.model.LoginRequest
 import pt.aquavitae.android.data.model.RecuperarPasswordRequest
 import pt.aquavitae.android.data.model.RedefinirPasswordRequest
+import pt.aquavitae.android.data.model.RefreshRequest
 import pt.aquavitae.android.data.model.RegisterRequest
 import pt.aquavitae.android.data.model.VerificarCodigoRequest
 import pt.aquavitae.android.data.network.AquaVitaeApi
@@ -25,7 +26,7 @@ class AuthRepository @Inject constructor(
     /** `identificador` = username ou email. */
     suspend fun login(identificador: String, password: String): Result<AuthResponse> = runCatching {
         val response = api.login(LoginRequest(identificador = identificador, password = password))
-        tokenDataStore.saveSession(response.token, response.userId, response.username)
+        tokenDataStore.saveSession(response.token, response.refreshToken, response.userId, response.username)
         response
     }
 
@@ -39,7 +40,7 @@ class AuthRepository @Inject constructor(
         val response = api.register(
             RegisterRequest(username = username, email = email, password = password, aceitouTermos = aceitouTermos),
         )
-        tokenDataStore.saveSession(response.token, response.userId, response.username)
+        tokenDataStore.saveSession(response.token, response.refreshToken, response.userId, response.username)
         response
     }
 
@@ -61,7 +62,13 @@ class AuthRepository @Inject constructor(
         api.redefinirPassword(RedefinirPasswordRequest(identificador, codigo, novaPassword))
     }
 
+    /**
+     * Termina a sessão: revoga o refresh token no servidor (melhor esforço — sem rede, ele expira sozinho ao fim de 30 dias) e
+     * apaga a sessão do telemóvel, que é o que conta.
+     */
     suspend fun logout() {
+        val refreshToken = tokenDataStore.tokens().second
+        if (!refreshToken.isNullOrBlank()) runCatching { api.logout(RefreshRequest(refreshToken)) }
         tokenDataStore.clearSession()
     }
 }

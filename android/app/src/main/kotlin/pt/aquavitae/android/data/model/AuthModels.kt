@@ -23,11 +23,22 @@ data class LoginRequest(
     val password: String,
 )
 
+/**
+ * A sessão que o backend devolve no login, no registo e na renovação: o token de acesso (JWT, 60 min) e o `refreshToken`
+ * (opaco, 30 dias, rodado a cada renovação) que o troca por um par novo sem pedir a password.
+ */
 @JsonClass(generateAdapter = true)
 data class AuthResponse(
     val token: String,
+    val refreshToken: String,
     val userId: Long,
     val username: String,
+)
+
+/** `POST /api/auth/refresh` e `POST /api/auth/logout`. */
+@JsonClass(generateAdapter = true)
+data class RefreshRequest(
+    val refreshToken: String,
 )
 
 // Recuperação de password: a conta identifica-se como no login, por "Username ou Email" (`identificador`).

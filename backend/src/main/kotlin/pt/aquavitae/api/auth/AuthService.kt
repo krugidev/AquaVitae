@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import pt.aquavitae.api.auth.dto.AuthResponse
 import pt.aquavitae.api.auth.dto.LoginRequest
+import pt.aquavitae.api.auth.dto.RefreshRequest
 import pt.aquavitae.api.auth.dto.RegisterRequest
 import pt.aquavitae.api.common.ConflictException
 import pt.aquavitae.api.common.InvalidCredentialsException
@@ -23,6 +24,7 @@ class AuthService(
     private val utilizadorRoleRepository: UtilizadorRoleRepository,
     private val passwordEncoder: PasswordEncoder,
     private val jwtService: JwtService,
+    private val refreshTokenService: RefreshTokenService,
 ) {
 
     @Transactional
@@ -53,8 +55,7 @@ class AuthService(
         )
         val saved = utilizadorRepository.save(utilizador)
 
-        val token = jwtService.generateToken(saved.id, saved.email)
-        return AuthResponse(token = token, userId = saved.id, username = saved.username)
+        return respostaDeSessao(saved)
     }
 
     fun login(request: LoginRequest): AuthResponse {
@@ -68,7 +69,29 @@ class AuthService(
             throw InvalidCredentialsException("Username/email ou password inválidos")
         }
 
-        val token = jwtService.generateToken(utilizador.id, utilizador.email)
-        return AuthResponse(token = token, userId = utilizador.id, username = utilizador.username)
+        return respostaDeSessao(utilizador)
     }
+
+    // Troca um refresh token por um par novo (o de acesso e outro refresh, rodado). 401 se o token não existe, expirou ou já
+    // foi usado — a app leva o utilizador ao login. `noRollbackFor`: a revogação em massa numa reutilização tem de gravar.
+    @Transactional(noRollbackFor = [InvalidCredentialsException::class])
+    fun refresh(request: RefreshRequest): AuthResponse {
+        val (utilizador, novoRefresh) = refreshTokenService.rodar(request.refreshToken)
+        return AuthResponse(
+            token = jwtService.generateToken(utilizador.id, utilizador.email),
+            refreshToken = novoRefresh,
+            userId = utilizador.id,
+            username = utilizador.username,
+        )
+    }
+
+    // Termina a sessão deste dispositivo (revoga o refresh token). O JWT de acesso, sem estado, expira sozinho.
+    fun logout(request: RefreshRequest) = refreshTokenService.revogar(request.refreshToken)
+
+    private fun respostaDeSessao(utilizador: Utilizador): AuthResponse = AuthResponse(
+        token = jwtService.generateToken(utilizador.id, utilizador.email),
+        refreshToken = refreshTokenService.emitir(utilizador),
+        userId = utilizador.id,
+        username = utilizador.username,
+    )
 }

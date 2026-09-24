@@ -28,6 +28,8 @@ ddl/
                                   da nacionalidade) + os 8 códigos; repetível
   14_patch_produtor_morada.sql    patch p/ BD de dev JÁ existente: `produtor_morada` (morada em texto, para a página do
                                   produtor); repetível
+  15_patch_refresh_token.sql     patch p/ BD de dev JÁ existente: `utilizador_refresh_token` (sessão renovável: refresh tokens com hash e
+                                  rotação); repetível
 seed/
   01_lookups.sql         tabelas de lookup preenchidas (corpo, taninos, 277 castas, 218 países, casks, ...)
   02_bebidas.sql          produtores, retalhistas e ~16 bebidas de exemplo (maioritariamente portuguesas)
@@ -63,7 +65,7 @@ ou, em bash:
 Isto corre `ddl/01_tables.sql`, `ddl/02_constraints.sql`, `ddl/03_triggers.sql`,
 `seed/01_lookups.sql` e `seed/02_bebidas.sql`, por esta ordem, ligando como o `APP_USER` definido no `.env`.
 
-Os ficheiros `04_*` a `14_*` **não** fazem parte desta sequência: as alterações que fazem já estão em
+Os ficheiros `04_*` a `15_*` **não** fazem parte desta sequência: as alterações que fazem já estão em
 `01_tables.sql`/`02_constraints.sql` (e o `06`, `07`, `09`, `10` e `11` também em `seed/`), por isso só servem para pôr ao dia
 uma BD que já existia antes delas (cada um explica no topo como se corre). Ao mexer no schema: atualizar
 `01_tables.sql` **e** criar um patch novo.

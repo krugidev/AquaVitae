@@ -3,7 +3,7 @@
 Roadmap vivo do MVP. Atualizar isto no fim de cada sessão de trabalho relevante — é o que uma sessão
 nova do Claude Code (ou tu, ao voltares passado um tempo) deve ler primeiro para saber onde ficámos.
 
-## ▶ Retomar aqui (última atualização: 2026-09-24, fatias 1 a 6 + "Comprar" feitas — a seguir: sessão, pesquisa sem acentos e painel web)
+## ▶ Retomar aqui (última atualização: 2026-09-24, fatias 1 a 6 + "Comprar" + sessão renovável feitas — a seguir: pesquisa sem acentos e painel web)
 
 **Numa sessão nova, ler por esta ordem:** `CLAUDE.md` (convenções e ferramentas desta máquina) → esta secção → `android/README.md`
 (estado do frontend, estrutura, mapa de ecrãs) → `android/design/README.md` (os prints e **o que o utilizador pediu para cada ecrã**,
@@ -41,16 +41,14 @@ seguinte — por isso este `PLANO.md` e os READMEs ficam atualizados a cada pont
 **Git:** duas branches. **`feature/api-endpoints-design`** = PR #1 (backend v1): já fundido/enviado. **`feature/android-app`** =
 criada a partir dela em 2026-09-21 para o Android, com [PR #2](https://github.com/krugidev/AquaVitae/pull/2) aberto (para `main`,
 ainda não fundido) — leva tudo desde a fatia 1a até à fatia 6 (a 5 é o commit `d33d440`, a 6 — com a morada e o filtro por
-produtor — o `ff75aa2`), commitado por área/fatia (ver o próprio PR para a lista). **O ponto "Comprar" está feito mas ainda não
-commitado nem enviado** — `git status` mostra só os ficheiros dele: **backend** `CliqueCompra.kt` (mapeia `is_perguntado`/
-`resposta`), `CliqueCompraController.kt`, `CliquePergunta.kt` (novos) + `CliquePerguntaTest.kt`, `CompraService.kt`,
-`CompraDtos.kt`, `Cave.kt` (uma query `exists`), `application.yml`; **Android** `feature/compra/` (novo: `CompraPromptHost`,
-`CompraPromptViewModel`), `data/model/CompraModels.kt`/`CompraFormatacao.kt`, `data/repository/CompraRepository.kt`,
-`ui/util/ExternalLinks.kt` (novos) + `CompraFormatacaoTest.kt`, e alterações a `AquaVitaeApi.kt`, `BebidaDetalheViewModel.kt`/
-`BebidaDetalheSheet.kt` (pílula clicável + "Onde comprar"), `WishlistScreen.kt`/`WishlistViewModel.kt` ("Comprar em X"),
-`AdicionarACaveSheet.kt`/`AdicionarACaveViewModel.kt` (preço sugerido), `CaveScreen.kt`, `MainActivity.kt`, `ProdutorScreen.kt`
-(usa o `abrirLink` partilhado); `android/README.md`, `android/design/README.md`, `backend/API_ENDPOINTS.md`, `CLAUDE.md` e este
-`PLANO.md` também têm alterações. **Ficam de fora dos commits, de propósito** (regra do `CLAUDE.md`): as notas do utilizador —
+produtor — o `ff75aa2`), commitado por área/fatia (ver o próprio PR para a lista). **O ponto "Comprar" é o commit `6ae8ec8`; a sessão renovável está feita mas ainda não commitada nem enviada** — `git status` mostra só os
+ficheiros dela: **BD** `ddl/01_tables.sql`, `ddl/02_constraints.sql`, `ddl/15_patch_refresh_token.sql` (novo), `database/README.md`;
+**backend** `auth/RefreshToken.kt`, `RefreshTokenRegras.kt`, `RefreshTokenService.kt` (novos) + `RefreshTokenRegrasTest.kt`,
+`AuthService.kt`, `AuthController.kt`, `PasswordResetService.kt`, `AuthDtos.kt`, `application.yml`; **Android** `data/network/`
+`TokenAuthenticator.kt`, `AuthRefreshApi.kt`, `SessionEvents.kt` (novos) + `TokenAuthenticatorTest.kt`, `feature/auth/`
+`SessaoEventosViewModel.kt` (novo), e alterações a `NetworkModule.kt`, `AquaVitaeApi.kt`, `AuthRepository.kt`, `AuthModels.kt`,
+`TokenDataStore.kt`, `LoginScreen.kt`, `AppNavHost.kt`, `libs.versions.toml`/`build.gradle.kts` (o `MockWebServer` de teste); os READMEs,
+`CLAUDE.md` e este `PLANO.md`. **Ficam de fora dos commits, de propósito** (regra do `CLAUDE.md`): as notas do utilizador —
 `android/AQUAVITAESEEDS-NOTES` e, na raiz, `—--------------- DADOS A INSERIR NA.txt`, `REGIÕES A AJUSTAR (...).txt` e
 `NOVOSDADOS.txt` (este último parece um relatório de incidentes sem ligação ao projeto — vale a pena o utilizador confirmar se
 foi parar ali por engano). Ao commitar, usar `git commit <caminhos explícitos>`, nunca `git add -A`. **O utilizador autorizou,
@@ -58,7 +56,7 @@ foi parar ali por engano). Ao commitar, usar `git commit <caminhos explícitos>`
 meio** — por isso cada ponto (Comprar, sessão, pesquisa, painel) termina com um commit e um push. A `main` só tem a landing page
 em `docs/`.
 
-**Ambiente no fim da sessão:** BD de dev migrada até ao patch `14` (`produtor_morada`); contentor `aquavitae-oracle-xe` a correr; **API parada** (foi parada para correr os testes; arrancar com o `bootRun` abaixo), perfil
+**Ambiente no fim da sessão:** BD de dev migrada até ao patch `15` (`utilizador_refresh_token`); contentor `aquavitae-oracle-xe` a correr; **API parada** (foi parada para correr os testes; arrancar com o `bootRun` abaixo), perfil
 `dev` (sem `mailpit`), com as credenciais do Gmail carregadas e já a servir `tipo`/`tanino`/`produtorRegiao`/`temBebida` e, desde a fatia 6, o
 `ratingMedio`/`totalReviews`/`categorias` do produtor — se
 reiniciar, ver `CLAUDE.md`, "Email de recuperação — Gmail", para voltar a carregar `backend/.env.mail` antes do `bootRun`; contentor
@@ -73,8 +71,8 @@ Barca Velha 2015 em guarda até 2035) e "Brancos frescos" (id 23, vazia) — **f
 contínuo; termos repostos a `NULL` no fim desta sessão (a fatia 6 também os aceitou ao testar). **Os dados de teste temporários
 da fatia 6** (história/morada/coordenadas/imagem nos produtores 1 e 8 e 7 bebidas movidas para o 1) **já foram revertidos** — a
 BD de dev ficou como estava (nenhum produtor tem história, morada, coordenadas nem imagem; ver "Android — fatia 6"). Testes:
-backend `.\gradlew.bat test` em `backend/` (**96**, sem BD, +5 do `ProdutorRatingTest` e +3 do `CliquePerguntaTest`, corridos nesta sessão); Android
-`testDebugUnitTest` (**82**, +29 nesta sessão: `ProdutorFormatacaoTest`, `ProdutorUiStateTest` e `CompraFormatacaoTest`, ver `android/README.md`). Corri o
+backend `.\gradlew.bat test` em `backend/` (**105**, sem BD, corridos nesta sessão); Android
+`testDebugUnitTest` (**92**, ver `android/README.md`). Corri o
 `database/verify/rebuild-check.sh` depois do patch `14` (`produtor_morada`): "reconstrução igual à dev". **Landing page (GitHub
 Pages):** já está ativa em `https://krugidev.github.io/AquaVitae/` (fonte `main:/docs`, HTTPS, sem domínio próprio; HTTP 200
 verificado em 2026-09-24) — serve de "website" nos pedidos a outras redes de afiliados; continua a não se mexer no repo/domínio.
@@ -90,12 +88,10 @@ no `CLAUDE.md` o que fazer se o Docker Desktop crashar.
 **Combinado com o utilizador em 2026-09-24 e em curso (um ponto de cada vez; commit + push no fim de cada):**
 - **A1. Comprar — ✅ feito** (ver "Android — Comprar"). Falta só, quando houver o 1.º lote, confirmar com um link de afiliado
   **real** que o tracking sobrevive (todos os testes usaram `example.com`).
-- **A2. Sessão — a fazer.** O JWT expira aos **60 min** (`jwt.expiration-minutes`), **não há renovação** e uma resposta 401 a
-  meio da utilização não leva ao login: passada 1 hora a app mostra erros sem explicação. Desenho sugerido: **refresh token**
-  (tabela nova `utilizador_refresh_token` com o hash, validade longa e rotação; patch `15`) + `POST /api/auth/refresh` e
-  `POST /api/auth/logout` a revogar; na app, um `Authenticator` do OkHttp que renova **uma só vez** por 401 (pedidos em
-  simultâneo esperam pela mesma renovação), repete o pedido e, se a renovação falhar, limpa a sessão e leva ao login. Em produção
-  o `JWT_SECRET` tem de ser definido (hoje há um valor de desenvolvimento por omissão).
+- **A2. Sessão — ✅ feito** (ver "Android — Sessão renovável"): refresh token com rotação (patch `15`), `POST /api/auth/refresh` e
+  `/logout`, e um `TokenAuthenticator` na app que renova sozinho a cada 401 e, se a renovação for recusada, leva ao login com aviso.
+  Fica em aberto: renovar **antes** de expirar (um pedido a um endpoint público com o token expirado vem como anónimo) e, em produção,
+  definir o `JWT_SECRET`.
 - **A3. Pesquisa sem acentos — a fazer.** Hoje "esporao"/"meao"/"beirao" não encontram nada (só "Esporão"…) e um `%` ou `_`
   escrito na pesquisa é um curinga do `LIKE` (devolve tudo). Desenho: `TRANSLATE(UPPER(coluna), 'ÁÀÂÃ…', 'AAAA…')` do lado da
   BD (`function('translate', …)` no HQL, só no `search`, sem `NLS_COMP` global — que mexeria em todas as comparações) e o mesmo
@@ -280,6 +276,9 @@ domain" nas definições do Pages** (aconteceu por engano uma vez e desviou o si
   loja (link de afiliado, **só por toque do utilizador**) e registam o clique; o "Comprar em X" da wishlist também; ao voltar do
   browser, o popup **"Compraste esta bebida?"** (Sim → "Adicionar à cave" com o preço; Não comprei; Mais tarde). Backend: 2
   endpoints novos para o inquérito. Antes disto a app não tinha nenhuma forma de comprar. Ver "Android — Comprar", em "Em curso".
+- **Sessão renovável (2026-09-24)** — o token de acesso (60 min) passou a renovar-se sozinho com um refresh token (30 dias, rodado, só o
+  hash na BD, patch `15`): backend `POST /api/auth/refresh` e `/logout`; app com um `TokenAuthenticator` (OkHttp). Uma sessão expirada
+  leva ao login com "A tua sessão expirou". Ver "Android — Sessão renovável", em "Em curso".
 - Os restantes ecrãs (`detail`, `reviews`) continuam os placeholders do esqueleto (esqueleto morto, por limpar).
 
 ## Em curso 🔜
@@ -896,6 +895,30 @@ o controlador novo não chegou a ser criado (um `&&` a seguir a um script falhad
 
 **Em aberto:** confirmar com um link de afiliado **real** que o tracking sobrevive; o preço sugerido no "Compraste?" é o de agora;
 "Mais tarde" só volta no arranque seguinte; sem notificações.
+
+### Android — Sessão renovável (ponto 2 a seguir à fatia 6, feito e validado ao vivo, 2026-09-24)
+
+Pedido pelo utilizador ("faz os pontos 1, 2 e 3"): o JWT de acesso dura 60 min, a app não o renovava e um 401 a meio da utilização não
+levava a lado nenhum. Sem mockup. Detalhe em `android/design/README.md`, "Sessão renovável" — aqui o resumo.
+
+**Backend:** tabela `utilizador_refresh_token` (`01_tables.sql` + `02_constraints.sql` + patch `15`, repetível; só o **hash SHA-256**,
+validade, revogação e o **motivo** da revogação); `RefreshTokenRegras` (puro: estado válido/expirado/revogado, tolerância de 60 s **só
+para a rotação**, geração e hash), `RefreshTokenService` (emitir, rodar, revogar, revogar todos, limpeza diária 04:30);
+`POST /api/auth/refresh` e `/logout`; `login`/`register` devolvem `refreshToken`; redefinir a password revoga todas as sessões.
+Config `jwt.refresh-expiration-days` (30) e `jwt.refresh-tolerance-seconds` (60). **+9 testes** (105 no total).
+
+**Android:** `AuthResponse.refreshToken`; `TokenDataStore` guarda os dois tokens; `TokenAuthenticator` (uma renovação por vez, repete
+com o token novo, token recusado → apaga a sessão e avisa via `SessionEvents`, sem rede a sessão mantém-se); `AuthRefreshApi` com
+cliente à parte; `AppNavHost` leva ao login e o `LoginScreen` mostra "A tua sessão expirou. Entra novamente."; "Terminar sessão"
+revoga no servidor. **+10 testes** (`TokenAuthenticatorTest` contra um `MockWebServer`; 92 no total).
+
+**Validado ao vivo** com `JWT_EXPIRATION_MINUTES=1`: renovação transparente ao abrir "Favoritos" com o token expirado, sessão
+revogada → login com aviso, "Terminar sessão" → `LOGOUT`, reutilização de um token rodado → 401 e todas as sessões revogadas.
+**Dois defeitos de desenho apanhados ao testar:** a tolerância valia para qualquer revogação (coluna do motivo acrescentada) e o
+`Authenticator` renovava duas vezes com um 401 persistente. **Um erro meu:** ao repor os dados de teste do "Comprar" usei um URL
+truncado; o `rebuild-check.sh` apanhou-o (agora `CLAUDE.md` avisa).
+
+**Em aberto:** renovar antes de expirar; sessões antigas voltam ao login uma vez; sem lista/fim de outras sessões; `JWT_SECRET` em produção.
 
 ### Desenho dos endpoints (concluído, 2026-09-17)
 

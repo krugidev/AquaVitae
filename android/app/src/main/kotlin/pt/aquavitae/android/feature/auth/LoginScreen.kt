@@ -46,6 +46,8 @@ fun LoginScreen(
     onForgotPassword: () -> Unit,
     showPasswordChanged: Boolean = false,
     onPasswordChangedDismissed: () -> Unit = {},
+    // A sessão morreu a meio da utilização (o token não se conseguiu renovar): explica porque se voltou aqui.
+    sessaoExpirada: Boolean = false,
     viewModel: AuthViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -98,6 +100,8 @@ fun LoginScreen(
             )
             if (error != null) {
                 Text(text = error.message, style = AquaText.Error, modifier = Modifier.padding(top = 2.dp))
+            } else if (sessaoExpirada) {
+                Text(text = "A tua sessão expirou. Entra novamente.", style = AquaText.Hint, modifier = Modifier.padding(top = 2.dp))
             }
             // Espaço para o botão, que se sobrepõe à margem de baixo do cartão.
             Spacer(Modifier.height(30.dp))

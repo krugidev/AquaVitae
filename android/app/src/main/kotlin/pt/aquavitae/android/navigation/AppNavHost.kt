@@ -4,10 +4,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -16,6 +18,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import pt.aquavitae.android.feature.auth.LoginScreen
 import pt.aquavitae.android.feature.auth.RegisterScreen
+import pt.aquavitae.android.feature.auth.SessaoEventosViewModel
 import pt.aquavitae.android.feature.cave.CaveScreen
 import pt.aquavitae.android.feature.provadas.ProvadasScreen
 import pt.aquavitae.android.feature.catalog.CatalogScreen
@@ -39,6 +42,19 @@ import pt.aquavitae.android.ui.components.BottomNavItem
  */
 @Composable
 fun AppNavHost(navController: NavHostController = rememberNavController()) {
+    // A sessão pode morrer a meio da utilização (o token de acesso expirou e a renovação falhou): leva ao login, seja qual for o
+    // ecrã, e o login explica porquê. Nos ecrãs de entrada não faz nada (já lá estamos, ou o loading trata do seu caso).
+    val sessaoEventos: SessaoEventosViewModel = hiltViewModel()
+    val avisoSessaoExpirada by sessaoEventos.eventos.avisoNoLogin.collectAsState()
+    LaunchedEffect(navController) {
+        sessaoEventos.eventos.sessaoExpirada.collect {
+            val rotaAtual = navController.currentDestination?.route
+            if (rotaAtual !in ROTAS_DE_ENTRADA) {
+                navController.navigate(AppDestinations.LOGIN) { popUpTo(0) { inclusive = true } }
+            }
+        }
+    }
+
     NavHost(navController = navController, startDestination = AppDestinations.LOADING) {
 
         composable(AppDestinations.LOADING) {
@@ -64,10 +80,12 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             LoginScreen(
                 // Quem já tem conta vai direto para a app; o onboarding é só de quem acabou de se registar.
                 onLoggedIn = {
+                    sessaoEventos.eventos.limparAviso()
                     navController.navigate(AppDestinations.HOME) {
                         popUpTo(AppDestinations.LOGIN) { inclusive = true }
                     }
                 },
+                sessaoExpirada = avisoSessaoExpirada,
                 onNavigateToRegister = { navController.navigate(AppDestinations.REGISTER) },
                 onForgotPassword = { navController.navigate(AppDestinations.RECOVER) },
                 showPasswordChanged = passwordChanged,
@@ -235,6 +253,9 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
 private fun NavHostController.abrirProdutor(produtorId: Long) {
     navigate(AppDestinations.produtor(produtorId)) { launchSingleTop = true }
 }
+
+// Os ecrãs por onde se chega à app: uma sessão que morre aqui não precisa de ser levada ao login.
+private val ROTAS_DE_ENTRADA = listOf(AppDestinations.LOADING, AppDestinations.LOGIN, AppDestinations.REGISTER, AppDestinations.RECOVER)
 
 /**
  * Envolve um dos 5 ecrãs de topo com a [BottomNavBar], sobreposta ao fundo do ecrã. Tocar noutro item navega para o

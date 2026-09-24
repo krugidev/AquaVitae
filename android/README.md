@@ -23,6 +23,7 @@ O frontend constrói-se em **fatias verticais**, cada uma um fluxo de ecrãs des
 | 5 | perfil: ver/editar dados e preferências, escolher avatar, terminar sessão | ✅ feita (2026-09-24) |
 | 6 | página do produtor (imagem, rating geral, história, mapa, garrafas) + catálogo só desse produtor | ✅ feita (2026-09-24) |
 | 7 | comprar: a pílula do preço e "COMPRAR" abrem a loja e registam o clique, "Onde comprar", "Compraste?" ao voltar do browser, "Comprar em X" da wishlist | ✅ feita (2026-09-24) |
+| 8 | sessão renovável: o token de acesso expirava aos 60 min sem renovação nem tratamento de 401 — agora renova-se sozinho (refresh token) | ✅ feita (2026-09-24) |
 
 Os ecrãs `detail` e `reviews` continuam **placeholders do esqueleto** (esqueleto morto, por limpar — ver abaixo): estão
 embrulhados em `LegacyScreen` (`navigation/AppNavHost.kt`), que dá o espaço das barras do sistema. Ao redesenhar um,
@@ -88,8 +89,9 @@ android/
   o teclado usa `imePadding()`. A `MainActivity` deixa as barras transparentes com ícones escuros (o fundo é claro).
 - **Tema só claro** (o design é claro). **Textos em PT-PT.** Validar o que se pode no cliente antes de enviar (`AuthValidation.kt`) e
   escrever essa validação em Kotlin puro para a poder testar em JVM.
-- **Sessão:** `TokenDataStore` guarda o JWT; o `AuthInterceptor` acrescenta o `Bearer`. O arranque (`SessionViewModel`) valida a sessão com
-  `GET /api/users/me`.
+- **Sessão:** `TokenDataStore` guarda o JWT **e o refresh token**; o `AuthInterceptor` acrescenta o `Bearer`; o `TokenAuthenticator`
+  (OkHttp) renova o par a cada 401 (ver "Lacunas conhecidas" e `design/README.md`, "Sessão renovável"). O arranque
+  (`SessionViewModel`) valida a sessão com `GET /api/users/me`.
 - **Imagens:** o `imagePath` de uma bebida pode ser um URL absoluto (`https://…`, do retalhista) ou um caminho relativo (os avatares:
   `icones/avatares/casta-bago.svg`): `resolveImageUrl(path)` (`data/network/ImageUrls.kt`) usa-o tal como está se começa por `http(s)://`,
   senão prefixa-se `API_BASE_URL`. Carregamento com **Coil 2.7** (`AsyncImage`); o carregador único da app (com o `SvgDecoder`, que deixa
@@ -157,6 +159,7 @@ android/
 | `feature/perfil/EditarPreferenciasSheet` | o popup "Editar preferências" do perfil: as mesmas do onboarding (tipos de bebida, acidez/doçura, castas), aqui em pílulas horizontais compactas (`RangePillRow` reutilizado tal e qual) em vez das listas paginadas do onboarding |
 | `feature/produtor/HistoriaProdutorSheet` | o popup "Ler a história completa" da página do produtor: nome no topo, texto a deslizar, parágrafos da BD preservados |
 | `feature/compra/CompraPromptHost` | o inquérito "Compraste?": vive na `MainActivity`, por cima do grafo de navegação; ao voltar ao primeiro plano (`ON_RESUME`) pede `GET /users/me/cliques-compra/pendentes` e mostra "Compraste esta bebida?" (Sim → "Adicionar à cave" com o preço do link; Não comprei; Mais tarde) |
+| `TokenAuthenticator`, `AuthRefreshApi`, `SessionEvents` (`data/network/`) | a sessão renovável: o `Authenticator` do OkHttp renova o token a cada 401 (uma vez, para todos os pedidos em simultâneo) com o refresh token; a `AuthRefreshApi` tem cliente próprio (sem interceptor nem authenticator, senão seria um ciclo); o `SessionEvents` avisa a UI de que a sessão morreu (o `AppNavHost` leva ao login e o login mostra "A tua sessão expirou") |
 | `ui/util/abrirLink` | `Context.abrirLink(url)`: abre um URL fora da app (browser/app da loja/site do produtor/mapas); devolve `false` se não houver nada que o abra |
 
 **Tokens novos da homepage/catálogo** (`ui/theme/Color.kt`/`Type.kt`): `WineDark` (cartão do produtor em destaque), `RoseBorder`
@@ -203,9 +206,9 @@ código como esqueleto morto, por limpar numa fatia futura.
 
 ## Testes
 
-Unitários (JVM), **82**: `AuthValidationTest` (10, validação do registo), `RecoveryRulesTest` (10, email tapado, password nova),
+Unitários (JVM), **92**: `AuthValidationTest` (10, validação do registo), `RecoveryRulesTest` (10, email tapado, password nova),
 `OnboardingRulesTest` (12, ordem dos ecrãs, montagem dos pedidos de perfil e preferências), `FlagEmojiTest` (3), `ImageUrlsTest` (4),
-`AvatarBadgeTest` (6, iniciais do avatar), `BebidaFormatacaoTest` (8, a fórmula de `linhaAtributos()` e a extração do ano do nome). `ProdutorFormatacaoTest` (14, domínio do site, URL, coordenadas, morada, URI `geo:` por coordenadas ou por morada com o nome escapado, singular/plural) e `ProdutorUiStateTest` (5, 3 garrafas de início, "CARREGAR MAIS N", nunca mais de 6). `CompraFormatacaoTest` (10, a oferta principal é a mais barata das disponíveis com link, "MAIS BARATO" só com comparação, "há N min/horas/dias", "atualizado hoje").
+`AvatarBadgeTest` (6, iniciais do avatar), `BebidaFormatacaoTest` (8, a fórmula de `linhaAtributos()` e a extração do ano do nome). `ProdutorFormatacaoTest` (14, domínio do site, URL, coordenadas, morada, URI `geo:` por coordenadas ou por morada com o nome escapado, singular/plural) e `ProdutorUiStateTest` (5, 3 garrafas de início, "CARREGAR MAIS N", nunca mais de 6). `CompraFormatacaoTest` (10, a oferta principal é a mais barata das disponíveis com link, "MAIS BARATO" só com comparação, "há N min/horas/dias", "atualizado hoje"). `TokenAuthenticatorTest` (10, contra um `MockWebServer` local: renova e repete com o token novo, renovação recusada apaga a sessão e avisa, sem rede/5xx a sessão mantém-se, pedido anónimo e `/api/auth/` não renovam, outro pedido já renovou, sessão antiga sem refresh token, nunca renova duas vezes o mesmo pedido).
 Ainda **sem** testes de ViewModels nem de UI (pede `kotlinx-coroutines-test`; fica para quando compensar) — `HomeViewModel` e
 `CatalogViewModel` também ainda não têm testes (o `RangePillRow` e a lógica de intervalo do popup de filtros também só validados ao
 vivo, não têm teste unitário). `descricaoJanela` (`HomeScreen.kt`) continua `private`, sem teste. Os fluxos validam-se ao vivo no
@@ -259,7 +262,10 @@ emulador (compilar → instalar → `adb shell input tap/text` → screenshot), 
   temporizador de validade com "pedir código novo" fica para depois (pede backend, ver `design/README.md`).
 - **Onboarding:** os pedidos só se enviam no último ecrã, por isso, se a app for fechada a meio, perde-se o que estava por guardar. O
   estado de erro das listas ("TENTAR DE NOVO") não foi exercitado ao vivo (as listas carregam todas no arranque do onboarding).
-- Uma resposta 401 **durante** a utilização (token expirado a meio) ainda não leva ao login (só no arranque).
+- **Sessão renovável (2026-09-24):** um 401 a meio da utilização já não deixa a app com erros: o `TokenAuthenticator` renova o token
+  sozinho e, se a renovação for recusada, leva ao login com aviso; ver `design/README.md`, "Sessão renovável". **Não renova antes de
+  expirar**: um pedido a um endpoint **público** com o token expirado (o catálogo, por exemplo) não devolve 401 — vem como anónimo
+  (sem favoritos/wishlist marcados) até haver um pedido autenticado; o arranque (`GET /users/me`) e a maioria dos ecrãs fazem-no logo.
 - O nome "AQUAVITAE" é texto Inter; falta o **SVG do logótipo**. A fonte **Inter** (OFL) precisa de aviso de licença antes de publicar.
 - "TERMOS E CONDIÇÕES" e "LER OS TERMOS" abrem o popup `TermsSheet` (texto de `GET /api/legal/termos`, ainda um Lorem ipsum de
   exemplo); o texto final dos termos é do utilizador.

@@ -63,6 +63,18 @@ brancas) — texto já capturado, falta só o `UPDATE` em massa no seed.
 | POST | `/recuperar-password` `{ identificador }` | — | ✅ **implementado** — código de 6 dígitos em `utilizador_password_reset` (15 min de validade), 202 sempre (não revela se a conta existe). Envio real por email ainda por fazer — por agora só regista em log (`PasswordResetService`, combinado adiar o email). **`identificador` = username OU email, como no login** (sem distinguir maiúsculas, com `trim`; **mudou em 2026-09-22**, antes era `email`; o corpo antigo com `email` dá 400) |
 | POST | `/verificar-codigo` `{ identificador, codigo }` | — | ✅ **implementado** — 200 se válido/não expirado/não usado, 401 "Código inválido"/"Código expirado". `identificador` como acima |
 | POST | `/redefinir-password` `{ identificador, codigo, novaPassword }` | — | ✅ **implementado** — valida de novo, atualiza password, marca código usado (testado: reutilizar o código dá 401). `novaPassword` 8 a 72 caracteres. `identificador` como acima. Não inicia sessão |
+| POST | `/refresh` `{ refreshToken }` | — | ✅ **implementado** (2026-09-24, validado ao vivo) — troca um refresh token por um **par novo** `{ token, refreshToken, userId, username }` (o mesmo corpo do login); o refresh token usado fica revogado (`ROTACAO`). 401 se o token não existe, expirou (30 dias) ou já foi usado; 400 sem corpo |
+| POST | `/logout` `{ refreshToken }` | — | ✅ **implementado** (2026-09-24) — revoga o refresh token (`LOGOUT`); **idempotente** (um token desconhecido também dá 204) |
+
+**Sessão renovável (2026-09-24).** `login` e `register` passam a devolver também **`refreshToken`** (opaco, 43 caracteres,
+guardado na BD **só como hash SHA-256**, tabela `utilizador_refresh_token`, patch `15`). O token de acesso (`token`, JWT) continua a
+durar `jwt.expiration-minutes` (60); quando expira, a app apresenta o refresh token a `POST /api/auth/refresh` e recebe um par novo,
+sem pedir a password. **Rotação:** cada renovação revoga o token usado e emite outro. **Tolerância** (`jwt.refresh-tolerance-seconds`,
+60): um token **rodado** há menos de 60 s ainda se aceita — a resposta pode ter-se perdido (má rede) e a app repete o pedido com o
+token antigo; **só vale para a rotação** (motivo `ROTACAO`): um token revogado por logout, password nova ou reutilização recusa-se logo.
+**Deteção de roubo:** um token já rodado (fora da tolerância) que volta a aparecer revoga **todas** as sessões do utilizador
+(`REUTILIZACAO`) e devolve 401. **Redefinir a password revoga todas as sessões** (`PASSWORD`). Limpeza diária (04:30) dos expirados há
+mais de 7 dias. Em produção definir `JWT_SECRET` (hoje há um valor de desenvolvimento por omissão).
 
 ## Utilizador / Perfil (`/api/users/me`)
 
@@ -568,6 +580,12 @@ Já corrigido no fim do dia: a pesquisa do catálogo não tinha `ORDER BY` (pagi
   em X" da wishlist abrem o link de afiliado **por toque do utilizador** e registam o clique em segundo plano (falhar nunca
   impede de abrir a loja). **Os 5 campos adiados na fatia 4 continuam adiados** — o "Comprar em X" da wishlist não os
   precisou: vai buscar as ofertas da bebida ao tocar e abre a mais barata das disponíveis.
+- ✅ **Feito na app em 2026-09-24 (sessão renovável)** — `AuthResponse` ganhou `refreshToken` (login e registo o guardam junto do
+  token de acesso no `TokenDataStore`); **`TokenAuthenticator`** (OkHttp) renova a sessão sozinho a cada 401 (uma renovação de cada
+  vez, repete o pedido com o token novo; token recusado → apaga a sessão e leva ao login com "A tua sessão expirou"; sem rede a
+  sessão mantém-se); `AuthRefreshApi` (cliente à parte, sem interceptor nem authenticator) chama `POST /api/auth/refresh`;
+  "Terminar sessão" chama `POST /api/auth/logout`. **Sessões antigas** (sem refresh token, de antes desta versão) acabam ao
+  primeiro 401 e voltam ao login uma vez.
 - Imagens: `imagePath` pode ser um URL absoluto (`https://...`) além de um caminho relativo — resolver conforme a regra da
   secção "Imagens" (já resolvido pela app, `resolveImageUrl`, para os campos que já sincronizou)
 - Produtores: `GET /api/produtores/{id}/bebidas` já usado na app desde a fatia 6 (página e catálogo do produtor).

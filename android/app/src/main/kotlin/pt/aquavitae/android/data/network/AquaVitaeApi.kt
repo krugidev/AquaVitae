@@ -24,6 +24,7 @@ import pt.aquavitae.android.data.model.PreferenciaRequest
 import pt.aquavitae.android.data.model.PreferenciaResponse
 import pt.aquavitae.android.data.model.ProdutorDetail
 import pt.aquavitae.android.data.model.RecuperarPasswordRequest
+import pt.aquavitae.android.data.model.RefreshRequest
 import pt.aquavitae.android.data.model.RedefinirPasswordRequest
 import pt.aquavitae.android.data.model.RegisterRequest
 import pt.aquavitae.android.data.model.RespostaCliqueRequest
@@ -59,6 +60,10 @@ interface AquaVitaeApi {
 
     @POST("api/auth/login")
     suspend fun login(@Body request: LoginRequest): AuthResponse
+
+    /** Termina a sessão deste dispositivo (revoga o refresh token). A renovação está à parte, em [AuthRefreshApi]. */
+    @POST("api/auth/logout")
+    suspend fun logout(@Body request: RefreshRequest)
 
     // Recuperação de password, em 3 passos (o código de 6 dígitos vale 15 min). O 1.º devolve sempre 202, exista ou não a conta.
     @POST("api/auth/recuperar-password")

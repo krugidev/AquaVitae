@@ -752,3 +752,50 @@ saltou-o) — só se viu porque o `GET .../pendentes` deu 404; ficou corrigido e
 - O preço sugerido no "Compraste?" é o do link **agora** (pode ter mudado desde o clique).
 - Sem "voltar a perguntar mais tarde no mesmo dia": "Mais tarde" só volta no arranque seguinte da app.
 - O "Compraste?" só corre ao voltar ao primeiro plano; não há notificação (nem se pede a permissão).
+
+## Sessão renovável (ponto 2 a seguir à fatia 6, feito e validado ao vivo — 2026-09-24)
+
+**Sem mockup** (é infraestrutura). O problema: o JWT de acesso do backend dura **60 minutos**, a app **não o renovava** e uma
+resposta 401 a meio da utilização não levava a lado nenhum — passada 1 hora os pedidos falhavam sem explicação (só o arranque tratava
+um 401).
+
+**Como funciona:**
+- **Backend:** `login`/`register` devolvem também um `refreshToken` (opaco, 30 dias, guardado só como hash SHA-256 na tabela nova
+  `utilizador_refresh_token`, patch `15`); `POST /api/auth/refresh` troca-o por um par novo e **roda-o** (o usado fica revogado);
+  `POST /api/auth/logout` revoga-o; redefinir a password revoga todos. Um token já rodado que volta a aparecer (fora de 60 s de
+  tolerância para uma resposta perdida) revoga **todas** as sessões do utilizador. Detalhe em `backend/API_ENDPOINTS.md`, "Auth".
+- **App:** o `TokenAuthenticator` (`Authenticator` do OkHttp) trata cada 401 de um pedido que levava sessão: renova **uma vez para
+  todos os pedidos em simultâneo** (o refresh token roda, por isso usá-lo duas vezes seguidas falharia), repete o pedido com o token
+  novo e, **se a renovação for recusada** (expirou, revogado, password mudou), apaga a sessão e o `AppNavHost` leva ao login, que
+  mostra **"A tua sessão expirou. Entra novamente."** até haver uma entrada bem-sucedida. **Sem rede ou com erro do servidor a sessão
+  mantém-se** (apagá-la por uma falha de rede punha quem tem má cobertura a fazer login a toda a hora); o pedido falha com o 401 e o
+  utilizador tenta de novo. Um pedido anónimo (o login com a password errada) e os de `/api/auth/` nunca se renovam.
+  "Terminar sessão" também revoga o token no servidor (melhor esforço).
+
+**Decisões minhas:** 30 dias de validade e 60 s de tolerância (configuráveis em `jwt.*`); o texto do aviso do login; **não se renova
+antes de expirar** (ver "Em aberto").
+
+**Um defeito de desenho apanhado ao testar ao vivo (e dois nos testes):** (1) a tolerância de 60 s valia para **qualquer** token
+revogado, por isso depois de uma revogação em massa (reutilização, password nova) os tokens ainda se aceitavam mais 60 s — agora só
+vale para a **rotação** (coluna nova `refresh_token_revogado_motivo`: `ROTACAO`/`LOGOUT`/`PASSWORD`/`REUTILIZACAO`); (2) com um 401
+persistente o `Authenticator` renovava **duas** vezes — apanhado pelo `TokenAuthenticatorTest`; agora uma por pedido.
+
+**Testes:** +7 backend (`RefreshTokenRegrasTest`, agora 9 — validade, rotação, tolerância só para a rotação, hash SHA-256 com vetor
+conhecido, tokens de 43 caracteres sem repetições; **105** no total) e +10 Android (`TokenAuthenticatorTest`, contra um
+`MockWebServer` local, ferramenta de teste nova; **92** no total).
+
+**Validado ao vivo** (API com `JWT_EXPIRATION_MINUTES=1`, emulador `Pixel_8`, `demo_user2`): login devolve o `refreshToken`; `refresh`
+roda-o; repetir o antigo dentro de 60 s → 200; um inventado → 401; corpo vazio → 400; **fora da tolerância, reutilizar um rodado →
+401 e o token novo também deixa de servir** (`REUTILIZACAO`); **na app, com o token de acesso expirado, abrir "Favoritos" carregou a
+lista normalmente** (token 9 `ROTACAO`, novo token 10); **com a sessão revogada por SQL e o token expirado, a app voltou ao login com
+"A tua sessão expirou"**; entrar de novo e **"Terminar sessão" deixou o token `LOGOUT`** no servidor.
+Um erro meu apanhado no fim: ao repor os dados de teste do "Comprar" usei um URL truncado (a listagem cortava aos 70 caracteres) —
+o `rebuild-check.sh` apontou "BEBIDA_LINK_COMPRA: mesmo nº de linhas mas texto diferente"; reposto pelo valor do seed.
+
+**Em aberto:**
+- **Não renova antes de expirar:** um pedido a um endpoint **público** com o token já expirado (o catálogo, por exemplo) não devolve 401
+  — o backend trata-o como anónimo — e vem sem as marcações do utilizador (favorito/wishlist/provada) até haver um pedido autenticado
+  (o arranque e a maioria dos ecrãs fazem-no logo). Se incomodar: renovar no `AuthInterceptor` quando o `exp` do JWT já passou.
+- Sessões **de antes desta versão** (sem refresh token) acabam ao primeiro 401 e voltam ao login uma vez.
+- Sem "terminar as outras sessões" (nem lista de dispositivos) — a coluna e a tabela já o permitiriam.
+- Em produção o `JWT_SECRET` tem de ser definido (hoje há um valor de desenvolvimento por omissão).

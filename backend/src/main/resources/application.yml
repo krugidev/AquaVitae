@@ -63,3 +63,7 @@ jwt:
   # variável de ambiente JWT_SECRET com um valor próprio, longo e aleatório.
   secret: ${JWT_SECRET:dev-only-secret-change-me-before-any-real-deployment-32chars}
   expiration-minutes: 60
+  # Sessão renovável: o refresh token (opaco, guardado só como hash) dura estes dias e roda a cada renovação; a tolerância
+  # aceita o mesmo token repetido poucos segundos depois de rodado (a resposta perdeu-se, má rede) em vez de o tomar por roubo.
+  refresh-expiration-days: 30
+  refresh-tolerance-seconds: 60

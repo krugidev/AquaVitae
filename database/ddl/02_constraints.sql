@@ -18,6 +18,9 @@ ALTER TABLE utilizador ADD CONSTRAINT fk_utilizador_role
 ALTER TABLE utilizador_password_reset ADD CONSTRAINT fk_pwd_reset_utilizador
     FOREIGN KEY (utilizador_id) REFERENCES utilizador (utilizador_id);
 
+ALTER TABLE utilizador_refresh_token ADD CONSTRAINT fk_refresh_token_utilizador
+    FOREIGN KEY (utilizador_id) REFERENCES utilizador (utilizador_id);
+
 ALTER TABLE utilizador_avatar ADD CONSTRAINT fk_avatar_categoria
     FOREIGN KEY (avatar_category_id) REFERENCES avatar_categoria (avatar_categoria_id);
 

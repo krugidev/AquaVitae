@@ -312,6 +312,20 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
   um clique (o inquérito só pergunta passados 2 minutos): `UPDATE clique_compra SET clique_compra_data = clique_compra_data - INTERVAL '5'
   MINUTE WHERE clique_compra_is_perguntado = 0`, depois `input keyevent 3` (home) e `am start` para forçar o `ON_RESUME`. **O "Compraste?"
   vive na `MainActivity` (`CompraPromptHost`), não num ecrã**: aparece por cima de qualquer ecrã ao voltar ao primeiro plano.
+- **Sessão renovável (2026-09-24) — como se testa e o que não se pode partir.** O JWT dura 60 min (`jwt.expiration-minutes`) e há um refresh
+  token de 30 dias (tabela `utilizador_refresh_token`, só o hash, rotação a cada uso; ver `backend/API_ENDPOINTS.md`, "Auth"). **Para testar
+  sem esperar uma hora:** arrancar a API com `$env:JWT_EXPIRATION_MINUTES = "1"` antes do `bootRun` (o Spring lê a variável), entrar na app,
+  esperar ~70 s e usar um ecrã autenticado (a aba "Favoritos"): a app deve renovar sozinha (na BD: o token antigo `ROTACAO` e um novo).
+  Para o caso da sessão morta: `UPDATE utilizador_refresh_token SET refresh_token_revogado_em = SYSTIMESTAMP, refresh_token_revogado_motivo =
+  'PASSWORD' WHERE utilizador_id = ... AND refresh_token_revogado_em IS NULL` e esperar outros 70 s — a app deve voltar ao login com "A tua
+  sessão expirou". **Reiniciar a API sem essa variável no fim.** Na app: **o `AuthRefreshApi` tem um cliente OkHttp à parte de propósito**
+  (sem `AuthInterceptor` nem `TokenAuthenticator`; com o mesmo cliente a renovação disparava-se a si própria) e o `TokenAuthenticator` nunca
+  renova `/api/auth/**` nem pedidos anónimos, e só uma vez por pedido. Um endpoint **público** chamado com o token expirado **não** dá 401
+  (o backend trata-o como anónimo): não se renova, e vem sem favorito/wishlist/provada até haver um pedido autenticado.
+- **Repor dados de teste = repor o valor EXATO do seed** (2026-09-24): ao guardar o "original" de uma coluna de texto, ler o valor **inteiro** —
+  uma listagem `substr(coluna,1,70)` cortou um URL e o `rebuild-check.sh` apanhou "mesmo nº de linhas mas texto diferente" (tabela
+  `bebida_link_compra`). Antes de mexer, `SELECT` da coluna toda (ou copiar do `database/seed/02_bebidas.sql`) para o ficheiro de reversão, e
+  correr o `rebuild-check.sh` no fim.
 - **Um script que falha a meio não deve encadear com `&&` a criação de outro ficheiro** (apanhado 2026-09-24): `perl script.pl && cat >
   Ficheiro.kt <<'EOF' ...` — o perl falhou e o `Ficheiro.kt` (um controlador) **nunca foi criado**, sem aviso; os testes e o `bootRun` passaram
   na mesma (só faltava a rota) e só se viu por um 404 ao vivo. Criar ficheiros novos com a ferramenta de escrita, à parte, e conferir com

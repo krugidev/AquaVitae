@@ -26,6 +26,7 @@ class PasswordResetService(
     private val passwordResetRepository: UtilizadorPasswordResetRepository,
     private val passwordEncoder: PasswordEncoder,
     private val emailService: EmailService,
+    private val refreshTokenService: RefreshTokenService,
     @Value("\${aquavitae.recuperacao.intervalo-minimo-segundos}") private val intervaloMinimoSegundos: Long,
 ) {
     private val logger = LoggerFactory.getLogger(PasswordResetService::class.java)
@@ -76,6 +77,8 @@ class PasswordResetService(
 
         utilizador.password = passwordEncoder.encode(novaPassword)
         utilizadorRepository.save(utilizador)
+        // Password nova = todas as sessões antigas (os refresh tokens) deixam de servir.
+        refreshTokenService.revogarTodos(utilizador.id)
 
         reset.usado = true
         passwordResetRepository.save(reset)
