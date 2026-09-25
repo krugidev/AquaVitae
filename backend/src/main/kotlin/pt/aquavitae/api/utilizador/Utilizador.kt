@@ -9,6 +9,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import pt.aquavitae.api.lookup.UtilizadorAvatar
 import pt.aquavitae.api.lookup.UtilizadorNationality
 import pt.aquavitae.api.lookup.UtilizadorRole
 import java.time.Instant
@@ -41,6 +42,10 @@ class Utilizador(
     @JoinColumn(name = "utilizador_nationality_id")
     var nationality: UtilizadorNationality? = null,
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "utilizador_avatar_photo_id")
+    var avatar: UtilizadorAvatar? = null,
+
     @Column(name = "utilizador_account_created_at")
     var accountCreatedAt: Instant? = null,
 
@@ -50,4 +55,17 @@ class Utilizador(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "utilizador_role_id")
     var role: UtilizadorRole? = null,
+
+    // Quando aceitou os termos e condições (null = nunca aceitou). Ver TermosRegras.kt.
+    @Column(name = "utilizador_termos_aceites_em")
+    var termosAceitesEm: Instant? = null,
 )
+
+// Como o utilizador aparece aos outros (ex.: autor de uma review): "nome apelido", ou o username se não
+// preencheu nenhum dos dois.
+fun Utilizador.nomeParaMostrar(): String? =
+    listOfNotNull(firstName, lastName)
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+        .joinToString(" ")
+        .ifEmpty { username }

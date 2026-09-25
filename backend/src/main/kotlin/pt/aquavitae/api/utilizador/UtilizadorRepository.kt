@@ -15,4 +15,10 @@ interface UtilizadorRepository : JpaRepository<Utilizador, Long> {
     // falha com 401, mascarando o erro real.
     @Query("SELECT u FROM Utilizador u LEFT JOIN FETCH u.role WHERE u.id = :id")
     fun findByIdWithRole(id: Long): Optional<Utilizador>
+
+    // Usado pelo perfil (GET/PUT /api/users/me): nationality e avatar são LAZY,
+    // e o controller/service não deve confiar no Open-Session-In-View para os
+    // carregar — mesmo motivo do findByIdWithRole acima.
+    @Query("SELECT u FROM Utilizador u LEFT JOIN FETCH u.nationality LEFT JOIN FETCH u.avatar WHERE u.id = :id")
+    fun findByIdWithProfile(id: Long): Optional<Utilizador>
 }

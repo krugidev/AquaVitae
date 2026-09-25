@@ -7,6 +7,7 @@ data class ProdutorDetailDto(
     val id: Long,
     val nome: String?,
     val paisNome: String?,
+    val regiaoId: Long?,
     val regiao: String?,
     val historia: String?,
     val anoFundacao: Int?,
@@ -15,13 +16,17 @@ data class ProdutorDetailDto(
     val latitude: BigDecimal?,
     val longitude: BigDecimal?,
     val permiteVisitas: Boolean,
+    // Nº de bebidas do produtor no catálogo (o "Produtos" da página do produtor).
+    val totalProdutos: Int,
 ) {
     companion object {
-        fun from(produtor: Produtor) = ProdutorDetailDto(
+        // `produtor.pais` e `produtor.regiao` têm de vir carregados (LAZY): ver ProdutorRepository.findByIdWithPais.
+        fun from(produtor: Produtor, totalProdutos: Int) = ProdutorDetailDto(
             id = produtor.id,
             nome = produtor.nome,
             paisNome = produtor.pais?.value,
-            regiao = produtor.regiao,
+            regiaoId = produtor.regiao?.id,
+            regiao = produtor.regiao?.nome,
             historia = produtor.historia,
             anoFundacao = produtor.anoFundacao,
             website = produtor.website,
@@ -29,6 +34,7 @@ data class ProdutorDetailDto(
             latitude = produtor.latitude,
             longitude = produtor.longitude,
             permiteVisitas = produtor.permiteVisitas,
+            totalProdutos = totalProdutos,
         )
     }
 }

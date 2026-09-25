@@ -7,6 +7,23 @@ spring:
 server:
   port: 8080
 
+aquavitae:
+  links:
+    verificacao:
+      # Job diário que verifica se os links de compra continuam utilizáveis (sem stock / página
+      # desaparecida => is_ativo = 0, esconde o botão de compra mas mantém a linha como histórico).
+      ativo: true
+      cron: "0 0 4 * * *"   # todos os dias às 04:00 (Europe/Lisbon)
+      falhas-para-desativar: 2   # noites seguidas com link inválido antes de o desativar
+      intervalo-ms: 1000   # espaçamento mínimo entre pedidos ao mesmo retalhista
+
+  termos:
+    # "AAAA-MM-DD" (hora de Portugal) em que os termos e condições em vigor foram publicados. Quem aceitou antes desta
+    # data volta a ter `precisaAceitarTermos = true` em GET /api/users/me (a data de cada aceitação não se perde).
+    # Vazio = os termos ainda não mudaram: só precisa de aceitar quem nunca aceitou. Em produção também se pode definir
+    # pela variável de ambiente AQUAVITAE_TERMOS_EM_VIGOR_DESDE.
+    em-vigor-desde: ""
+
 jwt:
   # Em dev usa-se o valor por omissão abaixo. Em produção define sempre a
   # variável de ambiente JWT_SECRET com um valor próprio, longo e aleatório.

@@ -15,6 +15,9 @@ ALTER TABLE utilizador ADD CONSTRAINT fk_utilizador_avatar
 ALTER TABLE utilizador ADD CONSTRAINT fk_utilizador_role
     FOREIGN KEY (utilizador_role_id) REFERENCES utilizador_role (utilizador_role_id);
 
+ALTER TABLE utilizador_password_reset ADD CONSTRAINT fk_pwd_reset_utilizador
+    FOREIGN KEY (utilizador_id) REFERENCES utilizador (utilizador_id);
+
 ALTER TABLE utilizador_avatar ADD CONSTRAINT fk_avatar_categoria
     FOREIGN KEY (avatar_category_id) REFERENCES avatar_categoria (avatar_categoria_id);
 
@@ -62,12 +65,25 @@ ALTER TABLE vinho_casta ADD CONSTRAINT fk_vinho_casta_vinho
 ALTER TABLE vinho_casta ADD CONSTRAINT fk_vinho_casta_casta
     FOREIGN KEY (casta_id) REFERENCES casta (casta_id);
 
+ALTER TABLE vinho_cask ADD CONSTRAINT fk_vinho_cask_vinho
+    FOREIGN KEY (vinho_id) REFERENCES vinho (bebida_id);
+
+ALTER TABLE vinho_cask ADD CONSTRAINT fk_vinho_cask_cask
+    FOREIGN KEY (cask_id) REFERENCES cask (cask_id);
+
+ALTER TABLE vinho_cask ADD CONSTRAINT fk_vinho_cask_formato
+    FOREIGN KEY (cask_formato_id) REFERENCES cask_formato (cask_formato_id);
+
+ALTER TABLE casta ADD CONSTRAINT fk_casta_tipo
+    FOREIGN KEY (casta_tipo_id) REFERENCES casta_tipo (casta_tipo_id);
+
 -- Whisky
 ALTER TABLE whisky ADD CONSTRAINT fk_whisky_tipo
     FOREIGN KEY (whisky_tipo_id) REFERENCES whisky_tipo (whisky_tipo_id);
 
+-- A região do whisky é da mesma lista das regiões dos produtores (`regiao`); a tabela whisky_regiao deixou de existir.
 ALTER TABLE whisky ADD CONSTRAINT fk_whisky_regiao
-    FOREIGN KEY (whisky_regiao_id) REFERENCES whisky_regiao (whisky_regiao_id);
+    FOREIGN KEY (whisky_regiao_id) REFERENCES regiao (regiao_id);
 
 ALTER TABLE whisky ADD CONSTRAINT fk_whisky_corpo
     FOREIGN KEY (whisky_corpo_id) REFERENCES whisky_corpo (whisky_corpo_id);
@@ -164,6 +180,18 @@ ALTER TABLE cave_bebida ADD CONSTRAINT fk_cave_bebida_bebida
 -- Produtor / retalhista
 ALTER TABLE produtor ADD CONSTRAINT fk_produtor_pais
     FOREIGN KEY (produtor_pais_id) REFERENCES produtor_pais (produtor_pais_id);
+
+ALTER TABLE regiao ADD CONSTRAINT fk_regiao_pais
+    FOREIGN KEY (regiao_pais_id) REFERENCES produtor_pais (produtor_pais_id);
+
+-- FK composta: a região de um produtor tem de ser do país desse produtor (inserir um produtor português com uma
+-- região de Espanha falha com ORA-02291 em fk_produtor_regiao). O Oracle não confere FKs com colunas nulas, por isso
+-- o CHECK garante que um produtor com região tem sempre país — sem ele, região sem país escapava à verificação.
+ALTER TABLE produtor ADD CONSTRAINT fk_produtor_regiao
+    FOREIGN KEY (produtor_pais_id, produtor_regiao_id) REFERENCES regiao (regiao_pais_id, regiao_id);
+
+ALTER TABLE produtor ADD CONSTRAINT ck_produtor_regiao_pais
+    CHECK (produtor_regiao_id IS NULL OR produtor_pais_id IS NOT NULL);
 
 ALTER TABLE retalhista ADD CONSTRAINT fk_retalhista_tipo
     FOREIGN KEY (retalhista_tipo_id) REFERENCES retalhista_tipo (retalhista_tipo_id);

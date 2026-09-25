@@ -35,14 +35,17 @@ class AuthService(
 
         val defaultRole = utilizadorRoleRepository.findByValue(DEFAULT_ROLE).orElse(null)
 
+        val agora = Instant.now()
         val utilizador = Utilizador(
             username = request.username,
             email = request.email,
             password = passwordEncoder.encode(request.password),
             firstName = request.firstName,
             lastName = request.lastName,
-            accountCreatedAt = Instant.now(),
+            accountCreatedAt = agora,
             role = defaultRole,
+            // `aceitouTermos` já foi validado como verdadeiro (Bean Validation): a conta nasce com os termos aceites.
+            termosAceitesEm = agora,
         )
         val saved = utilizadorRepository.save(utilizador)
 

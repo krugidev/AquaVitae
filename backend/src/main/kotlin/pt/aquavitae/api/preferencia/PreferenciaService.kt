@@ -18,6 +18,18 @@ class PreferenciaService(
     private val castaRepository: CastaRepository,
 ) {
 
+    fun get(utilizadorId: Long): PreferenciaResponse {
+        val preferencia = preferenciaRepository.findByUtilizador_Id(utilizadorId).orElse(null)
+        return PreferenciaResponse(
+            acidezMin = preferencia?.acidezMin,
+            acidezMax = preferencia?.acidezMax,
+            docuraMin = preferencia?.docuraMin,
+            docuraMax = preferencia?.docuraMax,
+            categoriaIds = categoriaPreferidaRepository.findByUtilizador_Id(utilizadorId).mapNotNull { it.categoria?.id },
+            castaIds = castaPreferidaRepository.findByUtilizador_Id(utilizadorId).mapNotNull { it.casta?.id },
+        )
+    }
+
     @Transactional
     fun upsert(utilizador: Utilizador, request: PreferenciaRequest): PreferenciaResponse {
         val preferencia = preferenciaRepository.findByUtilizador_Id(utilizador.id)
