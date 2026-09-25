@@ -17,20 +17,24 @@ Backend Spring Boot + Kotlin para o AquaVitae. Liga-se ao Oracle XE definido em 
 
 ```
 pt.aquavitae.api
-├── config/          SecurityConfig (JWT, regras de acesso)
+├── config/          SecurityConfig (JWT, regras de acesso), SchedulingConfig
 ├── security/         JwtService, JwtAuthenticationFilter
 ├── common/           exceções + @RestControllerAdvice partilhados
-├── lookup/            entidades read-only (categorias, países, corpo, taninos, castas, ...)
-├── utilizador/        Utilizador (conta), UtilizadorController (GET /me)
-├── auth/              registo/login (gera JWT)
-├── produtor/           GET /api/produtores/{id}
-├── bebida/             catálogo (supertype) — pesquisa + detalhe
+├── lookup/            entidades read-only + LookupController (/api/lookup/*)
+├── utilizador/        conta + perfil (GET/PUT /api/users/me, com contadores)
+├── auth/              registo/login (gera JWT) + recuperação de password por código
+├── produtor/           GET /api/produtores/{id} (o resto do módulo por fazer)
+├── bebida/             catálogo (supertype) — pesquisa com filtros, sugeridas, detalhe;
+│                       BebidaSummaryAssembler enriquece as listas (preço, flags do utilizador)
 ├── vinho/              subtype "Vinho" (padrão supertype/subtype, PK partilhada com bebida)
 ├── review/             reviews (a trigger da BD atualiza o rating agregado)
 ├── favorito/ wishlist/ provada/   as 3 relações utilizador<->bebida mais simples
-├── cave/               cave virtual (cave + cave_bebida)
+├── cave/               cave virtual (cave + cave_bebida) — agregados por fazer
+├── compra/             retalhistas, links de compra, cliques (+ verificacao/: job diário de links)
 └── preferencia/        preferências de onboarding
 ```
+
+Testes em `src/test` (só os da verificação de links por agora): `.\gradlew.bat test`.
 
 `vinho/` é o único subtype com entidades JPA completas (é a categoria com mais dados seed). As restantes
 categorias (`whisky`, `gin`, `licor`, `vodka`, `aguardente`) seguem exatamente o mesmo padrão — ver o
@@ -104,45 +108,19 @@ Entity):
 
 Uma conta de teste já existe na BD para experimentares sem teres de registar outra: `demo2@aquavitae.local` / `password123`.
 
-## Endpoints principais
+## Endpoints
 
-```
-POST   /api/auth/register
-POST   /api/auth/login
+A lista completa e atual — o que já existe, os parâmetros/DTOs e o que ainda falta — está em
+[`API_ENDPOINTS.md`](API_ENDPOINTS.md), que é a fonte da verdade (esta secção já teve uma lista própria, que
+ficou desatualizada). Endpoints marcados "(auth)" exigem `Authorization: Bearer <token>` (token devolvido por
+`/api/auth/login` ou `/api/auth/register`); `/api/admin/**` exige ainda o papel `Admin`.
 
-GET    /api/bebidas?search=&categoriaId=&page=&size=
-GET    /api/bebidas/{id}
-GET    /api/produtores/{id}
+## Por fazer a seguir
 
-GET    /api/bebidas/{bebidaId}/reviews
-POST   /api/bebidas/{bebidaId}/reviews        (auth)
-PUT    /api/reviews/{id}                       (auth, dono)
-DELETE /api/reviews/{id}                       (auth, dono)
+Ver "Retomar aqui" no [`PLANO.md`](../PLANO.md) — é lá que fica a lista atual (produtor, caves, lacunas
+encontradas nos mockups, testes). Notas soltas que continuam válidas:
 
-GET    /api/users/me                           (auth)
-PUT    /api/users/me/preferencias              (auth)
-
-GET    /api/users/me/favoritos   POST/DELETE /api/bebidas/{id}/favorito   (auth)
-GET    /api/users/me/wishlist    POST/DELETE /api/bebidas/{id}/wishlist   (auth)
-GET    /api/users/me/provadas    POST/DELETE /api/bebidas/{id}/provada    (auth)
-
-GET    /api/users/me/caves                     (auth)
-POST   /api/users/me/caves                     (auth)
-GET    /api/caves/{id}                         (auth, dono)
-POST   /api/caves/{id}/bebidas                 (auth, dono)
-PATCH  /api/caves/{id}/bebidas/{caveBebidaId}   (auth, dono)
-DELETE /api/caves/{id}/bebidas/{caveBebidaId}   (auth, dono)
-```
-
-Endpoints "(auth)" exigem header `Authorization: Bearer <token>` (token devolvido por
-`/api/auth/login` ou `/api/auth/register`).
-
-## Por fazer a seguir (fora deste esqueleto)
-
-- `bebida_link_compra` / `clique_compra`: endpoints de leitura dos links de afiliado + registo de
-  clique (fluxo descrito no briefing secção 4) — ainda não implementados.
 - Subtypes whisky/gin/licor/vodka/aguardente no `BebidaService` (replicar o padrão de `vinho/`).
-- Testes automatizados (nenhum incluído neste esqueleto).
 - CI/build pipeline, Dockerfile da própria API para deploy.
 - `bebida_ano_producao`/`produtor_ano_fundacao` (mapeados como `Int`) ainda não foram testados contra
   `ddl-auto: validate` num cenário com dados — se aparecer o mesmo tipo de erro de schema que o

@@ -1,0 +1,91 @@
+package pt.aquavitae.api.lookup
+
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RestController
+import pt.aquavitae.api.lookup.dto.AvatarDto
+import pt.aquavitae.api.lookup.dto.CastaDto
+import pt.aquavitae.api.lookup.dto.LookupItemDto
+import pt.aquavitae.api.lookup.dto.NacionalidadeDto
+import pt.aquavitae.api.lookup.dto.toLookupItemDto
+
+// Endpoints de leitura para as tabelas de lookup geridas pelo admin (ver
+// briefing secção 4 — a API só lê, nunca escreve aqui). Sem auth: são dados
+// públicos usados em formulários (registo, filtros, preferências).
+@RestController
+@RequestMapping("/api/lookup")
+class LookupController(
+    private val nationalityRepository: UtilizadorNationalityRepository,
+    private val avatarCategoriaRepository: AvatarCategoriaRepository,
+    private val avatarRepository: UtilizadorAvatarRepository,
+    private val bebidaCategoriaRepository: BebidaCategoriaRepository,
+    private val castaRepository: CastaRepository,
+    private val castaTipoRepository: CastaTipoRepository,
+    private val paisRepository: PaisRepository,
+    private val regiaoRepository: RegiaoRepository,
+    private val vinhoCorpoRepository: VinhoCorpoRepository,
+    private val vinhoTaninoRepository: VinhoTaninoRepository,
+    private val vinhoTipoRepository: VinhoTipoRepository,
+) {
+
+    @GetMapping("/nacionalidades")
+    fun nacionalidades(): List<NacionalidadeDto> =
+        nationalityRepository.findAll().map { NacionalidadeDto.from(it) }
+
+    @GetMapping("/avatar-categorias")
+    fun avatarCategorias(): List<LookupItemDto> =
+        avatarCategoriaRepository.findAll().map { it.toLookupItemDto() }
+
+    @GetMapping("/avatares")
+    fun avatares(@RequestParam categoriaId: Long?): List<AvatarDto> {
+        val avatares = if (categoriaId != null) {
+            avatarRepository.findByCategoria_IdAndIsActiveTrue(categoriaId)
+        } else {
+            avatarRepository.findByIsActiveTrue()
+        }
+        return avatares.map { AvatarDto.from(it) }
+    }
+
+    @GetMapping("/categorias-bebida")
+    fun categoriasBebida(): List<LookupItemDto> =
+        bebidaCategoriaRepository.findAll().map { LookupItemDto(it.id, it.value) }
+
+    // ~280 castas: as CASTAS_EM_DESTAQUE primeiro e o resto por ordem alfabética (o Oracle ordenaria por código de
+    // carácter, ver OrdemAlfabetica.kt).
+    @GetMapping("/castas")
+    fun castas(@RequestParam tipoId: Long?): List<CastaDto> {
+        val castas = if (tipoId != null) castaRepository.findByTipo_Id(tipoId) else castaRepository.findAll()
+        return castas.map { CastaDto.from(it) }.ordenadoPorNomeComDestaques(CASTAS_EM_DESTAQUE) { it.nome }
+    }
+
+    @GetMapping("/casta-tipos")
+    fun castaTipos(): List<LookupItemDto> =
+        castaTipoRepository.findAll().map { it.toLookupItemDto() }
+
+    // ~218 países: Portugal no topo e o resto por ordem alfabética (ver OrdemAlfabetica.kt).
+    @GetMapping("/paises")
+    fun paises(): List<LookupItemDto> =
+        paisRepository.findAll().map { LookupItemDto(it.id, it.value) }
+            .ordenadoPorNomeComDestaque(PAIS_EM_DESTAQUE) { it.nome }
+
+    // As pílulas de "Origem" do filtro do catálogo: as regiões do país que têm pelo menos uma bebida, por ordem
+    // alfabética. `id` é o que se envia em GET /api/bebidas?regiaoIds=. paisId é produtor_pais_id: pais e
+    // produtor_pais são duas tabelas mas com os MESMOS ids (convenção do seed, ver database/README.md), por isso é
+    // o mesmo id que /lookup/paises e GET /api/bebidas?paisId= usam.
+    @GetMapping("/regioes")
+    fun regioes(@RequestParam paisId: Long): List<LookupItemDto> =
+        regiaoRepository.findComBebidasByPaisId(paisId).map { LookupItemDto(it.id, it.nome) }.ordenadoPorNome { it.nome }
+
+    @GetMapping("/vinho/corpos")
+    fun vinhoCorpos(): List<LookupItemDto> =
+        vinhoCorpoRepository.findAll().map { LookupItemDto(it.id, it.value) }
+
+    @GetMapping("/vinho/taninos")
+    fun vinhoTaninos(): List<LookupItemDto> =
+        vinhoTaninoRepository.findAll().map { LookupItemDto(it.id, it.value) }
+
+    @GetMapping("/vinho/tipos")
+    fun vinhoTipos(): List<LookupItemDto> =
+        vinhoTipoRepository.findAll().map { LookupItemDto(it.id, it.value) }
+}

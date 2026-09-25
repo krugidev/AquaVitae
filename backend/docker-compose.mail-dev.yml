@@ -1,0 +1,13 @@
+# Servidor de email de mentira para desenvolvimento (Mailpit): recebe os emails que a API "envia" e mostra-os numa página,
+# sem enviar nada para fora. Só serve para testar; nada aqui vai para produção.
+#
+#   docker compose -f docker-compose.mail-dev.yml up -d        (em backend/)
+#   $env:SPRING_PROFILES_ACTIVE = "dev,mailpit"; .\gradlew.bat bootRun
+#   caixa de entrada:  http://localhost:8025     (SMTP em localhost:1025)
+services:
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: aquavitae-mailpit
+    ports:
+      - "1025:1025"   # SMTP (a API liga aqui)
+      - "8025:8025"   # a página com os emails

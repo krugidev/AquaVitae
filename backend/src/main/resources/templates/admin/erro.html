@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html th:replace="~{admin/layout :: pagina('Não encontrado', 'painel', ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<body>
+<main class="conteudo estreito">
+    <h1>Não encontrado</h1>
+    <p class="mensagem erro" role="alert" th:text="${mensagem}">Produtor 99 não encontrado</p>
+    <p><a th:href="@{/admin}">‹ Voltar ao painel</a></p>
+</main>
+</body>
+</html>

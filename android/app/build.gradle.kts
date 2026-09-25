@@ -76,7 +76,16 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    // Ícones (olho da password, setas, ...): o skeleton evitava-os para manter as deps enxutas, mas a UI real precisa deles.
+    implementation(libs.androidx.material.icons.extended)
     debugImplementation(libs.androidx.ui.tooling)
+
+    // Ecrã de arranque (Android 12+ e retrocompatível)
+    implementation(libs.androidx.core.splashscreen)
+
+    // Imagens da API: Coil + suporte a SVG (os avatares são SVG servidos pela API)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.svg)
 
     // Navigation Compose
     implementation(libs.androidx.navigation.compose)
@@ -99,6 +108,8 @@ dependencies {
 
     // Testes
     testImplementation(libs.junit)
+    // O TokenAuthenticator (renovação da sessão) testa-se contra um servidor HTTP local, sem rede real.
+    testImplementation(libs.okhttp.mockwebserver)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

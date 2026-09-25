@@ -77,7 +77,7 @@ private fun DetailContent(
             .verticalScroll(rememberScrollState())
             .padding(24.dp),
     ) {
-        Text(text = bebida.nome, style = MaterialTheme.typography.headlineMedium)
+        Text(text = bebida.nome.orEmpty(), style = MaterialTheme.typography.headlineMedium)
         Text(
             text = listOfNotNull(bebida.categoriaNome, bebida.produtorNome).joinToString(" · "),
             style = MaterialTheme.typography.bodyMedium,

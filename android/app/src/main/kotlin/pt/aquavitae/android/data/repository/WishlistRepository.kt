@@ -1,6 +1,6 @@
 package pt.aquavitae.android.data.repository
 
-import pt.aquavitae.android.data.model.BebidaSummary
+import pt.aquavitae.android.data.model.BebidaRelacao
 import pt.aquavitae.android.data.network.AquaVitaeApi
 import javax.inject.Inject
 
@@ -8,8 +8,8 @@ import javax.inject.Inject
 class WishlistRepository @Inject constructor(
     private val api: AquaVitaeApi,
 ) {
-    suspend fun getWishlist(): Result<List<BebidaSummary>> = runCatching {
-        api.getWishlist()
+    suspend fun getWishlist(sort: String? = null): Result<List<BebidaRelacao>> = runCatching {
+        api.getWishlist(sort)
     }
 
     suspend fun addToWishlist(bebidaId: Long): Result<Unit> = runCatching {

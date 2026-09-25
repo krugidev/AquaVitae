@@ -3,12 +3,75 @@ spring:
     name: aquavitae-api
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
+  mail:
+    # O servidor de email (SMTP) NUNCA vai para o repositório: define-se por variáveis de ambiente, com os nomes padrão do
+    # Spring — SPRING_MAIL_HOST, SPRING_MAIL_PORT, SPRING_MAIL_USERNAME e SPRING_MAIL_PASSWORD (e, se o fornecedor pedir SSL
+    # direto na porta 465, SPRING_MAIL_PROPERTIES_MAIL_SMTP_SSL_ENABLE=true). Sem SPRING_MAIL_HOST não há envio: em dev o
+    # código de recuperação de password aparece no log da API. Para ver os emails localmente, sem enviar nenhum: perfil
+    # `mailpit` (ver backend/docker-compose.mail-dev.yml).
+    properties:
+      mail:
+        smtp:
+          auth: true            # os fornecedores pedem utilizador e password
+          starttls:
+            enable: true        # porta 587 (STARTTLS)
+          connectiontimeout: 5000
+          timeout: 10000
+          writetimeout: 10000
 
 server:
   port: 8080
+  servlet:
+    session:
+      # Só o painel de administração (/admin) usa sessão (a API é sem estado, com JWT). Cookie inacessível ao JavaScript e nunca
+      # enviado a partir de outro site. Em produção, atrás de HTTPS: SERVER_SERVLET_SESSION_COOKIE_SECURE=true.
+      timeout: 60m
+      cookie:
+        http-only: true
+        same-site: strict
+
+aquavitae:
+  links:
+    verificacao:
+      # Job diário que verifica se os links de compra continuam utilizáveis (sem stock / página
+      # desaparecida => is_ativo = 0, esconde o botão de compra mas mantém a linha como histórico).
+      ativo: true
+      cron: "0 0 4 * * *"   # todos os dias às 04:00 (Europe/Lisbon)
+      falhas-para-desativar: 2   # noites seguidas com link inválido antes de o desativar
+      intervalo-ms: 1000   # espaçamento mínimo entre pedidos ao mesmo retalhista
+
+  compra:
+    # O inquérito "Compraste?" depois de um clique num link de compra (briefing, secção 4: janela de 24-72h). Só se pergunta
+    # por cliques com mais de `pergunta-apos-minutos` (quem volta segundos depois quase de certeza não comprou) e com menos de
+    # `pergunta-ate-horas` (passado esse tempo já ninguém se lembra).
+    pergunta-apos-minutos: 2
+    pergunta-ate-horas: 72
+
+  mail:
+    # Quem aparece como remetente dos emails. O endereço tem de ser um que o servidor SMTP deixe usar (em geral, o do
+    # domínio/conta que se criou). Em produção: AQUAVITAE_MAIL_FROM_ADDRESS e AQUAVITAE_MAIL_FROM_NAME.
+    from-address: ${AQUAVITAE_MAIL_FROM_ADDRESS:no-reply@aquavitae.pt}
+    from-name: ${AQUAVITAE_MAIL_FROM_NAME:AquaVitae}
+
+  recuperacao:
+    # Anti-abuso da recuperação de password: entre dois pedidos para a mesma conta têm de passar pelo menos estes segundos
+    # (um pedido antes disso não gera outro código nem outro email, mas a resposta é a mesma). Sem isto, qualquer pessoa
+    # podia encher a caixa de email de outra a partir do username. Um pedido novo invalida os códigos anteriores.
+    intervalo-minimo-segundos: 60
+
+  termos:
+    # "AAAA-MM-DD" (hora de Portugal) em que os termos e condições em vigor foram publicados. Quem aceitou antes desta
+    # data volta a ter `precisaAceitarTermos = true` em GET /api/users/me (a data de cada aceitação não se perde).
+    # Vazio = os termos ainda não mudaram: só precisa de aceitar quem nunca aceitou. Em produção também se pode definir
+    # pela variável de ambiente AQUAVITAE_TERMOS_EM_VIGOR_DESDE.
+    em-vigor-desde: ""
 
 jwt:
   # Em dev usa-se o valor por omissão abaixo. Em produção define sempre a
   # variável de ambiente JWT_SECRET com um valor próprio, longo e aleatório.
   secret: ${JWT_SECRET:dev-only-secret-change-me-before-any-real-deployment-32chars}
   expiration-minutes: 60
+  # Sessão renovável: o refresh token (opaco, guardado só como hash) dura estes dias e roda a cada renovação; a tolerância
+  # aceita o mesmo token repetido poucos segundos depois de rodado (a resposta perdeu-se, má rede) em vez de o tomar por roubo.
+  refresh-expiration-days: 30
+  refresh-tolerance-seconds: 60

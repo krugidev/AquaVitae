@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Emblema da AquaVitae, desenhado a partir das medidas do design (diâmetro 92): anel exterior fino (5),
+    intervalo (6), anel grosso (10) e buraco central (50). Duas circunferências só com traço.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="92dp"
+    android:height="92dp"
+    android:viewportWidth="92"
+    android:viewportHeight="92">
+    <path
+        android:pathData="M46,2.5A43.5,43.5 0 1,1 46,89.5A43.5,43.5 0 1,1 46,2.5Z"
+        android:strokeWidth="5"
+        android:strokeColor="#8F321D" />
+    <path
+        android:pathData="M46,16A30,30 0 1,1 46,76A30,30 0 1,1 46,16Z"
+        android:strokeWidth="10"
+        android:strokeColor="#8F321D" />
+</vector>

@@ -60,4 +60,9 @@ class Bebida(
 
     @Column(name = "bebida_total_reviews")
     var totalReviews: Int = 0,
+
+    // GTIN (texto, com zeros à esquerda), único e anulável. Só interno: serve para reconhecer a mesma bebida vinda de
+    // outro retalhista ao preparar os lotes; não é exposto na API.
+    @Column(name = "bebida_ean")
+    var ean: String? = null,
 )

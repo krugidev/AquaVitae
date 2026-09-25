@@ -11,6 +11,7 @@ import jakarta.persistence.Lob
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import pt.aquavitae.api.lookup.ProdutorPais
+import pt.aquavitae.api.lookup.Regiao
 import java.math.BigDecimal
 import java.time.Instant
 
@@ -29,8 +30,10 @@ class Produtor(
     @JoinColumn(name = "produtor_pais_id")
     var pais: ProdutorPais? = null,
 
-    @Column(name = "produtor_regiao")
-    var regiao: String? = null,
+    // Lookup `regiao`; a BD garante (FK composta) que é do país do produtor. LAZY: ver ProdutorRepository.findByIdWithPais.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "produtor_regiao_id")
+    var regiao: Regiao? = null,
 
     @Lob
     @Column(name = "produtor_historia")
@@ -44,6 +47,10 @@ class Produtor(
 
     @Column(name = "produtor_path_imagem")
     var pathImagem: String? = null,
+
+    // Morada em texto livre (rua, código postal, localidade); null = não disponível.
+    @Column(name = "produtor_morada")
+    var morada: String? = null,
 
     @Column(name = "produtor_latitude")
     var latitude: BigDecimal? = null,

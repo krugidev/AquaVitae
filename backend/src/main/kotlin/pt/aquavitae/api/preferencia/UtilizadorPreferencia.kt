@@ -87,9 +87,11 @@ interface UtilizadorPreferenciaRepository : JpaRepository<UtilizadorPreferencia,
 }
 
 interface UtilizadorCategoriaPreferidaRepository : JpaRepository<UtilizadorCategoriaPreferida, Long> {
+    fun findByUtilizador_Id(utilizadorId: Long): List<UtilizadorCategoriaPreferida>
     fun deleteByUtilizador_Id(utilizadorId: Long)
 }
 
 interface UtilizadorCastaPreferidaRepository : JpaRepository<UtilizadorCastaPreferida, Long> {
+    fun findByUtilizador_Id(utilizadorId: Long): List<UtilizadorCastaPreferida>
     fun deleteByUtilizador_Id(utilizadorId: Long)
 }

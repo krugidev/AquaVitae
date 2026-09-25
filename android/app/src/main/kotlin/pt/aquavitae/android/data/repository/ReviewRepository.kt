@@ -1,7 +1,9 @@
 package pt.aquavitae.android.data.repository
 
+import pt.aquavitae.android.data.model.MinhaReview
 import pt.aquavitae.android.data.model.ReviewRequest
 import pt.aquavitae.android.data.model.ReviewResponse
+import pt.aquavitae.android.data.model.ReviewsResponse
 import pt.aquavitae.android.data.network.AquaVitaeApi
 import javax.inject.Inject
 
@@ -9,9 +11,12 @@ import javax.inject.Inject
 class ReviewRepository @Inject constructor(
     private val api: AquaVitaeApi,
 ) {
-    suspend fun getReviews(bebidaId: Long): Result<List<ReviewResponse>> = runCatching {
+    suspend fun getReviews(bebidaId: Long): Result<ReviewsResponse> = runCatching {
         api.getReviews(bebidaId)
     }
+
+    /** As reviews do utilizador (o ecrã "As minhas reviews"), com a bebida de cada uma, mais recentes primeiro. */
+    suspend fun getMinhasReviews(): Result<List<MinhaReview>> = runCatching { api.getMinhasReviews() }
 
     suspend fun submitReview(bebidaId: Long, rating: Double, comment: String?): Result<ReviewResponse> =
         runCatching {

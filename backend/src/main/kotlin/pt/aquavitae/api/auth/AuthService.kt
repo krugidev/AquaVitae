@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import pt.aquavitae.api.auth.dto.AuthResponse
 import pt.aquavitae.api.auth.dto.LoginRequest
+import pt.aquavitae.api.auth.dto.RefreshRequest
 import pt.aquavitae.api.auth.dto.RegisterRequest
 import pt.aquavitae.api.common.ConflictException
 import pt.aquavitae.api.common.InvalidCredentialsException
@@ -12,6 +13,7 @@ import pt.aquavitae.api.lookup.UtilizadorRoleRepository
 import pt.aquavitae.api.security.JwtService
 import pt.aquavitae.api.utilizador.Utilizador
 import pt.aquavitae.api.utilizador.UtilizadorRepository
+import pt.aquavitae.api.utilizador.findByIdentificador
 import java.time.Instant
 
 private const val DEFAULT_ROLE = "Utilizador"
@@ -22,46 +24,74 @@ class AuthService(
     private val utilizadorRoleRepository: UtilizadorRoleRepository,
     private val passwordEncoder: PasswordEncoder,
     private val jwtService: JwtService,
+    private val refreshTokenService: RefreshTokenService,
 ) {
 
     @Transactional
     fun register(request: RegisterRequest): AuthResponse {
-        if (utilizadorRepository.existsByEmail(request.email)) {
-            throw ConflictException("Já existe uma conta com o email ${request.email}")
+        // O teclado do telemóvel deixa espaços no fim: guarda-se sempre sem eles.
+        val username = request.username.trim()
+        val email = request.email.trim()
+        if (utilizadorRepository.existsByEmailIgnoreCase(email)) {
+            throw ConflictException("Já existe uma conta com o email $email")
         }
-        if (utilizadorRepository.existsByUsername(request.username)) {
-            throw ConflictException("O username ${request.username} já está em uso")
+        if (utilizadorRepository.existsByUsernameIgnoreCase(username)) {
+            throw ConflictException("O username $username já está em uso")
         }
 
         val defaultRole = utilizadorRoleRepository.findByValue(DEFAULT_ROLE).orElse(null)
 
+        val agora = Instant.now()
         val utilizador = Utilizador(
-            username = request.username,
-            email = request.email,
+            username = username,
+            email = email,
             password = passwordEncoder.encode(request.password),
             firstName = request.firstName,
             lastName = request.lastName,
-            accountCreatedAt = Instant.now(),
+            accountCreatedAt = agora,
             role = defaultRole,
+            // `aceitouTermos` já foi validado como verdadeiro (Bean Validation): a conta nasce com os termos aceites.
+            termosAceitesEm = agora,
         )
         val saved = utilizadorRepository.save(utilizador)
 
-        val token = jwtService.generateToken(saved.id, saved.email)
-        return AuthResponse(token = token, userId = saved.id, username = saved.username)
+        return respostaDeSessao(saved)
     }
 
     fun login(request: LoginRequest): AuthResponse {
-        val utilizador = utilizadorRepository.findByEmail(request.email)
-            .orElseThrow { InvalidCredentialsException("Email ou password inválidos") }
+        val utilizador = utilizadorRepository.findByIdentificador(request.identificador)
+            ?: throw InvalidCredentialsException("Username/email ou password inválidos")
 
         val passwordHash = utilizador.password
-            ?: throw InvalidCredentialsException("Email ou password inválidos")
+            ?: throw InvalidCredentialsException("Username/email ou password inválidos")
 
         if (!passwordEncoder.matches(request.password, passwordHash)) {
-            throw InvalidCredentialsException("Email ou password inválidos")
+            throw InvalidCredentialsException("Username/email ou password inválidos")
         }
 
-        val token = jwtService.generateToken(utilizador.id, utilizador.email)
-        return AuthResponse(token = token, userId = utilizador.id, username = utilizador.username)
+        return respostaDeSessao(utilizador)
     }
+
+    // Troca um refresh token por um par novo (o de acesso e outro refresh, rodado). 401 se o token não existe, expirou ou já
+    // foi usado — a app leva o utilizador ao login. `noRollbackFor`: a revogação em massa numa reutilização tem de gravar.
+    @Transactional(noRollbackFor = [InvalidCredentialsException::class])
+    fun refresh(request: RefreshRequest): AuthResponse {
+        val (utilizador, novoRefresh) = refreshTokenService.rodar(request.refreshToken)
+        return AuthResponse(
+            token = jwtService.generateToken(utilizador.id, utilizador.email),
+            refreshToken = novoRefresh,
+            userId = utilizador.id,
+            username = utilizador.username,
+        )
+    }
+
+    // Termina a sessão deste dispositivo (revoga o refresh token). O JWT de acesso, sem estado, expira sozinho.
+    fun logout(request: RefreshRequest) = refreshTokenService.revogar(request.refreshToken)
+
+    private fun respostaDeSessao(utilizador: Utilizador): AuthResponse = AuthResponse(
+        token = jwtService.generateToken(utilizador.id, utilizador.email),
+        refreshToken = refreshTokenService.emitir(utilizador),
+        userId = utilizador.id,
+        username = utilizador.username,
+    )
 }

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-PT" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Entrar · AquaVitae Admin</title>
+    <link rel="stylesheet" th:href="@{/admin/css/admin.css}">
+</head>
+<body class="pagina-login">
+<main class="caixa-login">
+    <h1 class="marca">AQUA<span>VITAE</span></h1>
+    <p class="subtitulo">Painel de administração</p>
+
+    <p class="mensagem erro" th:if="${param.erro}" role="alert">Credenciais inválidas.</p>
+    <p class="mensagem info" th:if="${param.saiu}">Sessão terminada.</p>
+
+    <form th:action="@{/admin/login}" method="post">
+        <label for="identificador">Username ou email</label>
+        <input id="identificador" name="identificador" type="text" autocomplete="username" autocapitalize="none" required autofocus>
+
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+
+        <button type="submit" class="botao">Entrar</button>
+    </form>
+</main>
+</body>
+</html>
