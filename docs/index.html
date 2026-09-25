@@ -2,234 +2,210 @@
 <html lang="pt-PT">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="7197e10404415e4" content="d1be69fddfa2cac7b7d6ff8724527eb9" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AquaVitae — Catalogação e comunidade de vinhos e bebidas espirituosas</title>
-<meta name="description" content="AquaVitae é uma app Android de catalogação e comunidade para vinhos e bebidas espirituosas, focada no mercado português. Brevemente disponível.">
-<style>
-  :root {
-    --bordeaux: #5A1E1E;
-    --bordeaux-strong: #9A3324;
-    --cream: #FFF3EE;
-    --background: #F4EDE4;
-    --border: #EFE0DD;
-    --text-muted: #7A5C56;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background: var(--background);
-    color: var(--bordeaux);
-    line-height: 1.5;
-  }
-  .wrap {
-    max-width: 780px;
-    margin: 0 auto;
-    padding: 64px 24px 48px;
-  }
-  header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 56px;
-  }
-  .logo-mark {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: var(--cream);
-    border: 1.5px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .logo-mark svg { width: 26px; height: 26px; }
-  .wordmark {
-    font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-  }
-  .wordmark span { font-weight: 400; color: var(--text-muted); }
-
-  .badge {
-    display: inline-block;
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--bordeaux-strong);
-    background: var(--cream);
-    border: 1.5px solid var(--border);
-    border-radius: 999px;
-    padding: 6px 14px;
-    margin-bottom: 24px;
-  }
-
-  h1 {
-    font-size: clamp(32px, 5vw, 44px);
-    line-height: 1.15;
-    margin: 0 0 20px;
-  }
-
-  .lede {
-    font-size: 18px;
-    color: var(--text-muted);
-    max-width: 60ch;
-    margin: 0 0 48px;
-  }
-
-  .icon-row {
-    display: flex;
-    gap: 20px;
-    margin-bottom: 56px;
-  }
-  .icon-tile {
-    flex: 1;
-    background: #fff;
-    border: 1.5px solid var(--border);
-    border-radius: 16px;
-    padding: 20px;
-    text-align: center;
-  }
-  .icon-tile .circle {
-    width: 64px;
-    height: 64px;
-    margin: 0 auto 12px;
-    border-radius: 50%;
-    background: var(--cream);
-    border: 1.5px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .icon-tile svg { width: 40px; height: 40px; }
-  .icon-tile p { margin: 0; font-size: 14px; color: var(--text-muted); }
-
-  .features {
-    background: #fff;
-    border: 1.5px solid var(--border);
-    border-radius: 16px;
-    padding: 32px;
-    margin-bottom: 48px;
-  }
-  .features h2 {
-    font-size: 15px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--bordeaux-strong);
-    margin: 0 0 16px;
-  }
-  .features ul {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    display: grid;
-    gap: 12px;
-  }
-  .features li {
-    padding-left: 24px;
-    position: relative;
-    color: var(--bordeaux);
-  }
-  .features li::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 8px;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--bordeaux-strong);
-  }
-
-  footer {
-    border-top: 1.5px solid var(--border);
-    padding-top: 24px;
-    font-size: 14px;
-    color: var(--text-muted);
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  @media (max-width: 560px) {
-    .icon-row { flex-direction: column; }
-  }
-</style>
+<meta name="description" content="A AquaVitae é uma app Android para catalogar, avaliar e descobrir vinhos, whiskies, gins e outras bebidas espirituosas, com foco no mercado e nos produtores portugueses. Em desenvolvimento.">
+<meta name="theme-color" content="#8f321d">
+<link rel="canonical" href="https://krugidev.github.io/AquaVitae/">
+<link rel="icon" type="image/svg+xml" href="assets/emblema.svg">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_PT">
+<meta property="og:title" content="AquaVitae — vinhos e bebidas espirituosas, com foco em Portugal">
+<meta property="og:description" content="Cataloga, avalia e descobre vinhos e espirituosas. App Android em desenvolvimento.">
+<meta property="og:url" content="https://krugidev.github.io/AquaVitae/">
+<meta property="og:image" content="https://krugidev.github.io/AquaVitae/assets/screens/home.jpg">
+<link rel="stylesheet" href="assets/site.css">
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <div class="logo-mark">
-        <svg viewBox="0 0 100 100" fill="none" stroke="#5A1E1E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M34 22H66"></path>
-          <path d="M34 22C28 48 36 62 50 62C64 62 72 48 66 22"></path>
-          <path d="M50 62V82"></path>
-          <path d="M32 84C39 79 61 79 68 84"></path>
-        </svg>
-      </div>
-      <div class="wordmark">AQUA<span>VITAE</span></div>
-    </header>
+<a class="salta" href="#conteudo">Saltar para o conteúdo</a>
 
-    <span class="badge">Brevemente disponível</span>
-    <h1>Catalogação e comunidade de vinhos e bebidas espirituosas</h1>
-    <p class="lede">
-      Uma app Android para descobrires, avaliares e organizares vinhos, whiskies, gins e outras bebidas
-      espirituosas — com foco no mercado e nos produtores portugueses.
-    </p>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-grelha" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></symbol>
+    <symbol id="i-garrafa" viewBox="0 0 24 24"><path d="M10 3h4v4.2c0 .8.5 1.5 1.2 1.9C16.3 9.7 17 10.8 17 12v7.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 7 19.5V12c0-1.2.7-2.3 1.8-2.9C9.5 8.7 10 8 10 7.2V3z"/><path d="M7 14h10"/></symbol>
+    <symbol id="i-estrela" viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.8 6.8 19.5l1-5.8-4.2-4.1 5.8-.8L12 3.5z"/></symbol>
+    <symbol id="i-coracao" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10A4.5 4.5 0 0 1 12 7.2 4.5 4.5 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/></symbol>
+    <symbol id="i-marcador" viewBox="0 0 24 24"><path d="M7 3.5h10a1 1 0 0 1 1 1V21l-6-4-6 4V4.5a1 1 0 0 1 1-1z"/></symbol>
+    <symbol id="i-local" viewBox="0 0 24 24"><path d="M12 21s-6-5.6-6-10.2A6 6 0 0 1 18 10.8C18 15.4 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.3"/></symbol>
+    <symbol id="i-saco" viewBox="0 0 24 24"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></symbol>
+    <symbol id="i-brilho" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8L19 16z"/></symbol>
+    <symbol id="i-escudo" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></symbol>
+    <symbol id="i-copo" viewBox="0 0 24 24"><path d="M7 3h10l-.8 8a4.2 4.2 0 0 1-8.4 0L7 3z"/><path d="M12 15v6M8.5 21h7"/></symbol>
+  </defs>
+</svg>
 
-    <div class="icon-row">
-      <div class="icon-tile">
-        <div class="circle">
-          <svg viewBox="0 0 100 100" fill="none" stroke="#5A1E1E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M34 88V22"></path>
-            <path d="M34 34C44 34 50 28 54 20M34 56C46 56 54 48 58 38"></path>
-            <path d="M58 38C64 36 68 30 66 24"></path>
-            <circle cx="62" cy="56" r="7" fill="#FFF3EE"></circle>
-            <circle cx="76" cy="56" r="7" fill="#FFF3EE"></circle>
-            <circle cx="69" cy="68" r="7" fill="#FFF3EE"></circle>
-          </svg>
-        </div>
-        <p>Catálogo &amp; castas</p>
-      </div>
-      <div class="icon-tile">
-        <div class="circle">
-          <svg viewBox="0 0 100 100" fill="none" stroke="#5A1E1E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M43 12V38C36 42 34 48 34 56V86H66V56C66 48 64 42 57 38V12Z"></path>
-            <path d="M42 21H58"></path>
-          </svg>
-        </div>
-        <p>Cave virtual</p>
-      </div>
-      <div class="icon-tile">
-        <div class="circle">
-          <svg viewBox="0 0 100 100" fill="none" stroke="#5A1E1E" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M34 22H66"></path>
-            <path d="M34 22C28 48 36 62 50 62C64 62 72 48 66 22"></path>
-            <path d="M50 62V82"></path>
-            <path d="M32 84C39 79 61 79 68 84"></path>
-          </svg>
-        </div>
-        <p>Reviews &amp; ratings</p>
-      </div>
-    </div>
-
-    <div class="features">
-      <h2>O que a AquaVitae permite</h2>
-      <ul>
-        <li>Catalogar e pesquisar vinhos, whiskies, gins, vodkas, licores e aguardentes</li>
-        <li>Escrever reviews e acompanhar as bebidas já provadas</li>
-        <li>Organizar a tua cave virtual, com controlo de stock e janela de consumo</li>
-        <li>Descobrir produtores portugueses e a sua história</li>
-        <li>Comparar preços entre retalhistas e comprar diretamente</li>
-      </ul>
-    </div>
-
-    <footer>
-      <span>AquaVitae — Portugal</span>
-      <span><!-- TODO: email de contacto --></span>
-    </footer>
+<header class="topo">
+  <div class="caixa">
+    <a class="marca" href="#topo" aria-label="AquaVitae — início">
+      <svg viewBox="0 0 92 92" fill="none" stroke="#8F321D" aria-hidden="true"><circle cx="46" cy="46" r="43.5" stroke-width="5"/><circle cx="46" cy="46" r="30" stroke-width="10"/></svg>
+      <b>AQUA<span>VITAE</span></b>
+    </a>
+    <nav class="menu" aria-label="Principal">
+      <a href="#app">A app</a>
+      <a href="#funcionalidades">Funcionalidades</a>
+      <a href="#transparencia">Transparência</a>
+      <a class="botao" href="#contacto">Contacto</a>
+    </nav>
   </div>
+</header>
+
+<main id="conteudo">
+
+<section class="hero" id="topo">
+  <div class="caixa">
+    <div>
+      <span class="etiqueta">App Android · Em desenvolvimento</span>
+      <h1>Descobre, avalia e guarda os teus <em>vinhos e espirituosas</em></h1>
+      <p class="lede">A AquaVitae é uma app para catalogar e descobrir vinhos, whiskies, gins e outras bebidas espirituosas — com foco no mercado e nos produtores portugueses.</p>
+      <div class="botoes">
+        <a class="botao" href="#app">Ver a app</a>
+        <a class="botao vazio" href="mailto:aquavitaerecovery@gmail.com">Falar connosco</a>
+      </div>
+      <p class="nota">Ainda não está disponível na Google Play. Lançamento previsto: em breve.</p>
+    </div>
+    <div class="palco" aria-hidden="false">
+      <div class="telemovel t1"><img src="assets/screens/cave.jpg" width="600" height="1278" alt="Ecrã da app com a cave virtual: garrafas em guarda, valor investido e janela de consumo"></div>
+      <div class="telemovel t2"><img src="assets/screens/home.jpg" width="600" height="1278" alt="Ecrã inicial da app com sugestões “Escolhido para ti” e as caves do utilizador"></div>
+    </div>
+  </div>
+</section>
+
+<section id="app" class="suave">
+  <div class="caixa">
+    <div class="duas">
+      <div>
+        <p class="olho">O que é a AquaVitae</p>
+        <h2>Uma app para quem gosta de <em>provar</em></h2>
+      </div>
+      <div>
+        <p>A AquaVitae é uma app Android de catalogação e comunidade para vinhos, whiskies, gins, vodkas, aguardentes e licores. Reúne num só sítio a informação de cada garrafa — produtor, região, castas, teor alcoólico, perfil sensorial — e as opiniões de quem já a provou.</p>
+        <p>Filtras por categoria, região, preço e rating, guardas as garrafas na tua cave virtual, marcas o que já provaste e escreves reviews. A app sugere-te bebidas com base nas tuas preferências e mostra onde as comprar, em lojas online.</p>
+        <p>Nasce em Portugal, com os produtores portugueses no centro: cada produtor tem a sua página, com a história, a região e as garrafas que tem no catálogo.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="galeria" role="region" aria-label="Ecrãs da app" tabindex="0">
+    <figure><div class="telemovel"><img src="assets/screens/home.jpg" width="600" height="1278" loading="lazy" alt="Início: sugestões “Escolhido para ti”, as caves e a pesquisa"></div><figcaption><b>Início</b>Sugestões feitas para ti e as tuas caves.</figcaption></figure>
+    <figure><div class="telemovel"><img src="assets/screens/catalogo.jpg" width="600" height="1278" loading="lazy" alt="Catálogo de vinhos com pesquisa, categorias e ordenação"></div><figcaption><b>Catálogo</b>Pesquisa e explora por categoria.</figcaption></figure>
+    <figure><div class="telemovel"><img src="assets/screens/filtros.jpg" width="600" height="1278" loading="lazy" alt="Filtros por origem, preço, rating e atributos do vinho"></div><figcaption><b>Filtros</b>Origem, preço, rating e perfil do vinho.</figcaption></figure>
+    <figure><div class="telemovel"><img src="assets/screens/detalhe.jpg" width="600" height="1278" loading="lazy" alt="Detalhe de um vinho com perfil sensorial, castas e produtor"></div><figcaption><b>Detalhe</b>Perfil sensorial, castas e produtor.</figcaption></figure>
+    <figure><div class="telemovel"><img src="assets/screens/cave.jpg" width="600" height="1278" loading="lazy" alt="Cave virtual com garrafas, valor investido e janela de consumo"></div><figcaption><b>Cave</b>Garrafas, valor investido e quando beber.</figcaption></figure>
+    <figure><div class="telemovel"><img src="assets/screens/reviews.jpg" width="600" height="1278" loading="lazy" alt="As reviews do utilizador agrupadas por mês, com estrelas"></div><figcaption><b>Reviews</b>As tuas notas, organizadas por mês.</figcaption></figure>
+    <figure><div class="telemovel"><img src="assets/screens/perfil.jpg" width="600" height="1278" loading="lazy" alt="Perfil com estatísticas e preferências do utilizador"></div><figcaption><b>Perfil</b>Estatísticas e preferências.</figcaption></figure>
+  </div>
+  <div class="caixa"><p class="nota centro">Imagens da versão de testes da app, com dados de demonstração. A versão final pode ser diferente.</p></div>
+</section>
+
+<section id="como">
+  <div class="caixa centro">
+    <p class="olho">Como funciona</p>
+    <h2>Da descoberta à <em>cave</em>, em quatro passos</h2>
+    <p class="lede">Sem complicações: encontras, provas, guardas e, se quiseres, compras.</p>
+  </div>
+  <div class="caixa">
+    <div class="passos">
+      <div class="passo"><h3>Explora</h3><p>Pesquisa por nome, produtor ou casta e filtra o catálogo até encontrares o que procuras.</p></div>
+      <div class="passo"><h3>Prova e avalia</h3><p>Marca o que já provaste e escreve a tua review, com estrelas e comentário.</p></div>
+      <div class="passo"><h3>Organiza</h3><p>Guarda as garrafas nas tuas caves, com o preço pago e a altura em que as queres beber.</p></div>
+      <div class="passo"><h3>Compra bem</h3><p>Vê onde comprar e segue para a loja. A compra é feita sempre no site do retalhista.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="funcionalidades" class="suave">
+  <div class="caixa centro">
+    <p class="olho">Funcionalidades</p>
+    <h2>Tudo o que precisas para <em>conhecer melhor</em> o que bebes</h2>
+  </div>
+  <div class="caixa">
+    <div class="grelha">
+      <article class="cartao"><div class="icone"><svg aria-hidden="true"><use href="#i-grelha"/></svg></div><h3>Catálogo e filtros</h3><p>Vinhos e espirituosas com pesquisa e filtros por categoria, origem, preço, rating e características.</p></article>
+      <article class="cartao"><div class="icone"><svg aria-hidden="true"><use href="#i-brilho"/></svg></div><h3>Escolhido para ti</h3><p>Sugestões com base nas categorias, castas, acidez e doçura que preferes.</p></article>
+      <article class="cartao"><div class="icone"><svg aria-hidden="true"><use href="#i-garrafa"/></svg></div><h3>Cave virtual</h3><p>Controla as garrafas, o preço pago, o valor investido e a janela ideal de consumo.</p></article>
+      <article class="cartao"><div class="icone"><svg aria-hidden="true"><use href="#i-estrela"/></svg></div><h3>Provadas e reviews</h3><p>Regista o que provaste e partilha a tua opinião, só de bebidas que já provaste.</p></article>
+      <article class="cartao"><div class="icone"><svg aria-hidden="true"><use href="#i-coracao"/></svg></div><h3>Favoritos</h3><p>Guarda num toque as bebidas de que mais gostas e revê a tua nota.</p></article>
+      <article class="cartao"><div class="icone"><svg aria-hidden="true"><use href="#i-marcador"/></svg></div><h3>Wishlist</h3><p>Uma lista do que queres provar, com o preço mais baixo à vista.</p></article>
+      <article class="cartao"><div class="icone"><svg aria-hidden="true"><use href="#i-local"/></svg></div><h3>Produtores</h3><p>Páginas com a história, a região, as visitas e as garrafas de cada produtor.</p></article>
+      <article class="cartao"><div class="icone"><svg aria-hidden="true"><use href="#i-saco"/></svg></div><h3>Onde comprar</h3><p>As ofertas de lojas online num só sítio, com o preço e a disponibilidade.</p></article>
+    </div>
+  </div>
+</section>
+
+<section id="estado">
+  <div class="caixa centro">
+    <p class="olho">Estado do projeto</p>
+    <h2>Em construção, <em>com transparência</em></h2>
+    <p class="lede">A AquaVitae está em desenvolvimento ativo. Este é o ponto da situação.</p>
+  </div>
+  <div class="caixa">
+    <ul class="estado">
+      <li class="feito"><span class="marca-estado" aria-hidden="true">✓</span><div><b>App Android</b><span>Catálogo, filtros, cave, provadas, reviews, favoritos, wishlist e páginas de produtores.</span></div></li>
+      <li class="feito"><span class="marca-estado" aria-hidden="true">✓</span><div><b>Conta segura</b><span>Registo, sessão renovável, recuperação e alteração de password por código enviado por email, e eliminação da conta.</span></div></li>
+      <li class="curso"><span class="marca-estado" aria-hidden="true">…</span><div><b>Catálogo inicial</b><span>Vinhos e espirituosas, sobretudo portugueses, a entrar em lotes com informação verificada.</span></div></li>
+      <li class="breve"><span class="marca-estado" aria-hidden="true">○</span><div><b>Testes fechados</b><span>Com um grupo pequeno de utilizadores, antes de abrir a todos.</span></div></li>
+      <li class="breve"><span class="marca-estado" aria-hidden="true">○</span><div><b>Lançamento na Google Play</b><span>Lançamento previsto: em breve.</span></div></li>
+    </ul>
+  </div>
+</section>
+
+<section id="transparencia" class="suave">
+  <div class="caixa centro">
+    <p class="olho">Transparência</p>
+    <h2>Como funcionamos, <em>sem letras pequenas</em></h2>
+  </div>
+  <div class="caixa">
+    <div class="grelha tres">
+      <article class="cartao"><div class="icone"><svg aria-hidden="true"><use href="#i-saco"/></svg></div><h3>Como nos financiamos</h3><p>A AquaVitae mostra ligações para lojas online parceiras. Se comprares através de algumas delas, podemos receber uma pequena comissão, sem qualquer custo adicional para ti. As avaliações são dos utilizadores e a ordenação do catálogo não depende de comissões.</p></article>
+      <article class="cartao"><div class="icone"><svg aria-hidden="true"><use href="#i-copo"/></svg></div><h3>Consumo responsável</h3><p>A AquaVitae destina-se a maiores de 18 anos. Não vendemos bebidas alcoólicas nem incentivamos o consumo excessivo. O álcool é prejudicial à saúde: consome com moderação e, se beberes, não conduzas.</p></article>
+      <article class="cartao"><div class="icone"><svg aria-hidden="true"><use href="#i-escudo"/></svg></div><h3>Os teus dados</h3><p>Só pedimos o que a app precisa para funcionar, não vendemos dados e podes apagar a conta, e tudo o que guardaste, na própria app. Lê a <a href="privacidade.html">Política de Privacidade</a> e os <a href="termos.html">Termos de Utilização</a>.</p></article>
+    </div>
+  </div>
+</section>
+
+<section id="contacto" class="contacto">
+  <div class="caixa">
+    <p class="olho" style="color:#f3c9bd">Contacto</p>
+    <h2>Tens dúvidas, sugestões ou és <em>produtor ou retalhista</em>?</h2>
+    <p>Escreve-nos. Ouvimos com gosto quem produz, vende ou simplesmente gosta de provar.</p>
+    <a class="botao" href="mailto:aquavitaerecovery@gmail.com">aquavitaerecovery@gmail.com</a>
+  </div>
+</section>
+
+</main>
+
+<footer class="rodape">
+  <div class="caixa">
+    <div class="colunas">
+      <div>
+        <a class="marca" href="#topo" aria-label="AquaVitae — topo da página">
+          <svg viewBox="0 0 92 92" fill="none" stroke="#8F321D" aria-hidden="true"><circle cx="46" cy="46" r="43.5" stroke-width="5"/><circle cx="46" cy="46" r="30" stroke-width="10"/></svg>
+          <b>AQUA<span>VITAE</span></b>
+        </a>
+        <p style="margin-top:14px">Catalogação e comunidade de vinhos e bebidas espirituosas, com foco em Portugal.</p>
+      </div>
+      <div>
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="termos.html">Termos de Utilização</a></li>
+          <li><a href="privacidade.html">Política de Privacidade</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Contacto</h4>
+        <ul>
+          <li><a href="mailto:aquavitaerecovery@gmail.com">aquavitaerecovery@gmail.com</a></li>
+          <li>Portugal</li>
+        </ul>
+      </div>
+    </div>
+    <div class="aviso">
+      <p><b>Maiores de 18 anos.</b> O álcool é prejudicial à saúde. Consome com moderação. Se beberes, não conduzas.</p>
+      <p>Algumas ligações para lojas online são de afiliados: podemos receber uma comissão, sem custo adicional para ti. A AquaVitae não vende bebidas; a compra é feita no site do retalhista. Preços e disponibilidade podem mudar.</p>
+      <p>Este site está alojado no GitHub Pages e não usa cookies nem ferramentas de análise. As marcas e imagens de produtos pertencem aos respetivos titulares. © 2026 AquaVitae.</p>
+    </div>
+  </div>
+</footer>
 </body>
 </html>
