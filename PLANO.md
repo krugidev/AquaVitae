@@ -96,8 +96,10 @@ no `CLAUDE.md` o que fazer se o Docker Desktop crashar.
   atributos": o script de verificação do catálogo aprovado, agora como ecrã); (2) ✅ **produtores** — formulário completo (país e
   região em listas, morada, coordenadas, história, visitas, imagem); (3) **bebidas** — formulário por categoria (vinho com
   castas e %; as outras só com os campos gerais até haver subtypes), EAN validado, imagem e links de compra (retalhista, URL
-  de afiliado, URL de verificação, preço); (4) **importador de feed** — CSV/XML (Awin ou Google Shopping) → tabela de revisão
-  editável com duplicados por EAN → aprovar em bloco (só quando houver um feed real); (5) rotinas — "verificar links" e
+  de afiliado, URL de verificação, preço); (4) **importador de feed** — CSV/XML (Awin, **Daisycon** ou Google Shopping) → tabela de revisão
+  editável com duplicados por EAN → aprovar em bloco (só quando houver um feed real — **a 2026-09-25 o utilizador tem a conta Daisycon com o feed
+  "Decantalo (INT): Food & Drinks"**: 6 904 produtos, EUR, locale Portugal, atualizado diariamente; falta verificar a media "AquaVitae", ter a
+  campanha aprovada, escolher a media no painel e descarregar o feed — os campos estão em "Feed da Daisycon", abaixo); (5) rotinas — "verificar links" e
   atualização diária de preço/stock. **Imagens:** guardá-las nós (redimensionadas, miniatura para as listas) em armazenamento
   de ficheiros com CDN (Cloudflare R2/Backblaze B2), o URL na BD como hoje (a app não muda); até haver alojamento, os URLs das
   lojas (decisão de 2026-09-20). Confirmar os termos de cada programa/produtor antes de copiar imagens.
@@ -110,12 +112,30 @@ no `CLAUDE.md` o que fazer se o Docker Desktop crashar.
   (c) **duplicado por EAN**: ao criar, se o EAN já existe, o painel diz qual é a bebida e propõe **só acrescentar o link** (regra do `CLAUDE.md`).
   (d) **imagens**: continuar com o URL da loja até haver alojamento (o campo já aceita as duas formas). (e) **mini-página de regiões/países**
   (hoje `INSERT`s à mão): só se os lotes pedirem regiões novas com frequência.
+**Feed da Daisycon (2026-09-25, o utilizador perguntou como capturar os produtos da Decantalo):** não se faz scraping — descarrega-se o **URL do feed** que o
+painel da Daisycon gera ("Material > Product feeds > Use product feed": escolher a **media**, o formato XML/CSV e, se quiser, um **Sub ID** até 100 caracteres para
+saber de onde vem o clique) e lê-se por HTTP, todos os dias. Antes: verificar a media "AquaVitae" (o painel mostra "Verify media") e a campanha estar aprovada para ela.
+Campos habituais do feed (de páginas de terceiros, **confirmar no "Show example products"**): `sku`, `title`, `description`, `price`, `price_old`, `currency`, `link`
+(o deeplink **com o tracking da media**), `image_default`/`image_small`…, `ean`, `brand`, `category`/`category_path`, `in_stock`, `delivery_time`. Mapeamento previsto:
+`ean`→`bebida_ean` (duplicado = só um link novo), `title`→nome (a limpar), `brand`→produtor (a casar ou criar), `image`→`bebida_path_image` (ver termos da campanha),
+`price`/`in_stock`→`bebida_link_compra` (preço e `is_ativo`), `link`→`bebida_link_compra_url` (o de afiliado; **nunca se abre**), e o URL limpo da página do produto para
+`url_verificacao` (se o `link` levar o destino num parâmetro, extrai-se; senão vem de outro sítio). **Os atributos (tipo, castas, corpo, teor…) não vêm estruturados**: o feed
+dá o rascunho e a revisão continua a ser à mão. **O URL do feed é privado** (leva a media): guardar num ficheiro local fora do git (como o `backend/.env.mail`), nunca no chat nem
+no repositório. **Verificação da media (2026-09-25):** o ficheiro que a Daisycon deu (`7197e10404415e4.html`) foi publicado em `docs/` da `main` (commit `40f7241`, servido em `https://krugidev.github.io/AquaVitae/7197e10404415e4.html`, conteúdo idêntico); **a Daisycon guarda o URL da media sempre em minúsculas (`https://krugidev.github.io/aquavitae/`) e o GitHub Pages distingue maiúsculas no caminho do repositório (404). Resolvido a 2026-09-25 com um 2.º repositório público, `krugidev/krugidev.github.io` (site de utilizador), que serve `/aquavitae/` com uma cópia da landing page (com `canonical` para `/AquaVitae/`) e o mesmo ficheiro de verificação; o `/AquaVitae/` da Awin não mudou.** Se um dia se mexer na landing page, mexer nas duas cópias (ou trocar a cópia por um redirecionamento). Rever antes os **termos da campanha** (comparadores/apps, uso de imagens e descrições, comissão, cookie) e a `retalhista` da Decantalo (rede "Daisycon").
+
 - **A5. "As minhas reviews" e "Conta e segurança" — ✅ feito** (fatia 10, ver "Android — fatia 10"). O "apagar conta" é o que a Google Play exige a apps com registo ([regra](https://support.google.com/googleplay/android-developer/answer/13327111?hl=en)); **falta ainda o link web para pedir a eliminação da conta** (fora da app), a preparar com a política de privacidade antes de publicar.
 - **A6. Pedido do utilizador (2026-09-25), ainda por fazer: melhorar o layout do painel web para algo mais intuitivo** (o utilizador guardou os detalhes para o prompt seguinte).
 
 
 **Ideias do utilizador, por decidir:** secção "Produtor" (pesquisa + chips) no popup do catálogo geral — só com centenas de
-produtores; a 2.ª versão com leitura de fotos de refeições (ver "Ideia do utilizador para a versão 2", abaixo).
+produtores; a 2.ª versão com leitura de fotos de refeições (ver "Ideia do utilizador para a versão 2", abaixo);
+**(2026-09-25) atributos percebidos pelos utilizadores:** ao fazer uma review, o utilizador classificaria também atributos (achei-o mais doce, mais
+encorpado…) e isso entraria nas estatísticas da bebida. Pontos a pensar quando chegar a altura: os atributos do **catálogo** (curados por nós, a
+"referência") não devem ser sobrescritos — mostrar a perceção da comunidade **à parte** (média/distribuição por atributo, com o nº de votos); precisa de uma
+tabela nova ligada à review (um valor 1–5 por atributo, opcional) e de uma escala igual à do catálogo (acidez/doçura 1–5, corpo/tanino em lookup);
+só se mostra com um mínimo de votos; e o filtro do catálogo continua a usar os atributos curados. **A pesquisa manual de tipo, castas, corpo, doçura…
+de cada bebida continua a ser nossa** (o feed da Daisycon/Awin só dá nome, EAN, produtor, preço, imagem e categoria): eu leio a página do produto (sem
+tracking) e proponho valores com a fonte, tu aprovas.
 
 1. **Ronda de bugs (combinada com o utilizador em 2026-09-24, a seguir à fatia 6)**, antes de começar a meter bebidas reais.
    Candidatos já conhecidos, para não os perder: o cartão de bebida diz "1 reviews" (sem singular) no catálogo/cave/home;

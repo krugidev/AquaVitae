@@ -16,7 +16,7 @@ database/    Oracle XE (Docker) — DDL, triggers, seed
 backend/     API Spring Boot + Kotlin (recursos estáticos, ex. avatares, em src/main/resources/static) + painel de administração web em /admin
 android/     app Android (Compose + MVVM + Hilt) — construída por fatias (feitas: 1 a 10, até "As minhas reviews" e "Conta e segurança"; ver android/README.md)
 android/design/   prints do Figma + especificação por ecrã (o que foi pedido, estado, diferenças)
-docs/        landing page (GitHub Pages, só na branch main) — o URL foi enviado à Awin, não mexer no repo/domínio
+docs/        landing page (GitHub Pages, só na branch main) — o URL foi enviado à Awin, não mexer no repo/domínio. Há uma cópia em minúsculas no repo `krugidev/krugidev.github.io` (`/aquavitae/`, o URL que a Daisycon guarda para a media); ver `PLANO.md`, "Feed da Daisycon"
 ```
 
 - **BD:** Oracle XE 21c via Docker (`gvenzl/oracle-xe`), gerido por `database/docker-compose.yml`.
