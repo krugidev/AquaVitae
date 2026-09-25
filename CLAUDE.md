@@ -16,7 +16,7 @@ database/    Oracle XE (Docker) — DDL, triggers, seed
 backend/     API Spring Boot + Kotlin (recursos estáticos, ex. avatares, em src/main/resources/static) + painel de administração web em /admin
 android/     app Android (Compose + MVVM + Hilt) — construída por fatias (feitas: 1 a 10, até "As minhas reviews" e "Conta e segurança"; ver android/README.md)
 android/design/   prints do Figma + especificação por ecrã (o que foi pedido, estado, diferenças)
-docs/        landing page (GitHub Pages, só na branch main) — o URL foi enviado à Awin, não mexer no repo/domínio. Há uma cópia em minúsculas no repo `krugidev/krugidev.github.io` (`/aquavitae/`, o URL que a Daisycon guarda para a media); ver `PLANO.md`, "Feed da Daisycon"
+docs/        landing page (GitHub Pages, só na branch main) — o URL foi enviado à Awin, não mexer no repo/domínio. Há uma cópia em minúsculas no repo `krugidev/krugidev.github.io` (`/aquavitae/`, o URL que a Daisycon guarda para a media); ver `PLANO.md`, "Feed da Daisycon". **Landing redesenhada a 2026-09-25** (HTML/CSS estáticos, sem cookies nem recursos de terceiros; `index.html`, `termos.html`, `privacidade.html`, `assets/`; o email de contacto é `aquavitaerecovery@gmail.com`). **Qualquer mudança nela tem de ir para as DUAS cópias** (a `main:/docs` e a `aquavitae/` do `krugidev.github.io`, com os links relativos iguais) e **mantém a metatag `7197e10404415e4` em todas as páginas**. Os termos/privacidade são rascunhos — manter em linha com o que a app faz (cliques de compra, sessões, apagar conta)
 ```
 
 - **BD:** Oracle XE 21c via Docker (`gvenzl/oracle-xe`), gerido por `database/docker-compose.yml`.
@@ -245,7 +245,7 @@ docs/        landing page (GitHub Pages, só na branch main) — o URL foi envia
   qualquer ecrã; sem `SavedStateHandle`, usa `hiltViewModel(key = "bebida-detalhe-$id")` (ver `android/README.md`, "Convenções"). **O cartão do produtor no fim do popup abre a página do produtor** (fatia 6) por um parâmetro `onVerProdutor` do `BebidaDetalheSheet` — cada ecrã que o usa tem de o receber do `AppNavHost` e passá-lo; `null` (o valor por omissão) tira o atalho, e é o que as páginas do próprio produtor fazem.
   **`DatePicker`/`DatePickerDialog` do Material3** (`AdicionarACaveSheet`, fatia 3b) são `@ExperimentalMaterial3Api` — precisam de
   `@OptIn`, já usados pela 1.ª vez neste projeto (a "data de aquisição" do popup "Adicionar à cave").
-  Testes unitários: `gradle.bat -p android testDebugUnitTest --console=plain` (116: registo, recuperar password, onboarding,
+  Testes unitários: `gradle.bat -p android testDebugUnitTest --console=plain` (117: registo, recuperar password, onboarding,
   bandeiras, URLs, iniciais do avatar, formatação de bebida, formatação e estado do produtor, ofertas de compra, renovação de sessão
   contra um `MockWebServer`, texto sem acentos, contadores do código, excerto/agrupamento das reviews).
 - **Um `Row`/`Column` de altura fixa com texto de comprimento variável perde conteúdo sem erro nenhum (apanhado no `BebidaCard`,
