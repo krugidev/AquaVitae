@@ -30,6 +30,7 @@ import pt.aquavitae.android.data.model.LocalePt
 import pt.aquavitae.android.data.model.anoNoNome
 import pt.aquavitae.android.data.model.formatarPrecoPt
 import pt.aquavitae.android.data.model.linhaAtributos
+import pt.aquavitae.android.data.model.textoReviews
 import pt.aquavitae.android.data.network.resolveImageUrl
 import pt.aquavitae.android.ui.theme.AquaText
 import pt.aquavitae.android.ui.theme.CardGray
@@ -85,7 +86,7 @@ fun BebidaCard(bebida: BebidaSummary, onClick: () -> Unit, modifier: Modifier = 
             )
             Spacer(Modifier.height(6.dp))
             Text(
-                text = String.format(LocalePt, "%.1f/5 • %d reviews", bebida.ratingMedio, bebida.totalReviews),
+                text = String.format(LocalePt, "%.1f/5 • %s", bebida.ratingMedio, textoReviews(bebida.totalReviews)),
                 style = AquaText.Label.copy(fontSize = 16.sp),
             )
             Spacer(Modifier.weight(1f))

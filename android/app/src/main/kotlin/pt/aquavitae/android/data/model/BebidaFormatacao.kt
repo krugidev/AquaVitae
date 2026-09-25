@@ -27,3 +27,6 @@ fun BebidaSummary.linhaAtributos(): String {
 }
 
 fun formatarPrecoPt(valor: Double): String = String.format(LocalePt, "%.2f€", valor)
+
+/** "1 review" ou "N reviews" (o singular estava a sair "1 reviews"). */
+fun textoReviews(total: Int): String = if (total == 1) "1 review" else "$total reviews"

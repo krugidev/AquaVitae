@@ -66,6 +66,7 @@ import coil.compose.AsyncImage
 import pt.aquavitae.android.data.model.Avatar
 import pt.aquavitae.android.data.model.BebidaDetail
 import pt.aquavitae.android.data.model.LocalePt
+import pt.aquavitae.android.data.model.textoReviews
 import pt.aquavitae.android.data.model.LookupState
 import pt.aquavitae.android.data.model.OfertaCompra
 import pt.aquavitae.android.data.model.atualizadoTexto
@@ -206,7 +207,7 @@ private fun CabecalhoBebida(bebida: BebidaDetail) {
             val produtorLinha = listOfNotNull(bebida.produtorNome, bebida.produtorResumo?.regiao).joinToString(" • ")
             if (produtorLinha.isNotEmpty()) Text(text = produtorLinha, style = AquaText.Footer.copy(color = MutedInk, fontSize = 12.sp))
             Spacer(Modifier.height(6.dp))
-            Text(text = String.format(LocalePt, "%.1f/5 • %d reviews", bebida.ratingMedio, bebida.totalReviews), style = AquaText.Label.copy(fontSize = 15.sp))
+            Text(text = String.format(LocalePt, "%.1f/5 • %s", bebida.ratingMedio, textoReviews(bebida.totalReviews)), style = AquaText.Label.copy(fontSize = 15.sp))
         }
     }
 }
@@ -578,7 +579,7 @@ private fun ConteudoReviews(reviews: ReviewsResponse, ratingMedio: Double) {
         }
     }
     Spacer(Modifier.height(6.dp))
-    Text(text = "$total reviews", style = AquaText.Footer.copy(color = MutedInk, fontSize = 11.sp))
+    Text(text = textoReviews(total), style = AquaText.Footer.copy(color = MutedInk, fontSize = 11.sp))
     Spacer(Modifier.height(18.dp))
     Text(text = "DA COMUNIDADE", style = EstiloSeccao)
     Spacer(Modifier.height(10.dp))

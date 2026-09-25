@@ -80,4 +80,11 @@ class BebidaFormatacaoTest {
         val linha = bebida(tipo = "Tinto", corpo = "Encorpado", tanino = "Elevado", nivelDocura = 1).linhaAtributos()
         assertEquals("VINHO TINTO • CORPO ENCORPADO • TANINO ELEVADO", linha)
     }
+
+    @Test
+    fun `o numero de reviews tem singular e plural`() {
+        assertEquals("0 reviews", textoReviews(0))
+        assertEquals("1 review", textoReviews(1))
+        assertEquals("2 reviews", textoReviews(2))
+    }
 }

@@ -53,6 +53,7 @@ import pt.aquavitae.android.data.model.BebidaDetail
 import pt.aquavitae.android.data.model.BebidaRelacao
 import pt.aquavitae.android.data.model.LocalePt
 import pt.aquavitae.android.data.model.linhaAtributos
+import pt.aquavitae.android.data.model.textoReviews
 import pt.aquavitae.android.data.network.resolveImageUrl
 import pt.aquavitae.android.feature.bebidadetalhe.BebidaDetalheSheet
 import pt.aquavitae.android.feature.cave.AdicionarACaveSheet
@@ -227,7 +228,7 @@ private fun FavoritoCard(relacao: BebidaRelacao, onClick: () -> Unit, onRemover:
                 Spacer(Modifier.width(14.dp))
                 Column {
                     Text(text = String.format(LocalePt, "%.1f", bebida.ratingMedio), style = AquaText.Label.copy(fontSize = 14.sp))
-                    Text(text = "MÉDIA • ${bebida.totalReviews} REVIEWS", style = AquaText.Footer.copy(color = MutedInk, fontSize = 8.sp))
+                    Text(text = "MÉDIA • ${textoReviews(bebida.totalReviews).uppercase()}", style = AquaText.Footer.copy(color = MutedInk, fontSize = 8.sp))
                 }
             }
             Spacer(Modifier.height(8.dp))
